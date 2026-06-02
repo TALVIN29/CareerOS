@@ -20,6 +20,22 @@ When you need an external decision:
 
 ---
 
+## ⚠️ INSTRUCTION FOR AI TOOLS (Claude Code, Codex, Antigravity)
+
+**At the start of every session, read the Open Requests section below.**
+If any request has Status: OPEN, you must surface it to the user BEFORE starting any other work. Use this format:
+
+```
+⚠️ DECISION NEEDED — SDR[number]: [Title]
+Deadline: [date or "no hard deadline"]
+[Paste the full SDR entry]
+Please make a decision before we proceed.
+```
+
+Do not skip OPEN requests. Do not proceed with coding or writing tasks until all OPEN requests with a passed deadline are resolved. For requests without a deadline, flag them once and let the user choose to defer.
+
+---
+
 ## Request Template
 
 ```
@@ -32,17 +48,27 @@ When you need an external decision:
 **Decision needed by:** YYYY-MM-DD (leave blank if no hard deadline)
 
 **Context:**
-[2–3 sentences explaining the situation. Enough that the person you are asking understands it without reading the whole PRD.]
+[2–3 sentences explaining the situation. Enough that the person you are asking understands without reading the whole PRD.]
 
 **The question:**
-[One clear, specific question. If there are multiple options, list them.]
+[One clear, specific question.]
 
-**Options being considered:**
-- Option A: [description]
-- Option B: [description]
+**Options:**
 
-**What happens if we do not get an answer by the deadline:**
-[What the team will default to if no response received]
+**Option A — [Name]**
+- What it means: [Plain English. One sentence.]
+- Analogy: [Optional. "This is like choosing to renovate your house before selling vs. selling as-is."]
+- Impact if executed: [What happens if you choose this. Be specific. What gets built, what changes, what is affected downstream.]
+- Opportunity cost: [What you give up by choosing A instead of B. What you cannot do as a result. What B would have given you that A does not.]
+
+**Option B — [Name]**
+- What it means: [Plain English. One sentence.]
+- Analogy: [Optional.]
+- Impact if executed: [Specific downstream effects.]
+- Opportunity cost: [What you give up by choosing B instead of A.]
+
+**Default if no answer received by deadline:**
+[What the team does if the external party does not respond in time.]
 
 **Outcome:**
 [Fill this in when the answer comes back. Quote the person if possible.]
@@ -96,7 +122,7 @@ When you need an external decision:
 
 ---
 
-## Example Entry (For Reference)
+## Example Entry (For Reference — Shows Full Template In Use)
 
 ```
 ### SDR001 — Clarify Whether University Tab Counts as a Separate Module
@@ -108,21 +134,32 @@ When you need an external decision:
 **Decision needed by:** 2026-06-20
 
 **Context:**
-Our PRD includes a University tab in the prototype but scopes it as "prototype only — not built in 28 days." 
-We want to know if showing the university concept without a working build hurts our completeness score.
+Our PRD scopes the University tab as "prototype only — not built in the 28-day sprint."
+We want to know if showing a non-functional University tab hurts our Completeness score (20% of judging).
 
 **The question:**
-Does including a non-functional University tab in the prototype count against us on the Completeness criterion (20%), or is a conceptual prototype sufficient for that stakeholder group?
+Should we build a working University module in Week 3, or keep it as a static concept only?
 
-**Options being considered:**
-- Option A: Keep University tab as static concept — no build effort spent
-- Option B: Build a basic working University module in Week 3 if ahead of schedule
+**Options:**
 
-**What happens if we do not get an answer by the deadline:**
-Default to Option A — keep as static concept.
+**Option A — Keep University tab as static concept only**
+- What it means: Show a visual mockup of what the University module would do, but no real data or AI behind it.
+- Analogy: Like showing a floor plan of a room you have not built yet. The judges can see the vision but cannot walk into it.
+- Impact if executed: Saves approximately 15–20 hours of build time in Week 3. That time goes into polishing Career Path Navigator and Smart Talent Matching instead.
+- Opportunity cost: University career office judges (Albert Quek, Raja Edriana, Pui Wah Loh) may score Completeness lower. We lose the ability to demonstrate the third stakeholder working end-to-end.
+
+**Option B — Build a basic working University module in Week 3**
+- What it means: Build a functional Future-State Curriculum Engine where a university staff member inputs a course and sees a market demand gap analysis.
+- Analogy: Like finishing all three rooms of a house instead of two. The third room may not be fully furnished, but it has a floor and a roof.
+- Impact if executed: Adds a third working stakeholder flow. University panel members have something real to interact with. Completeness score likely improves.
+- Opportunity cost: 15–20 hours taken away from polishing Modules 1 and 2. Risk that all three modules are 80% finished instead of two being 100% finished. A half-working module on demo day is worse than a static concept.
+
+**Default if no answer received by deadline:**
+Default to Option A — keep as static concept. Depth over breadth.
 
 **Outcome:**
-Ben Ho confirmed that depth on two modules beats shallow coverage of three. University concept tab is acceptable. Focus on making Career Path Navigator and Smart Talent Matching excellent.
+Ben Ho confirmed that depth on two modules beats shallow coverage of three.
+University concept tab is acceptable. Focus on making Career Path Navigator and Smart Talent Matching excellent.
 
 **Decision logged in decision_log.md:** Yes — D009
 ```

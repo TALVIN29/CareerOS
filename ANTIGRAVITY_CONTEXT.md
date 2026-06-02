@@ -84,6 +84,7 @@ The Partner using Antigravity IDE owns:
 ## Critical Rules — Read Before Every Task
 
 1. **Read `SKILL.md` and `progress_plan.md` before starting any work.**
+2. **Read `stakeholder_decision.md` at session start.** If any entry has Status: OPEN, surface it to the user with the full impact and opportunity cost breakdown BEFORE doing anything else.
 2. **Do not add features not in `PRD.md`.** If unsure, check PRD Section 6 (Out of Scope).
 3. **Never touch the GapHunter repo** (`TALVIN29/GapHunter`). It is under separate hackathon judging.
 4. **Never commit `.env` files or API keys** to git.

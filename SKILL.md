@@ -259,8 +259,9 @@ Every session (both Talvin with Claude Code and Partner with Codex/Antigravity) 
 1. Read this file (`SKILL.md`) — understand current state
 2. Read `progress_plan.md` — know what is done and what is next
 3. Check `decision_log.md` — ensure no pending decisions block work
-4. State in one sentence what you will accomplish this session
-5. Start the task
+4. **Read `stakeholder_decision.md` — if any entry has Status: OPEN, surface it to the user immediately before any other work. Include the full entry with options, impact, and opportunity cost. Do not proceed until the user has responded.**
+5. State in one sentence what you will accomplish this session
+6. Start the task
 
 Every session ends with:
 1. Update `progress_plan.md` — mark completed tasks, add new blockers

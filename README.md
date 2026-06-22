@@ -21,6 +21,16 @@ http://localhost:5189
 
 The demo does not call the real GapHunter backend. CDN libraries are still loaded from the browser for Tailwind, Alpine.js, ApexCharts, Font Awesome, AOS, particles.js, SweetAlert, and Typed.js.
 
+Run the API server:
+
+```bash
+npm install
+cp .env.example .env
+npm run dev
+```
+
+The Express API listens on `PORT` from `.env`, defaults to `3000`, enables CORS, and implements the same stub endpoints as `demo-api.js`. Set `APP_API_SECRET` to require either `Authorization: Bearer <secret>` or `X-Demo-Secret: <secret>`. API key variables for future live integrations are included in `.env.example`.
+
 Career OS modules added:
 
 - Career Path Navigator in the Individual results view.

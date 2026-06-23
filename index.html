@@ -178,6 +178,29 @@
 
     /* Scroll panels */
     .scroll-panel { overflow-y: auto; }
+
+    .view-panel { will-change: opacity, transform; }
+    .loading-panel {
+      border: 1px solid rgba(59,130,246,0.14);
+      background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(13,21,38,0.82));
+      border-radius: .875rem;
+      padding: 1rem;
+      overflow: hidden;
+    }
+    .loading-orb {
+      width: 2.25rem; height: 2.25rem; border-radius: .75rem;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.25);
+      color: #93c5fd;
+    }
+    .skeleton-line {
+      height: .45rem; border-radius: 9999px;
+      background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(59,130,246,0.22), rgba(59,130,246,0.08));
+      background-size: 200% 100%;
+      animation: skeleton-sweep 1.2s ease-in-out infinite;
+    }
+    @keyframes skeleton-sweep { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     .scroll-panel::-webkit-scrollbar { width: 3px; }
 
     /* Animations */
@@ -294,21 +317,21 @@
         <nav class="flex gap-1 bg-black/30 rounded-xl p-1">
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'seeker' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
-            @click="activeTab = 'seeker'">
+            @click="setActiveTab('seeker')">
             <i class="fa-solid fa-user mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Individual</span>
             <span class="sm:hidden">Me</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'hr' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
-            @click="activeTab = 'hr'; maybeInitRadar()">
+            @click="setActiveTab('hr')">
             <i class="fa-solid fa-building mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Enterprise</span>
             <span class="sm:hidden">Biz</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'university' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
-            @click="activeTab = 'university'">
+            @click="setActiveTab('university')">
             <i class="fa-solid fa-graduation-cap mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">University</span>
             <span class="sm:hidden">Uni</span>
@@ -334,7 +357,7 @@
   <!-- ══════════════════════════════════════════
        INDIVIDUAL INTELLIGENCE TAB
   ══════════════════════════════════════════ -->
-  <main x-show="activeTab === 'seeker'">
+  <main x-show="activeTab === 'seeker'" x-ref="seekerView" class="view-panel">
 
     <!-- ═══ HERO STATE ═══ -->
     <div x-show="!jobs.length" class="min-h-[92vh] flex flex-col items-center justify-center px-4 py-16 relative">
@@ -972,12 +995,20 @@
 
             <!-- INTERVIEW TAB -->
             <div x-show="analysisTab === 'interview'" class="flex flex-col gap-3">
-              <div x-show="loadingInterview" class="flex items-center gap-2 text-slate-500 text-sm py-4 justify-center">
-                <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                </svg>
-                Predicting questions…
+              <div x-show="loadingInterview" class="loading-panel">
+                <div class="flex items-start gap-3">
+                  <span class="loading-orb shrink-0">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i>
+                  </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-slate-200">Predicting interview questions</p>
+                    <p class="text-xs text-slate-500 mt-1">Matching role scope, gaps, and seniority signals.</p>
+                    <div class="flex flex-col gap-2 mt-3">
+                      <div class="skeleton-line w-11/12"></div>
+                      <div class="skeleton-line w-9/12"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div x-show="!loadingInterview && interviewQuestions?.length" class="flex flex-col gap-3">
                 <p class="text-xs text-slate-500">
@@ -1037,12 +1068,21 @@
 
               <!-- Has skills -->
               <div x-show="skills">
-                <div x-show="loadingTailor" class="flex items-center gap-2 text-slate-500 text-sm py-4 justify-center">
-                  <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-                  </svg>
-                  Tailoring with Claude…
+                <div x-show="loadingTailor" class="loading-panel">
+                  <div class="flex items-start gap-3">
+                    <span class="loading-orb shrink-0">
+                      <i class="fa-solid fa-circle-notch fa-spin"></i>
+                    </span>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-semibold text-slate-200">Tailorman is drafting your materials</p>
+                      <p class="text-xs text-slate-500 mt-1">Building summary, cover letter opening, and talking points.</p>
+                      <div class="flex flex-col gap-2 mt-3">
+                        <div class="skeleton-line w-full"></div>
+                        <div class="skeleton-line w-10/12"></div>
+                        <div class="skeleton-line w-7/12"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <div x-show="!loadingTailor && tailormanResult" class="flex flex-col gap-4 text-xs">
                   <div x-show="tailormanResult?.tailored_summary">
@@ -1341,7 +1381,7 @@
   <!-- ══════════════════════════════════════════
        ENTERPRISE INTELLIGENCE TAB
   ══════════════════════════════════════════ -->
-  <main x-show="activeTab === 'hr'" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
+  <main x-show="activeTab === 'hr'" x-ref="hrView" class="view-panel max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
 
     <!-- ── Search bar (TOP, full-width) ── -->
     <div class="glass-card card-glow mb-6">
@@ -1815,7 +1855,7 @@
   <!-- ══════════════════════════════════════════
        UNIVERSITY CURRICULUM INTELLIGENCE TAB
   ══════════════════════════════════════════ -->
-  <main x-show="activeTab === 'university'" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
+  <main x-show="activeTab === 'university'" x-ref="universityView" class="view-panel max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
     <div class="glass-card card-glow mb-6">
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
@@ -1877,11 +1917,20 @@
       <p class="text-slate-600 text-xs">Run the scan to compare course coverage against current hiring demand.</p>
     </div>
 
-    <div x-show="uniScanning" class="card flex items-center gap-3">
-      <i class="fa-solid fa-circle-notch fa-spin text-blue-400"></i>
-      <div>
-        <p class="text-sm font-semibold text-slate-200">Mapping curriculum to employer demand</p>
-        <p class="text-xs text-slate-500">Skill signals, role readiness, capstone fit, and course actions are being generated.</p>
+    <div x-show="uniScanning" class="card loading-panel">
+      <div class="flex items-start gap-3">
+        <span class="loading-orb shrink-0">
+          <i class="fa-solid fa-circle-notch fa-spin"></i>
+        </span>
+        <div class="flex-1 min-w-0">
+          <p class="text-sm font-semibold text-slate-200">Mapping curriculum to employer demand</p>
+          <p class="text-xs text-slate-500 mt-1">Aggregating candidate gaps, benchmarking readiness, and shaping the capstone brief.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-4">
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+            <div class="skeleton-line"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2074,10 +2123,24 @@
           style: { colors: ['#94a3b8'], fontSize: '11px' } },
         colors: ['#3b82f6'],
         xaxis: { categories: labels, labels: { style: { colors: '#64748b' } } },
-        yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '12px' } } },
-        grid: { borderColor: 'rgba(59,130,246,0.08)' },
+        yaxis: { labels: { minWidth: 116, maxWidth: 170, offsetX: -4,
+          style: { colors: '#94a3b8', fontSize: '12px' } } },
+        grid: { borderColor: 'rgba(59,130,246,0.08)', padding: { left: 6, right: 14 } },
         theme: { mode: 'dark' },
         tooltip: { theme: 'dark' },
+        responsive: [{
+          breakpoint: 768,
+          options: {
+            chart: { height: Math.max(260, labels.length * 46) },
+            dataLabels: { offsetX: -2, style: { fontSize: '10px', colors: ['#cbd5e1'] } },
+            plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'center' } } },
+            xaxis: { labels: { style: { fontSize: '10px', colors: '#64748b' } } },
+            yaxis: { labels: { minWidth: 92, maxWidth: 118, offsetX: -10,
+              style: { colors: '#94a3b8', fontSize: '10px' },
+              trim: true } },
+            grid: { padding: { left: 0, right: 6 } },
+          },
+        }],
       };
 
       if (_gapsChart) {
@@ -2204,6 +2267,36 @@
               cursorChar: '|',
             });
           }
+
+          this.$nextTick(() => this.animateActiveView());
+        },
+
+        setActiveTab(tab) {
+          if (this.activeTab === tab) return;
+          this.activeTab = tab;
+          if (tab === 'hr') this.maybeInitRadar();
+          this.$nextTick(() => this.animateActiveView());
+        },
+
+        animateActiveView() {
+          const el = this.$refs[`${this.activeTab}View`];
+          if (!el) return;
+          if (window.gsap) {
+            gsap.fromTo(el,
+              { autoAlpha: 0, y: 14, scale: 0.992 },
+              { autoAlpha: 1, y: 0, scale: 1, duration: 0.38, ease: 'power2.out', clearProps: 'transform,opacity,visibility' }
+            );
+          } else {
+            el.animate([
+              { opacity: 0, transform: 'translateY(14px)' },
+              { opacity: 1, transform: 'translateY(0)' },
+            ], { duration: 260, easing: 'ease-out' });
+          }
+        },
+
+        async minimumLoadingDelay(startedAt, minMs = 420) {
+          const remaining = minMs - (Date.now() - startedAt);
+          if (remaining > 0) await new Promise(resolve => setTimeout(resolve, remaining));
         },
 
         careerPaths() {
@@ -2353,102 +2446,106 @@
 
         async runCurriculumScan() {
           if (this.uniScanning) return;
+          const startedAt = Date.now();
           this.uniScanning = true;
           this.uniReport = null;
-
-          const curriculum = (this.uniCurriculum || '').toLowerCase();
-          const aliases = {
-            'dbt': ['dbt', 'analytics engineering', 'data modeling'],
-            'Snowflake': ['snowflake', 'warehouse', 'cloud data'],
-            'Airflow': ['airflow', 'orchestration', 'workflow'],
-            'Experimentation': ['experiment', 'a/b', 'hypothesis', 'causal'],
-            'A/B testing': ['a/b', 'ab testing', 'experiment'],
-            'Stakeholder storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
-            'Data Storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
-            'Machine learning': ['machine learning', 'ml', 'modeling'],
-            'MLOps': ['mlops', 'model deployment', 'model monitoring'],
-            'SQL': ['sql', 'database', 'query'],
-            'Python': ['python', 'pandas', 'notebook'],
-            'Tableau': ['tableau', 'dashboard', 'visualization'],
-            'Power BI': ['power bi', 'dashboard', 'visualization'],
-          };
-          const hasSkill = skill => {
-            const terms = aliases[skill] || [skill];
-            return terms.some(term => curriculum.includes(term.toLowerCase()));
-          };
-
-          let metrics = null;
           try {
-            const res = await fetch(`${API}/api/uni/metrics`, { headers: _headers() });
-            metrics = await res.json();
-          } catch (err) {
-            console.warn('University metrics unavailable; using local fallback.', err);
+            const curriculum = (this.uniCurriculum || '').toLowerCase();
+            const aliases = {
+              'dbt': ['dbt', 'analytics engineering', 'data modeling'],
+              'Snowflake': ['snowflake', 'warehouse', 'cloud data'],
+              'Airflow': ['airflow', 'orchestration', 'workflow'],
+              'Experimentation': ['experiment', 'a/b', 'hypothesis', 'causal'],
+              'A/B testing': ['a/b', 'ab testing', 'experiment'],
+              'Stakeholder storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
+              'Data Storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
+              'Machine learning': ['machine learning', 'ml', 'modeling'],
+              'MLOps': ['mlops', 'model deployment', 'model monitoring'],
+              'SQL': ['sql', 'database', 'query'],
+              'Python': ['python', 'pandas', 'notebook'],
+              'Tableau': ['tableau', 'dashboard', 'visualization'],
+              'Power BI': ['power bi', 'dashboard', 'visualization'],
+            };
+            const hasSkill = skill => {
+              const terms = aliases[skill] || [skill];
+              return terms.some(term => curriculum.includes(term.toLowerCase()));
+            };
+
+            let metrics = null;
+            try {
+              const res = await fetch(`${API}/api/uni/metrics`, { headers: _headers() });
+              metrics = await res.json();
+            } catch (err) {
+              console.warn('University metrics unavailable; using local fallback.', err);
+            }
+
+            const topGaps = Array.isArray(metrics?.top_gaps) && metrics.top_gaps.length
+              ? metrics.top_gaps
+              : [
+                { skill: 'SQL', demand: 92, frequency: 5 },
+                { skill: 'Python', demand: 88, frequency: 4 },
+                { skill: 'dbt', demand: 82, frequency: 3 },
+                { skill: 'Snowflake', demand: 76, frequency: 2 },
+                { skill: 'Experimentation', demand: 73, frequency: 1 },
+              ];
+
+            const skillBank = topGaps.map(gap => ({
+              name: gap.skill,
+              demand: gap.demand || Math.round((gap.demand_score || 0.65) * 100),
+              frequency: gap.frequency || 0,
+              covered: hasSkill(gap.skill),
+            }));
+            const covered = skillBank.filter(s => s.covered);
+            const missing = skillBank.filter(s => !s.covered);
+            const coverageRatio = covered.length / Math.max(1, skillBank.length);
+            const benchmark = metrics?.benchmark || 68;
+            const readiness = Math.max(20, Math.min(96, Math.round((coverageRatio * 65) + (benchmark * 0.35))));
+            const critical = missing.slice(0, 3);
+            const focusSkills = critical.length ? critical : skillBank.slice(0, 3);
+            const primaryFocus = focusSkills[0]?.name || 'dbt';
+            const secondaryFocus = focusSkills[1]?.name || 'Snowflake';
+
+            this.uniReport = {
+              institution: this.uniInstitution || 'Your institution',
+              program: this.uniProgram || 'Business Analytics',
+              market: this.uniMarket || 'Malaysia',
+              readiness,
+              readinessLabel: readiness >= 75 ? 'Graduate-ready' : readiness >= 55 ? 'Needs targeted updates' : 'High curriculum gap',
+              capstoneFit: Math.max(42, Math.min(94, Math.round(readiness + (covered.length * 3) - (missing.length * 2)))),
+              benchmark,
+              ledgerSource: metrics?.source || 'fallback',
+              ledgerRecords: metrics?.total_records || 0,
+              skills: skillBank,
+              covered,
+              missing,
+              actions: [
+                {
+                  title: `Add ${primaryFocus} as an applied lab`,
+                  detail: `Use the live gaps ledger to move ${primaryFocus} from theory into a portfolio artifact that mirrors market demand.`,
+                  tags: [primaryFocus, 'portfolio', 'lab'],
+                },
+                {
+                  title: `Thread ${secondaryFocus} into assessments`,
+                  detail: 'Grade students on recommendations, trade-offs, metric design, and stakeholder clarity using the missing market gaps as assessment criteria.',
+                  tags: [secondaryFocus, 'decision memo', 'metrics'],
+                },
+                {
+                  title: 'Create an employer-backed capstone sprint',
+                  detail: `Use ${focusSkills.map(s => s.name).join(', ')} as project briefs so students graduate with proof aligned to repeated candidate gaps.`,
+                  tags: ['capstone', 'gaps ledger', this.uniMarket || 'market'],
+                },
+              ],
+              capstone: {
+                title: `${primaryFocus} Talent Readiness Sprint`,
+                detail: `Students build an employer-facing project that closes the strongest aggregated gaps: ${focusSkills.map(s => s.name).join(', ')}.`,
+                deliverables: ['Gap-focused technical artifact', 'Decision dashboard or workflow demo', 'One-page employer recommendation'],
+                signals: [`Applied ${primaryFocus}`, `${secondaryFocus} fluency`, 'Communication under ambiguity'],
+              },
+            };
+          } finally {
+            await this.minimumLoadingDelay(startedAt);
+            this.uniScanning = false;
           }
-
-          const topGaps = Array.isArray(metrics?.top_gaps) && metrics.top_gaps.length
-            ? metrics.top_gaps
-            : [
-              { skill: 'SQL', demand: 92, frequency: 5 },
-              { skill: 'Python', demand: 88, frequency: 4 },
-              { skill: 'dbt', demand: 82, frequency: 3 },
-              { skill: 'Snowflake', demand: 76, frequency: 2 },
-              { skill: 'Experimentation', demand: 73, frequency: 1 },
-            ];
-
-          const skillBank = topGaps.map(gap => ({
-            name: gap.skill,
-            demand: gap.demand || Math.round((gap.demand_score || 0.65) * 100),
-            frequency: gap.frequency || 0,
-            covered: hasSkill(gap.skill),
-          }));
-          const covered = skillBank.filter(s => s.covered);
-          const missing = skillBank.filter(s => !s.covered);
-          const coverageRatio = covered.length / Math.max(1, skillBank.length);
-          const benchmark = metrics?.benchmark || 68;
-          const readiness = Math.max(20, Math.min(96, Math.round((coverageRatio * 65) + (benchmark * 0.35))));
-          const critical = missing.slice(0, 3);
-          const focusSkills = critical.length ? critical : skillBank.slice(0, 3);
-          const primaryFocus = focusSkills[0]?.name || 'dbt';
-          const secondaryFocus = focusSkills[1]?.name || 'Snowflake';
-
-          this.uniReport = {
-            institution: this.uniInstitution || 'Your institution',
-            program: this.uniProgram || 'Business Analytics',
-            market: this.uniMarket || 'Malaysia',
-            readiness,
-            readinessLabel: readiness >= 75 ? 'Graduate-ready' : readiness >= 55 ? 'Needs targeted updates' : 'High curriculum gap',
-            capstoneFit: Math.max(42, Math.min(94, Math.round(readiness + (covered.length * 3) - (missing.length * 2)))),
-            benchmark,
-            ledgerSource: metrics?.source || 'fallback',
-            ledgerRecords: metrics?.total_records || 0,
-            skills: skillBank,
-            covered,
-            missing,
-            actions: [
-              {
-                title: `Add ${primaryFocus} as an applied lab`,
-                detail: `Use the live gaps ledger to move ${primaryFocus} from theory into a portfolio artifact that mirrors market demand.`,
-                tags: [primaryFocus, 'portfolio', 'lab'],
-              },
-              {
-                title: `Thread ${secondaryFocus} into assessments`,
-                detail: 'Grade students on recommendations, trade-offs, metric design, and stakeholder clarity using the missing market gaps as assessment criteria.',
-                tags: [secondaryFocus, 'decision memo', 'metrics'],
-              },
-              {
-                title: 'Create an employer-backed capstone sprint',
-                detail: `Use ${focusSkills.map(s => s.name).join(', ')} as project briefs so students graduate with proof aligned to repeated candidate gaps.`,
-                tags: ['capstone', 'gaps ledger', this.uniMarket || 'market'],
-              },
-            ],
-            capstone: {
-              title: `${primaryFocus} Talent Readiness Sprint`,
-              detail: `Students build an employer-facing project that closes the strongest aggregated gaps: ${focusSkills.map(s => s.name).join(', ')}.`,
-              deliverables: ['Gap-focused technical artifact', 'Decision dashboard or workflow demo', 'One-page employer recommendation'],
-              signals: [`Applied ${primaryFocus}`, `${secondaryFocus} fluency`, 'Communication under ambiguity'],
-            },
-          };
-          this.uniScanning = false;
         },
 
         async doSearch() {
@@ -2627,6 +2724,7 @@
 
         async runInterviewPrep() {
           if (!this.selectedJob) return;
+          const startedAt = Date.now();
           this.interviewQuestions = null;
           this.loadingInterview = true;
           try {
@@ -2645,7 +2743,10 @@
             const data = await res.json();
             if (data.status === 'ok') this.interviewQuestions = data.questions;
           } catch (err) { console.warn('Interview prep failed', err); }
-          finally { this.loadingInterview = false; }
+          finally {
+            await this.minimumLoadingDelay(startedAt);
+            this.loadingInterview = false;
+          }
         },
 
         fmtDate(iso) {
@@ -2667,6 +2768,7 @@
 
         async runTailorman() {
           if (!this.skills || !this.selectedJob) return;
+          const startedAt = Date.now();
           this.tailormanResult = null;
           this.loadingTailor = true;
           try {
@@ -2685,7 +2787,10 @@
             const data = await res.json();
             if (data.status === 'ok') this.tailormanResult = data.tailored;
           } catch (err) { console.warn('Tailorman failed', err); }
-          finally { this.loadingTailor = false; }
+          finally {
+            await this.minimumLoadingDelay(startedAt);
+            this.loadingTailor = false;
+          }
         },
 
         async uploadCV(event) {

@@ -2,6 +2,8 @@ import "dotenv/config";
 import cors from "cors";
 import express from "express";
 import multer from "multer";
+import mammoth from "mammoth";
+import { PDFParse } from "pdf-parse";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -9,6 +11,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 const PORT = Number(process.env.PORT || 3000);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 const APP_API_SECRET = process.env.APP_API_SECRET || "";
+const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY || "";
+const BRIGHTDATA_SEARCH_URL = process.env.BRIGHTDATA_SEARCH_URL || "";
+const BRIGHTDATA_API_KEY = process.env.BRIGHTDATA_API_KEY || "";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY || "";
+const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
 app.use(cors({ origin: CORS_ORIGIN }));
 app.use(express.json({ limit: "2mb" }));
@@ -117,6 +124,20 @@ const gaps = [
   { skill: "Experimentation", demand_score: 0.641, urls: ["https://www.coursera.org/learn/ab-testing"] },
   { skill: "Stakeholder storytelling", demand_score: 0.593, urls: ["https://www.tableau.com/learn/training"] },
 ];
+
+const skillResources = {
+  dbt: "https://www.getdbt.com/resources",
+  Snowflake: "https://learn.snowflake.com",
+  Airflow: "https://airflow.apache.org/docs/",
+  Experimentation: "https://www.coursera.org/learn/ab-testing",
+  "Stakeholder storytelling": "https://www.tableau.com/learn/training",
+  SQL: "https://mode.com/sql-tutorial/",
+  Python: "https://docs.python.org/3/tutorial/",
+  Tableau: "https://www.tableau.com/learn/training",
+  "machine learning": "https://developers.google.com/machine-learning/crash-course",
+  MLOps: "https://madewithml.com/",
+  "data governance": "https://www.databricks.com/glossary/data-governance",
+};
 
 const roadmaps = {
   dbt: {
@@ -289,6 +310,257 @@ function jobsForRole(role, location) {
   }));
 }
 
+function clampScore(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0.1, Math.min(0.99, n));
+}
+
+function normalizeSkillName(skill) {
+  const cleaned = String(skill || "").trim().replace(/\s+/g, " ");
+  const known = Object.keys(skillResources).find(item => item.toLowerCase() === cleaned.toLowerCase());
+  return known || cleaned.replace(/^./, char => char.toUpperCase());
+}
+
+function inferHeuristicGaps(jobs) {
+  const knownSkills = [
+    "SQL",
+    "Python",
+    "Tableau",
+    "Power BI",
+    "dbt",
+    "Snowflake",
+    "Airflow",
+    "Looker",
+    "Experimentation",
+    "A/B testing",
+    "stakeholder storytelling",
+    "machine learning",
+    "MLOps",
+    "data governance",
+  ];
+
+  const text = jobs
+    .map(job => [job.title, job.company, job.description, ...(job.skills_match || [])].join(" "))
+    .join(" ")
+    .toLowerCase();
+
+  const ranked = knownSkills
+    .map(skill => ({
+      skill,
+      count: (text.match(new RegExp(skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi")) || []).length,
+    }))
+    .filter(item => item.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5)
+    .map((item, index) => ({
+      skill: item.skill,
+      demand_score: clampScore(0.82 - index * 0.06, 0.6),
+      urls: [skillResources[item.skill] || "https://www.coursera.org/career-academy"],
+    }));
+
+  return ranked.length ? ranked : gaps;
+}
+
+function normalizeJob(raw, index, role, location) {
+  const extensions = raw.detected_extensions || {};
+  const description = raw.description || raw.snippet || "";
+  const salary = extensions.salary || raw.salary || raw.salary_range || "Market rate not listed";
+  const posted = extensions.posted_at || raw.posted_at || raw.date || "";
+  const company = raw.company_name || raw.company || "Company";
+  const title = raw.title || `${titleCase(role)} role`;
+  const jobLocation = raw.location || location || "Remote";
+  const url = raw.share_link || raw.job_link || raw.link || raw.apply_options?.[0]?.link || `https://www.google.com/search?q=${encodeURIComponent(`${title} ${company}`)}`;
+
+  return {
+    title,
+    company,
+    location: jobLocation,
+    url,
+    relevance_pct: Math.max(52, 88 - index * 5),
+    is_remote: /remote/i.test(`${title} ${jobLocation} ${description}`),
+    seniority: /senior|lead|principal|manager/i.test(title) ? "senior" : "mid",
+    salary,
+    source: raw.source || raw.via || "Google Jobs",
+    date_posted: posted,
+    company_industry: raw.company_industry || "Not specified",
+    company_size: raw.company_size || "",
+    company_description: description || `${company} is hiring for ${title}.`,
+    skills_match: inferHeuristicGaps([{ title, company, description }]).slice(0, 5).map(gap => gap.skill),
+  };
+}
+
+async function fetchSerpApiJobs(role, location) {
+  if (!SERPAPI_API_KEY) return null;
+
+  const params = new URLSearchParams({
+    engine: "google_jobs",
+    q: `${role || "Data Analyst"} ${location || ""}`.trim(),
+    api_key: SERPAPI_API_KEY,
+  });
+  if (location) params.set("location", location);
+
+  const response = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+  if (!response.ok) throw new Error(`SerpApi returned ${response.status}`);
+
+  const payload = await response.json();
+  const rawJobs = payload.jobs_results || [];
+  if (!rawJobs.length) return null;
+
+  return {
+    jobs: rawJobs.slice(0, 8).map((job, index) => normalizeJob(job, index, role, location)),
+    totalPostings: Number(payload.search_metadata?.total_results) || rawJobs.length,
+    dataSource: "live",
+  };
+}
+
+async function fetchBrightDataJobs(role, location) {
+  if (!BRIGHTDATA_SEARCH_URL || !BRIGHTDATA_API_KEY) return null;
+
+  const response = await fetch(BRIGHTDATA_SEARCH_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${BRIGHTDATA_API_KEY}`,
+    },
+    body: JSON.stringify({
+      query: `${role || "Data Analyst"} jobs ${location || ""}`.trim(),
+      role,
+      location,
+    }),
+  });
+  if (!response.ok) throw new Error(`Bright Data search returned ${response.status}`);
+
+  const payload = await response.json();
+  const rawJobs = payload.jobs || payload.results || payload.jobs_results || [];
+  if (!Array.isArray(rawJobs) || !rawJobs.length) return null;
+
+  return {
+    jobs: rawJobs.slice(0, 8).map((job, index) => normalizeJob(job, index, role, location)),
+    totalPostings: Number(payload.total_postings || payload.total || rawJobs.length),
+    dataSource: "web_extracted",
+  };
+}
+
+function extractOutputText(payload) {
+  if (typeof payload.output_text === "string") return payload.output_text;
+  const messages = payload.output || [];
+  for (const item of messages) {
+    for (const content of item.content || []) {
+      if (content.text) return content.text;
+    }
+  }
+  return "";
+}
+
+async function callOpenAIJson(prompt, fallback) {
+  if (!OPENAI_API_KEY) return fallback;
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        input: prompt,
+        text: { format: { type: "json_object" } },
+        store: false,
+      }),
+    });
+
+    if (!response.ok) throw new Error(`OpenAI returned ${response.status}`);
+    const payload = await response.json();
+    const text = extractOutputText(payload);
+    return JSON.parse(text);
+  } catch (error) {
+    console.warn("LLM JSON extraction failed; using fallback.", error.message);
+    return fallback;
+  }
+}
+
+async function inferGapsWithLlm(jobs) {
+  const fallback = inferHeuristicGaps(jobs);
+  const jobContext = jobs
+    .slice(0, 8)
+    .map(job => `${job.title} at ${job.company}: ${job.company_description || ""} Skills: ${(job.skills_match || []).join(", ")}`)
+    .join("\n");
+
+  const result = await callOpenAIJson(
+    `Return only JSON: {"gaps":[{"skill":"string","demand_score":0.75,"urls":["https://example.com"]}]}.
+Analyze these active job listings and identify the top 5 capability gaps a candidate should close. Demand scores must be decimals between 0 and 1.
+
+${jobContext}`,
+    { gaps: fallback },
+  );
+
+  const llmGaps = Array.isArray(result.gaps) ? result.gaps : fallback;
+  return llmGaps.slice(0, 5).map((gap, index) => {
+    const skill = normalizeSkillName(gap.skill || fallback[index]?.skill || "SQL");
+    return {
+      skill,
+      demand_score: clampScore(gap.demand_score, fallback[index]?.demand_score || 0.6),
+      urls: Array.isArray(gap.urls) && gap.urls.length
+        ? gap.urls
+        : [skillResources[skill] || "https://www.coursera.org/career-academy"],
+    };
+  });
+}
+
+async function extractResumeText(file) {
+  if (!file?.buffer) return "";
+  const mime = file.mimetype || "";
+  const name = file.originalname || "";
+
+  if (mime.includes("pdf") || /\.pdf$/i.test(name)) {
+    const parser = new PDFParse({ data: file.buffer });
+    try {
+      const parsed = await parser.getText();
+      return parsed.text || "";
+    } finally {
+      await parser.destroy();
+    }
+  }
+
+  if (mime.includes("word") || /\.docx$/i.test(name)) {
+    const parsed = await mammoth.extractRawText({ buffer: file.buffer });
+    return parsed.value || "";
+  }
+
+  return file.buffer.toString("utf8");
+}
+
+async function analyzeResume(file) {
+  const fallback = {
+    skills: ["SQL", "Python", "Tableau", "Excel", "stakeholder storytelling"],
+    inferred_role: "Data Analyst",
+  };
+
+  try {
+    const resumeText = (await extractResumeText(file)).slice(0, 12000);
+    if (!resumeText.trim()) return fallback;
+
+    const result = await callOpenAIJson(
+      `Return only JSON: {"skills":["skill"],"inferred_role":"role"}.
+Extract 5 to 10 important technical and soft skills from this resume text and infer the best target role. Keep skills concise.
+
+Resume:
+${resumeText}`,
+      fallback,
+    );
+
+    return {
+      skills: Array.isArray(result.skills) && result.skills.length ? result.skills.slice(0, 10) : fallback.skills,
+      inferred_role: result.inferred_role || fallback.inferred_role,
+    };
+  } catch (error) {
+    console.warn("Resume extraction failed; using fallback.", error.message);
+    return fallback;
+  }
+}
+
 function analyseJob(body) {
   const userSkills = String(body.user_skills || "")
     .split(",")
@@ -410,18 +682,29 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.post("/api/search", (req, res) => {
+app.post("/api/search", async (req, res) => {
   const role = req.body.role || "Data Analyst";
   const location = req.body.location || "Kuala Lumpur";
+  let jobResult = null;
+
+  try {
+    jobResult = await fetchSerpApiJobs(role, location);
+    if (!jobResult) jobResult = await fetchBrightDataJobs(role, location);
+  } catch (error) {
+    console.warn("Live job search failed; using fallback jobs.", error.message);
+  }
+
+  const jobs = jobResult?.jobs?.length ? jobResult.jobs : jobsForRole(role, location);
+  const inferredGaps = await inferGapsWithLlm(jobs);
 
   res.json({
     status: "ok",
-    jobs: jobsForRole(role, location),
-    gaps,
+    jobs,
+    gaps: inferredGaps,
     session_id: "demo-static",
-    total_postings: 47,
-    circuit_open: true,
-    data_source: "fallback",
+    total_postings: jobResult?.totalPostings || 47,
+    circuit_open: !jobResult,
+    data_source: jobResult?.dataSource || "fallback",
     location_searched: location,
   });
 });
@@ -476,11 +759,13 @@ app.post("/api/tailorman", (req, res) => {
   });
 });
 
-app.post("/api/resume", upload.single("file"), (req, res) => {
+app.post("/api/resume", upload.single("file"), async (req, res) => {
+  const analysis = await analyzeResume(req.file);
+
   res.json({
     status: "ok",
-    skills: ["SQL", "Python", "Tableau", "Excel", "stakeholder storytelling"],
-    inferred_role: "Data Analyst",
+    skills: analysis.skills,
+    inferred_role: analysis.inferred_role,
   });
 });
 

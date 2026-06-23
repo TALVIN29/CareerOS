@@ -2355,23 +2355,61 @@
           if (this.uniScanning) return;
           this.uniScanning = true;
           this.uniReport = null;
-          await new Promise(resolve => setTimeout(resolve, 650));
 
           const curriculum = (this.uniCurriculum || '').toLowerCase();
-          const has = (...terms) => terms.some(term => curriculum.includes(term.toLowerCase()));
-          const skillBank = [
-            { name: 'SQL', demand: 92, covered: has('sql') },
-            { name: 'Python', demand: 88, covered: has('python') },
-            { name: 'dbt', demand: 82, covered: has('dbt', 'analytics engineering') },
-            { name: 'Snowflake', demand: 76, covered: has('snowflake', 'warehouse', 'cloud data') },
-            { name: 'Experimentation Design', demand: 73, covered: has('experiment', 'a/b', 'hypothesis') },
-            { name: 'Data Storytelling', demand: 69, covered: has('story', 'communication', 'presentation') },
-            { name: 'AI-Assisted Analytics', demand: 66, covered: has('ai', 'machine learning', 'prompt') },
-          ];
+          const aliases = {
+            'dbt': ['dbt', 'analytics engineering', 'data modeling'],
+            'Snowflake': ['snowflake', 'warehouse', 'cloud data'],
+            'Airflow': ['airflow', 'orchestration', 'workflow'],
+            'Experimentation': ['experiment', 'a/b', 'hypothesis', 'causal'],
+            'A/B testing': ['a/b', 'ab testing', 'experiment'],
+            'Stakeholder storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
+            'Data Storytelling': ['story', 'communication', 'presentation', 'stakeholder'],
+            'Machine learning': ['machine learning', 'ml', 'modeling'],
+            'MLOps': ['mlops', 'model deployment', 'model monitoring'],
+            'SQL': ['sql', 'database', 'query'],
+            'Python': ['python', 'pandas', 'notebook'],
+            'Tableau': ['tableau', 'dashboard', 'visualization'],
+            'Power BI': ['power bi', 'dashboard', 'visualization'],
+          };
+          const hasSkill = skill => {
+            const terms = aliases[skill] || [skill];
+            return terms.some(term => curriculum.includes(term.toLowerCase()));
+          };
+
+          let metrics = null;
+          try {
+            const res = await fetch(`${API}/api/uni/metrics`, { headers: _headers() });
+            metrics = await res.json();
+          } catch (err) {
+            console.warn('University metrics unavailable; using local fallback.', err);
+          }
+
+          const topGaps = Array.isArray(metrics?.top_gaps) && metrics.top_gaps.length
+            ? metrics.top_gaps
+            : [
+              { skill: 'SQL', demand: 92, frequency: 5 },
+              { skill: 'Python', demand: 88, frequency: 4 },
+              { skill: 'dbt', demand: 82, frequency: 3 },
+              { skill: 'Snowflake', demand: 76, frequency: 2 },
+              { skill: 'Experimentation', demand: 73, frequency: 1 },
+            ];
+
+          const skillBank = topGaps.map(gap => ({
+            name: gap.skill,
+            demand: gap.demand || Math.round((gap.demand_score || 0.65) * 100),
+            frequency: gap.frequency || 0,
+            covered: hasSkill(gap.skill),
+          }));
           const covered = skillBank.filter(s => s.covered);
           const missing = skillBank.filter(s => !s.covered);
-          const readiness = Math.round((covered.length / skillBank.length) * 72 + 18);
+          const coverageRatio = covered.length / Math.max(1, skillBank.length);
+          const benchmark = metrics?.benchmark || 68;
+          const readiness = Math.max(20, Math.min(96, Math.round((coverageRatio * 65) + (benchmark * 0.35))));
           const critical = missing.slice(0, 3);
+          const focusSkills = critical.length ? critical : skillBank.slice(0, 3);
+          const primaryFocus = focusSkills[0]?.name || 'dbt';
+          const secondaryFocus = focusSkills[1]?.name || 'Snowflake';
 
           this.uniReport = {
             institution: this.uniInstitution || 'Your institution',
@@ -2379,32 +2417,35 @@
             market: this.uniMarket || 'Malaysia',
             readiness,
             readinessLabel: readiness >= 75 ? 'Graduate-ready' : readiness >= 55 ? 'Needs targeted updates' : 'High curriculum gap',
-            capstoneFit: Math.max(48, Math.min(91, readiness + 9)),
+            capstoneFit: Math.max(42, Math.min(94, Math.round(readiness + (covered.length * 3) - (missing.length * 2)))),
+            benchmark,
+            ledgerSource: metrics?.source || 'fallback',
+            ledgerRecords: metrics?.total_records || 0,
             skills: skillBank,
             covered,
             missing,
             actions: [
               {
-                title: `Add ${critical[0]?.name || 'dbt'} as an applied lab`,
-                detail: 'Move students from theory into a portfolio artifact that mirrors how analytics teams actually ship work.',
-                tags: [critical[0]?.name || 'dbt', 'portfolio', 'lab'],
+                title: `Add ${primaryFocus} as an applied lab`,
+                detail: `Use the live gaps ledger to move ${primaryFocus} from theory into a portfolio artifact that mirrors market demand.`,
+                tags: [primaryFocus, 'portfolio', 'lab'],
               },
               {
-                title: 'Refresh assessment around decision quality',
-                detail: 'Grade students on recommendations, trade-offs, metric design, and stakeholder clarity rather than dashboard completion alone.',
-                tags: ['decision memo', 'stakeholders', 'metrics'],
+                title: `Thread ${secondaryFocus} into assessments`,
+                detail: 'Grade students on recommendations, trade-offs, metric design, and stakeholder clarity using the missing market gaps as assessment criteria.',
+                tags: [secondaryFocus, 'decision memo', 'metrics'],
               },
               {
                 title: 'Create an employer-backed capstone sprint',
-                detail: 'Use current job-signal gaps as project briefs so students graduate with proof aligned to hiring demand.',
-                tags: ['capstone', 'employer signal', this.uniMarket || 'market'],
+                detail: `Use ${focusSkills.map(s => s.name).join(', ')} as project briefs so students graduate with proof aligned to repeated candidate gaps.`,
+                tags: ['capstone', 'gaps ledger', this.uniMarket || 'market'],
               },
             ],
             capstone: {
-              title: 'Regional Growth Intelligence Dashboard',
-              detail: 'Students model product, revenue, and customer signals, then recommend one market action backed by SQL, visualization, and an executive memo.',
-              deliverables: ['Clean warehouse-ready dataset', 'Decision dashboard', 'One-page executive recommendation'],
-              signals: ['Technical fluency', 'Commercial reasoning', 'Communication under ambiguity'],
+              title: `${primaryFocus} Talent Readiness Sprint`,
+              detail: `Students build an employer-facing project that closes the strongest aggregated gaps: ${focusSkills.map(s => s.name).join(', ')}.`,
+              deliverables: ['Gap-focused technical artifact', 'Decision dashboard or workflow demo', 'One-page employer recommendation'],
+              signals: [`Applied ${primaryFocus}`, `${secondaryFocus} fluency`, 'Communication under ambiguity'],
             },
           };
           this.uniScanning = false;

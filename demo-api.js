@@ -505,6 +505,22 @@
       });
     }
 
+    if (path === "/api/uni/metrics") {
+      await sleep(150);
+      return jsonResponse({
+        status: "ok",
+        top_gaps: gaps.slice(0, 5).map((gap, index) => ({
+          skill: gap.skill,
+          frequency: 5 - index,
+          demand_score: gap.demand_score,
+          demand: Math.round(gap.demand_score * 100),
+        })),
+        benchmark: 68,
+        total_records: 0,
+        source: "fallback",
+      });
+    }
+
     if (path === "/api/hr/intelligence") {
       await sleep(300);
       return jsonResponse({

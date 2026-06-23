@@ -29,9 +29,11 @@ cp .env.example .env
 npm run dev
 ```
 
-The Express API listens on `PORT` from `.env`, defaults to `3000`, enables CORS, and preserves the response keys expected by the Alpine.js frontend. Set `APP_API_SECRET` to require either `Authorization: Bearer <secret>` or `X-Demo-Secret: <secret>`.
+The Express API listens on `PORT` from `.env`, defaults to `3000`, enables CORS, and preserves the response keys expected by the Alpine.js frontend. Set `APP_API_SECRET` to require either `Authorization: Bearer <secret>` or `X-Demo-Secret: <secret>`. Search skill gaps are persisted to a local SQLite ledger at `DATABASE_PATH`, defaulting to `./data/careeros.sqlite`.
 
 Live integrations are optional. `POST /api/search` uses `SERPAPI_API_KEY` for Google Jobs first, then `BRIGHTDATA_SEARCH_URL` plus `BRIGHTDATA_API_KEY`, and falls back to local demo jobs. `POST /api/resume` extracts text from PDF, DOCX, or text uploads and uses `OPENAI_API_KEY` plus `OPENAI_MODEL` for skill and role inference, defaulting to GPT-4o and falling back to demo skills when no key is configured.
+
+`GET /api/uni/metrics` aggregates the `gaps_ledger` table into the top 5 recurring market gaps and returns a dynamic curriculum readiness benchmark for the University flow.
 
 Career OS modules added:
 

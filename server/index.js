@@ -4,12 +4,16 @@ import express from "express";
 import multer from "multer";
 import mammoth from "mammoth";
 import { PDFParse } from "pdf-parse";
+import Database from "better-sqlite3";
+import fs from "fs";
+import path from "path";
 
 const app = express();
 const upload = multer({ storage: multer.memoryStorage() });
 
 const PORT = Number(process.env.PORT || 3000);
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
+const DATABASE_PATH = process.env.DATABASE_PATH || "./data/careeros.sqlite";
 const APP_API_SECRET = process.env.APP_API_SECRET || "";
 const SERPAPI_API_KEY = process.env.SERPAPI_API_KEY || "";
 const BRIGHTDATA_SEARCH_URL = process.env.BRIGHTDATA_SEARCH_URL || "";
@@ -19,6 +23,25 @@ const OPENAI_MODEL = process.env.OPENAI_MODEL || "gpt-4o";
 
 app.use(cors({ origin: CORS_ORIGIN }));
 app.use(express.json({ limit: "2mb" }));
+
+fs.mkdirSync(path.dirname(DATABASE_PATH), { recursive: true });
+const db = new Database(DATABASE_PATH);
+db.pragma("journal_mode = WAL");
+db.exec(`
+  CREATE TABLE IF NOT EXISTS gaps_ledger (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    role TEXT,
+    location TEXT,
+    skill TEXT NOT NULL,
+    demand_score REAL DEFAULT 0,
+    source TEXT DEFAULT 'search',
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_gaps_ledger_skill ON gaps_ledger(skill);
+  CREATE INDEX IF NOT EXISTS idx_gaps_ledger_created_at ON gaps_ledger(created_at);
+`);
 
 app.use((req, res, next) => {
   if (!APP_API_SECRET) return next();
@@ -320,6 +343,72 @@ function normalizeSkillName(skill) {
   const cleaned = String(skill || "").trim().replace(/\s+/g, " ");
   const known = Object.keys(skillResources).find(item => item.toLowerCase() === cleaned.toLowerCase());
   return known || cleaned.replace(/^./, char => char.toUpperCase());
+}
+
+function storeSearchGaps({ sessionId, role, location, gapList, source }) {
+  if (!Array.isArray(gapList) || !gapList.length) return;
+
+  const insert = db.prepare(`
+    INSERT INTO gaps_ledger (session_id, role, location, skill, demand_score, source)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const write = db.transaction(() => {
+    for (const gap of gapList) {
+      const skill = normalizeSkillName(gap.skill);
+      if (!skill) continue;
+      insert.run(
+        sessionId,
+        role,
+        location,
+        skill,
+        clampScore(gap.demand_score, 0),
+        source || "search",
+      );
+    }
+  });
+
+  write();
+}
+
+function getUniversityMetrics() {
+  const rows = db.prepare(`
+    SELECT
+      skill,
+      COUNT(*) AS frequency,
+      AVG(demand_score) AS avg_demand
+    FROM gaps_ledger
+    GROUP BY LOWER(skill)
+    ORDER BY frequency DESC, avg_demand DESC
+    LIMIT 5
+  `).all();
+
+  const fallbackRows = gaps.slice(0, 5).map((gap, index) => ({
+    skill: gap.skill,
+    frequency: Math.max(1, 5 - index),
+    avg_demand: gap.demand_score,
+  }));
+
+  const sourceRows = rows.length ? rows : fallbackRows;
+  const top_gaps = sourceRows.map(row => ({
+    skill: normalizeSkillName(row.skill),
+    frequency: Number(row.frequency || 0),
+    demand_score: clampScore(row.avg_demand, 0.6),
+    demand: Math.round(clampScore(row.avg_demand, 0.6) * 100),
+  }));
+
+  const total_records = Number(db.prepare("SELECT COUNT(*) AS count FROM gaps_ledger").get().count || 0);
+  const maxFrequency = Math.max(...top_gaps.map(gap => gap.frequency), 1);
+  const weightedCoverage = top_gaps.reduce((sum, gap) => sum + gap.demand_score * (gap.frequency / maxFrequency), 0);
+  const benchmark = Math.max(35, Math.min(92, Math.round((weightedCoverage / Math.max(1, top_gaps.length)) * 100)));
+
+  return {
+    status: "ok",
+    top_gaps,
+    benchmark,
+    total_records,
+    source: rows.length ? "gaps_ledger" : "fallback",
+  };
 }
 
 function inferHeuristicGaps(jobs) {
@@ -682,6 +771,10 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/api/uni/metrics", (_req, res) => {
+  res.json(getUniversityMetrics());
+});
+
 app.post("/api/search", async (req, res) => {
   const role = req.body.role || "Data Analyst";
   const location = req.body.location || "Kuala Lumpur";
@@ -696,12 +789,20 @@ app.post("/api/search", async (req, res) => {
 
   const jobs = jobResult?.jobs?.length ? jobResult.jobs : jobsForRole(role, location);
   const inferredGaps = await inferGapsWithLlm(jobs);
+  const sessionId = `search-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  storeSearchGaps({
+    sessionId,
+    role,
+    location,
+    gapList: inferredGaps,
+    source: jobResult?.dataSource || "fallback",
+  });
 
   res.json({
     status: "ok",
     jobs,
     gaps: inferredGaps,
-    session_id: "demo-static",
+    session_id: sessionId,
     total_postings: jobResult?.totalPostings || 47,
     circuit_open: !jobResult,
     data_source: jobResult?.dataSource || "fallback",

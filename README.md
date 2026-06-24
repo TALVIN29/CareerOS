@@ -1,10 +1,10 @@
-# GapHunter Demo
+# Signal Path Demo
 
-This is a self-contained static demo of the GapHunter site.
+This is a self-contained static demo of the Signal Path site.
 
 Files:
 
-- `index.html` - the UI cloned from the public GapHunter frontend.
+- `index.html` - the UI cloned from the public Signal Path frontend.
 - `demo-api.js` - a local mock API that returns dummy job, gap, salary, company, CV, interview, roadmap, and enterprise intelligence data.
 
 Run locally:

@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = window.__API_URL__ || "https://gaphunter-demo.local";
+  const API_BASE = window.__API_URL__ || "https://signalpath-demo.local";
   const nativeFetch = window.fetch.bind(window);
 
   const locations = {

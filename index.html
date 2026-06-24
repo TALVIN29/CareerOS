@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GapHunter — Labor Market Intelligence</title>
+  <title>Signal Path — Labor Market Intelligence</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%232563eb'/%3E%3Cpath%20d='M28%2018a10%2010%200%201%200%207%2017l9%209%204-4-9-9a10%2010%200%200%200-11-13zm0%206a4%204%200%201%201%200%208%204%204%200%200%201%200-8z'%20fill='white'/%3E%3C/svg%3E">
 
   <script>
     window.__APP_TOKEN__ = window.__APP_TOKEN__ || '';
-    window.__API_URL__   = window.__API_URL__   || 'https://gaphunter-demo.local';
+    window.__API_URL__   = window.__API_URL__   || 'https://signalpath-demo.local';
   </script>
 
   <!-- Core libraries -->
@@ -307,7 +307,7 @@
             <i class="fa-solid fa-magnifying-glass-chart text-white text-xs"></i>
           </div>
           <div class="flex flex-col leading-tight">
-            <span class="font-bold text-base tracking-tight text-white">GapHunter</span>
+            <span class="font-bold text-base tracking-tight text-white">Signal Path</span>
             <span class="text-xs text-slate-500 hidden sm:block">Labor Market Intelligence · Powered by Bright Data</span>
           </div>
           <span class="badge badge-blue hidden sm:inline-flex">v2.0</span>
@@ -370,7 +370,7 @@
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
           LinkedIn shows you jobs.<br>
-          <span class="text-accent">GapHunter shows you</span><br>
+          <span class="text-accent">Signal Path shows you</span><br>
           what's standing between you.
         </h1>
         <p class="text-slate-400 text-base sm:text-lg max-w-lg mx-auto min-h-[28px]">
@@ -971,7 +971,7 @@
 
             <!-- VERIFICATION TAB -->
             <div x-show="analysisTab === 'verify'" class="flex flex-col gap-3">
-              <p class="text-xs text-slate-500 leading-relaxed">GapHunter runs every job through 5 verification layers before showing it.</p>
+              <p class="text-xs text-slate-500 leading-relaxed">Signal Path runs every job through 5 verification layers before showing it.</p>
               <div class="flex flex-col gap-2">
                 <template x-for="(check, i) in [
                   {label: 'Description length ≥ 200 characters', ok: true},
@@ -1389,7 +1389,7 @@
         <i class="fa-solid fa-building-columns text-accent text-sm"></i>
         <span class="section-label">Competitive Market Intelligence</span>
       </div>
-      <p class="text-slate-500 text-xs mb-4">Just enter your company name — GapHunter auto-detects your competitors, identifies the most critical role to analyze, scans live job postings, fetches market news, and surfaces the exact skill gap.</p>
+      <p class="text-slate-500 text-xs mb-4">Just enter your company name — Signal Path auto-detects your competitors, identifies the most critical role to analyze, scans live job postings, fetches market news, and surfaces the exact skill gap.</p>
 
       <div class="flex flex-wrap gap-3 mb-3 items-end">
         <div class="flex-1 min-w-[180px]">
@@ -1763,7 +1763,7 @@
           </h2>
           <span class="badge badge-red text-xs">New</span>
         </div>
-        <p class="text-slate-500 text-xs mb-5">3 candidate profiles GapHunter identified — who to hire, where to find them, and exactly what to say</p>
+        <p class="text-slate-500 text-xs mb-5">3 candidate profiles Signal Path identified — who to hire, where to find them, and exactly what to say</p>
 
         <div x-show="hrLoadingHunt && !hrPersonas?.length" class="flex items-center gap-2 text-slate-500 text-xs py-3">
           <i class="fa-solid fa-spinner animate-spin"></i> Identifying candidate profiles…
@@ -2069,8 +2069,8 @@
   <script src="./demo-api.js"></script>
   <script>
     const USE_LOCAL_MOCKS = true;
-    const LOCAL_API_BASE = window.__API_URL__ || 'https://gaphunter-demo.local';
-    const LIVE_API_BASE = 'https://gaphunter-backend-service.onrender.com';
+    const LOCAL_API_BASE = window.__API_URL__ || 'https://signalpath-demo.local';
+    const LIVE_API_BASE = 'https://signalpath-backend-service.onrender.com';
     const API_BASE = USE_LOCAL_MOCKS ? LOCAL_API_BASE : LIVE_API_BASE;
     const API = API_BASE;
 

@@ -500,25 +500,56 @@
     </div>
 
     <!-- ═══ RESULTS STATE — jobs loaded ═══ -->
-    <div x-show="jobs.length > 0" class="max-w-screen-xl mx-auto px-4 sm:px-6 py-4">
+    <div x-show="jobs.length > 0" class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-4">
+      <div class="grid grid-cols-1 xl:grid-cols-[300px_1fr_420px] gap-6 items-start">
 
-      <!-- Compact search bar (like Google results page) -->
-      <div class="flex gap-2 mb-5 items-center flex-wrap">
-        <input class="input-field flex-1 min-w-[140px] py-2 text-sm" type="text" x-model="role"
-          placeholder="Job title" @keydown.enter="doSearch()" />
-        <input class="input-field flex-1 min-w-[140px] py-2 text-sm" type="text" x-model="location"
-          placeholder="Location" @keydown.enter="doSearch()" />
-        <input class="input-field flex-1 min-w-[140px] py-2 text-sm hidden sm:block" type="text" x-model="skills"
-          placeholder="Your skills" @keydown.enter="doSearch()" />
-        <button class="btn-primary py-2 px-4 text-sm whitespace-nowrap" @click="doSearch()" :disabled="searching">
-          <svg x-show="searching" class="animate-spin w-3.5 h-3.5 mr-1 inline" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-          </svg>
-          <i x-show="!searching" class="fa-solid fa-magnifying-glass mr-1"></i>
-          <span x-text="searching ? 'Searching…' : 'Search again'"></span>
-        </button>
-      </div>
+        <!-- Left Sidebar: Search form and CV upload -->
+        <aside class="sticky top-[85px] card flex flex-col gap-4">
+          <div>
+            <p class="section-label mb-1">Search Controls</p>
+            <h2 class="text-sm font-semibold text-slate-100">Tune your target</h2>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1.5 block font-medium">Job Title</label>
+            <input class="input-field py-2.5 text-sm" type="text" x-model="role"
+              placeholder="Job title" @keydown.enter="doSearch()" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1.5 block font-medium">Location</label>
+            <input class="input-field py-2.5 text-sm" type="text" x-model="location"
+              placeholder="Location" @keydown.enter="doSearch()" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1.5 block font-medium">Manual Skills</label>
+            <input class="input-field py-2.5 text-sm" type="text" x-model="skills"
+              placeholder="Python, SQL, Tableau" @keydown.enter="doSearch()" />
+          </div>
+          <label class="flex items-center gap-3 w-full px-3 py-3 border border-dashed border-cyan-500/20 rounded-xl cursor-pointer hover:border-cyan-500/40 hover:bg-cyan-500/5 transition-all group">
+            <div class="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/15 flex items-center justify-center group-hover:bg-cyan-500/15 transition-all shrink-0">
+              <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-slate-300" x-text="cvUploading ? 'Reading CV…' : cvStatus && cvStatus.startsWith('✓') ? 'CV uploaded' : 'Upload CV'"></p>
+              <p class="text-xs text-slate-500 truncate" x-text="cvUploading ? 'Extracting skills with AI' : cvStatus && cvStatus.startsWith('✓') ? cvStatus : 'PDF or DOCX'"></p>
+            </div>
+            <i x-show="cvStatus && cvStatus.startsWith('✓')" class="fa-solid fa-circle-check text-emerald-400 ml-auto"></i>
+            <input type="file" accept=".pdf,.doc,.docx" class="hidden" @change="uploadCV($event)" />
+          </label>
+          <div x-show="cvUploading" class="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden">
+            <div class="h-full bg-cyan-500 rounded-full cv-upload-bar"></div>
+          </div>
+          <button class="btn-primary py-2.5 px-4 text-sm whitespace-nowrap w-full" @click="doSearch()" :disabled="searching">
+            <svg x-show="searching" class="animate-spin w-3.5 h-3.5 mr-1 inline" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+            </svg>
+            <i x-show="!searching" class="fa-solid fa-magnifying-glass mr-1"></i>
+            <span x-text="searching ? 'Searching…' : 'Search again'"></span>
+          </button>
+        </aside>
+
+        <!-- Center Panel: Strategy and jobs -->
+        <section class="min-w-0">
 
       <!-- Results meta + attribution -->
       <div class="flex items-center gap-3 mb-4 flex-wrap">
@@ -547,6 +578,22 @@
         </div>
       </div>
 
+      <!-- Strategy accordion -->
+      <button class="card mb-3 w-full text-left flex items-center justify-between gap-3 hover:border-cyan-400/40 transition-all"
+        @click="strategyCollapsed = !strategyCollapsed">
+        <div class="min-w-0">
+          <p class="text-xs text-slate-500">Strategy Map</p>
+          <p class="text-sm text-slate-200 truncate">
+            <i class="fa-solid fa-map-location-dot text-accent mr-1.5"></i>
+            Target Role: <span class="font-semibold text-white" x-text="role || inferredRole || 'Target role'"></span>
+            <span class="text-slate-500 mx-1">|</span>
+            3 Paths Available
+          </p>
+        </div>
+        <span class="badge badge-blue shrink-0" x-text="strategyCollapsed ? 'Expand Strategy Map' : 'Collapse Strategy Map'"></span>
+      </button>
+
+      <div x-show="!strategyCollapsed" x-transition>
       <!-- Career Path Navigator -->
       <div class="card gradient-border mb-5" x-show="jobs.length > 0" data-aos="fade-up">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
@@ -672,9 +719,7 @@
           </div>
         </div>
       </div>
-
-      <!-- 2-column results: Jobs | Analysis -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-3">
+      </div>
 
         <!-- Job cards -->
         <div class="flex flex-col gap-2.5" id="jobs-list">
@@ -730,11 +775,13 @@
           </template>
         </div>
 
-        <!-- ── Analysis Panel (2nd column) ─────────────────── -->
-        <div>
+        </section>
+
+        <!-- Right Sidebar: Job analysis -->
+        <aside class="sticky top-[85px] max-h-[calc(100vh-110px)] overflow-y-auto scroll-panel card p-0">
 
         <!-- Empty state -->
-        <div x-show="!selectedJob" class="glass-card flex flex-col items-center justify-center text-center py-14 gap-3">
+        <div x-show="!selectedJob" class="flex flex-col items-center justify-center text-center py-14 gap-3 px-4">
           <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
             <i class="fa-solid fa-hand-pointer text-blue-400/60 text-lg"></i>
           </div>
@@ -743,7 +790,7 @@
         </div>
 
         <!-- Analysis panel with selected job -->
-        <div x-show="selectedJob" class="flex flex-col gap-0 card p-0 overflow-hidden">
+        <div x-show="selectedJob" class="flex flex-col gap-0 overflow-hidden">
 
           <!-- Job header -->
           <div class="p-4 border-b border-blue-500/10">
@@ -792,10 +839,15 @@
               Tailor
               <span class="badge badge-purple" style="font-size:.55rem;padding:.05rem .3rem;margin-left:.1rem">PRO</span>
             </button>
+            <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+              :class="analysisTab === 'salary' ? 'tab-active' : 'tab-inactive'"
+              @click="analysisTab = 'salary'; if(!salaryIntel) fetchSalary()">
+              <i class="fa-solid fa-sack-dollar text-xs"></i> Salary
+            </button>
           </div>
 
           <!-- Tab content -->
-          <div class="p-4 overflow-y-auto" style="max-height: calc(100vh - 300px);">
+          <div class="p-4">
 
             <!-- GAP ANALYSIS TAB -->
             <div x-show="analysisTab === 'gaps'" class="flex flex-col gap-4">
@@ -1132,13 +1184,52 @@
               </div>
             </div>
 
+            <!-- SALARY TAB -->
+            <div x-show="analysisTab === 'salary'" class="flex flex-col gap-3">
+              <div x-show="loadingSalary && !salaryIntel" class="loading-panel">
+                <div class="flex items-center gap-3">
+                  <span class="loading-orb shrink-0"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                  <div>
+                    <p class="text-sm font-semibold text-slate-200">Loading salary intelligence</p>
+                    <p class="text-xs text-slate-500 mt-1">Benchmarking this role against the current market.</p>
+                  </div>
+                </div>
+              </div>
+              <div x-show="salaryIntel" class="flex flex-col gap-3">
+                <div class="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+                  <p class="section-label mb-2">Market Median</p>
+                  <p class="text-2xl font-bold text-white" x-text="(salaryIntel?.currency_symbol || '$') + (salaryIntel?.market_median || 0).toLocaleString()"></p>
+                  <p class="text-xs text-slate-500 mt-1" x-text="salaryIntel?.market_context"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div class="rounded-xl border border-white/5 bg-black/20 p-3">
+                    <p class="text-xs text-slate-500">Min</p>
+                    <p class="text-sm font-semibold text-slate-200" x-text="(salaryIntel?.currency_symbol || '$') + (salaryIntel?.market_min || 0).toLocaleString()"></p>
+                  </div>
+                  <div class="rounded-xl border border-white/5 bg-black/20 p-3">
+                    <p class="text-xs text-slate-500">Max</p>
+                    <p class="text-sm font-semibold text-slate-200" x-text="(salaryIntel?.currency_symbol || '$') + (salaryIntel?.market_max || 0).toLocaleString()"></p>
+                  </div>
+                </div>
+                <div class="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-3">
+                  <p class="section-label mb-2">Next Move</p>
+                  <p class="text-xs text-slate-300 leading-relaxed" x-text="fairPay().nextMove"></p>
+                </div>
+              </div>
+              <div x-show="!loadingSalary && !salaryIntel" class="text-center py-4">
+                <button @click="fetchSalary()" class="btn-primary text-xs px-5 py-2.5">
+                  <i class="fa-solid fa-sack-dollar mr-1.5"></i>
+                  Load Salary Intelligence
+                </button>
+              </div>
+            </div>
+
           </div><!-- end tab content -->
         </div><!-- end analysis panel card -->
-        </div><!-- end analysis column -->
-      </div><!-- end 2-col results grid -->
+        </aside>
 
       <!-- ── Demand Score + Gap Chart ────────────────────────── -->
-    <div class="card mt-2" x-show="gaps.length > 0" data-aos="fade-up">
+    <div class="card mt-2 xl:col-start-2" x-show="gaps.length > 0" data-aos="fade-up">
       <div class="flex items-center justify-between mb-3">
         <h2 class="font-semibold text-slate-300 flex items-center gap-2">
           <i class="fa-solid fa-chart-bar text-accent text-sm"></i>
@@ -1178,7 +1269,7 @@
     </div>
 
     <!-- ── Learning Roadmaps ─────────────────────────────── -->
-    <div class="card mt-5" x-show="gaps.length > 0" data-aos="fade-up" data-aos-delay="100">
+    <div class="card mt-5 xl:col-start-2" x-show="gaps.length > 0" data-aos="fade-up" data-aos-delay="100">
       <h2 class="font-semibold text-slate-300 flex items-center gap-2 mb-4">
         <i class="fa-solid fa-road text-accent text-sm"></i>
         Learning Roadmaps
@@ -1242,7 +1333,7 @@
     </div>
 
     <!-- ── Salary Intelligence ───────────────────────────── -->
-    <div class="card mt-5 gradient-border" x-show="salaryIntel || loadingSalary" data-aos="fade-up" data-aos-delay="150">
+    <div class="card mt-5 gradient-border xl:col-start-2" x-show="salaryIntel || loadingSalary" data-aos="fade-up" data-aos-delay="150">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-semibold text-slate-300 flex items-center gap-2">
           <i class="fa-solid fa-sack-dollar text-yellow-400 text-sm"></i>
@@ -1375,6 +1466,7 @@
         </div>
       </div>
     </div><!-- end results state -->
+      </div><!-- end seeker dashboard grid -->
 
   </main>
 
@@ -1453,8 +1545,56 @@
       <p class="text-slate-600 text-xs">Fill in company, role, and market above then click Run Market Intelligence</p>
     </div>
 
-    <!-- ── Results (stacked, visible after scan) ── -->
-    <div x-show="hrSkills.length > 0" class="flex flex-col gap-6">
+    <!-- ── Results dashboard, visible after scan ── -->
+    <div x-show="hrSkills.length > 0" class="grid grid-cols-1 lg:grid-cols-[400px_1fr] gap-6 items-start">
+      <aside class="sticky top-[85px] flex flex-col gap-6">
+        <div class="card">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fa-solid fa-satellite-dish text-accent text-sm"></i>
+            <h2 class="font-semibold text-slate-200 text-base">Scanned Competitor</h2>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+              <p class="text-xs text-slate-500 mb-1">Competitor</p>
+              <p class="text-sm font-bold text-cyan-200 truncate" x-text="hrCompany"></p>
+            </div>
+            <div class="rounded-xl border border-slate-600/40 bg-slate-800/40 p-3">
+              <p class="text-xs text-slate-500 mb-1">Postings</p>
+              <p class="text-sm font-bold text-slate-100" x-text="hrPostings"></p>
+            </div>
+          </div>
+          <div class="mt-3 text-xs text-slate-500 space-y-1">
+            <p>Role: <span class="text-emerald-300 font-medium" x-text="hrRole"></span></p>
+            <p x-show="hrDetectReason" class="italic" x-text="'Why: ' + hrDetectReason"></p>
+            <p x-show="hrNewsSignals" class="text-emerald-400">Market news signals included</p>
+          </div>
+        </div>
+
+        <div class="card" x-show="hrPostingLinks.length > 0">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-brands fa-linkedin text-cyan-400 text-sm"></i>
+              <h2 class="font-semibold text-slate-200 text-sm">Scraped Job Posts</h2>
+            </div>
+            <span class="badge badge-blue text-xs" x-text="hrPostingLinks.length"></span>
+          </div>
+          <div class="flex flex-col gap-2 max-h-[48vh] overflow-y-auto scroll-panel">
+            <template x-for="(url, i) in hrPostingLinks.slice(0, 12)" :key="i">
+              <a :href="url" target="_blank" rel="noopener"
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/40 border border-cyan-500/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all text-xs text-cyan-300 group">
+                <i class="fa-brands fa-linkedin text-cyan-400/60 shrink-0 text-sm"></i>
+                <div class="flex flex-col min-w-0">
+                  <span class="font-medium text-slate-200" x-text="'Posting #' + (i+1)"></span>
+                  <span class="truncate text-slate-500" x-text="url.replace('https://www.linkedin.com/jobs/view/','').replace(/\?.*/, '').replace(/\/$/, '')"></span>
+                </div>
+                <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-auto opacity-0 group-hover:opacity-100 shrink-0"></i>
+              </a>
+            </template>
+          </div>
+        </div>
+      </aside>
+
+      <section class="min-w-0 flex flex-col gap-6">
 
       <!-- Executive Summary — manager reads this, stops here -->
       <div class="card">
@@ -1686,35 +1826,6 @@
         </div>
       </div>
 
-      <!-- Section 4: Source Postings — collapsed by default, expandable for verification -->
-      <div class="card" x-show="hrPostingLinks.length > 0" x-data="{ open: false }">
-        <button @click="open = !open"
-          class="w-full flex items-center justify-between group">
-          <div class="flex items-center gap-2">
-            <i class="fa-brands fa-linkedin text-blue-400 text-sm"></i>
-            <span class="font-semibold text-slate-200 text-sm">Source Postings</span>
-            <span class="text-xs text-slate-500">— <span x-text="hrPostingLinks.length"></span> live LinkedIn postings used for this analysis</span>
-          </div>
-          <div class="flex items-center gap-2 text-xs text-slate-500 group-hover:text-slate-300 transition-colors">
-            <span x-text="open ? 'Hide' : 'Verify sources'"></span>
-            <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
-          </div>
-        </button>
-        <div x-show="open" x-transition class="flex flex-col gap-2 mt-3 pt-3 border-t border-slate-700/50">
-          <template x-for="(url, i) in hrPostingLinks.slice(0, 9)" :key="i">
-            <a :href="url" target="_blank" rel="noopener"
-              class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/40 border border-blue-500/10 hover:border-blue-500/30 hover:bg-blue-500/5 transition-all text-xs text-blue-300 group">
-              <i class="fa-brands fa-linkedin text-blue-400/60 shrink-0 text-sm"></i>
-              <div class="flex flex-col min-w-0">
-                <span class="font-medium text-slate-200" x-text="'Posting #' + (i+1)"></span>
-                <span class="truncate text-slate-500" x-text="url.replace('https://www.linkedin.com/jobs/view/','').replace(/\?.*/, '').replace(/\/$/, '')"></span>
-              </div>
-              <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-auto opacity-0 group-hover:opacity-100 shrink-0"></i>
-            </a>
-          </template>
-        </div>
-      </div>
-
       <!-- Section 4: Training Academy Roadmap -->
       <div class="card">
         <h2 class="font-semibold text-slate-200 flex items-center gap-2 text-base mb-1">
@@ -1848,6 +1959,7 @@
         </div>
       </div>
 
+      </section>
     </div><!-- end results -->
 
   </main>
@@ -1873,7 +1985,14 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-5 gap-3 mt-5">
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 items-start">
+      <aside class="sticky top-[85px] card flex flex-col gap-4">
+        <div>
+          <p class="section-label mb-1">Curriculum Inputs</p>
+          <h2 class="text-sm font-semibold text-slate-100">Benchmark the program</h2>
+        </div>
         <div>
           <label class="text-xs text-slate-500 mb-1.5 block font-medium">Institution</label>
           <input class="input-field py-2.5" type="text" x-model="uniInstitution" placeholder="e.g. Talentbank University" />
@@ -1887,27 +2006,25 @@
           <input class="input-field py-2.5" type="text" x-model="uniMarket" placeholder="e.g. Malaysia" />
         </div>
         <div>
-          <label class="text-xs text-slate-500 mb-1.5 block font-medium">Graduate Roles</label>
+          <label class="text-xs text-slate-500 mb-1.5 block font-medium">Target Roles</label>
           <input class="input-field py-2.5" type="text" x-model="uniTargetRoles" placeholder="Data Analyst, Product Analyst" />
         </div>
-        <div class="flex items-end">
-          <button class="btn-primary gap-2 py-2.5 px-5 w-full" @click="runCurriculumScan()" :disabled="uniScanning">
-            <svg x-show="uniScanning" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-            </svg>
-            <i x-show="!uniScanning" class="fa-solid fa-radar text-sm"></i>
-            <span x-text="uniScanning ? 'Scanning…' : 'Run Scan'"></span>
-          </button>
+        <div>
+          <label class="text-xs text-slate-500 mb-1.5 block font-medium">Syllabus Topics</label>
+          <textarea class="input-field text-sm min-h-[180px]" x-model="uniCurriculum"
+            placeholder="Excel, statistics, SQL basics, dashboard design, business communication"></textarea>
         </div>
-      </div>
+        <button class="btn-primary gap-2 py-2.5 px-5 w-full" @click="runCurriculumScan()" :disabled="uniScanning">
+          <svg x-show="uniScanning" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          <i x-show="!uniScanning" class="fa-solid fa-radar text-sm"></i>
+          <span x-text="uniScanning ? 'Scanning…' : 'Run Scan'"></span>
+        </button>
+      </aside>
 
-      <div class="mt-4">
-        <label class="text-xs text-slate-500 mb-1.5 block font-medium">Current Curriculum Topics</label>
-        <textarea class="input-field text-sm min-h-[92px]" x-model="uniCurriculum"
-          placeholder="Excel, statistics, SQL basics, dashboard design, business communication"></textarea>
-      </div>
-    </div>
+      <section class="min-w-0">
 
     <div x-show="!uniReport && !uniScanning" class="flex flex-col items-center justify-center py-20 text-center gap-3">
       <div class="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
@@ -2061,6 +2178,8 @@
         </div>
       </div>
     </div>
+      </section>
+    </div>
   </main>
 
   <!-- ══════════════════════════════════════════
@@ -2157,6 +2276,7 @@
         role: '',
         location: '',
         skills: '',
+        strategyCollapsed: false,
         searching: false,
         jobs: [],
         gaps: [],

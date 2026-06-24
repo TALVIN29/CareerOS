@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Signal Path — Labor Market Intelligence</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%232563eb'/%3E%3Cpath%20d='M28%2018a10%2010%200%201%200%207%2017l9%209%204-4-9-9a10%2010%200%200%200-11-13zm0%206a4%204%200%201%201%200%208%204%204%200%200%201%200-8z'%20fill='white'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%2306b6d4'/%3E%3Cpath%20d='M28%2018a10%2010%200%201%200%207%2017l9%209%204-4-9-9a10%2010%200%200%200-11-13zm0%206a4%204%200%201%201%200%208%204%204%200%200%201%200-8z'%20fill='white'/%3E%3C/svg%3E">
 
   <script>
     window.__APP_TOKEN__ = window.__APP_TOKEN__ || '';
@@ -33,11 +33,11 @@
       theme: {
         extend: {
           colors: {
-            canvas:  '#060a12',
-            surface: '#0d1526',
-            card:    '#111c2e',
-            border:  'rgba(59,130,246,0.15)',
-            accent:  '#3b82f6',
+            canvas:  '#04060f',
+            surface: '#090e1c',
+            card:    '#0d1527',
+            border:  'rgba(6,182,212,0.15)',
+            accent:  '#06b6d4',
           },
           fontFamily: { sans: ['Inter', 'sans-serif'] },
         },
@@ -50,7 +50,7 @@
     html { overflow-x: hidden; }
     html, body { height: 100%; }
     body {
-      background: #080d18;
+      background: #04060f;
       color: #e2e8f0;
       font-family: 'Inter', sans-serif;
       overflow-x: hidden;
@@ -60,12 +60,12 @@
     /* Scrollbar */
     ::-webkit-scrollbar { width: 4px; height: 4px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(59,130,246,0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(6,182,212,0.3); border-radius: 4px; }
 
     /* Cards */
     .card {
-      background: #131f33;
-      border: 1px solid #243349;
+      background: #0d1527;
+      border: 1px solid rgba(6,182,212,0.15);
       border-radius: 1rem;
       padding: 1.25rem;
       position: relative;
@@ -75,12 +75,12 @@
       content: '';
       position: absolute;
       inset: 0;
-      background: linear-gradient(135deg, rgba(59,130,246,0.04) 0%, transparent 60%);
+      background: linear-gradient(135deg, rgba(6,182,212,0.04) 0%, transparent 60%);
       pointer-events: none;
     }
     .glass-card {
-      background: #131f33;
-      border: 1px solid #2a3f60;
+      background: #0d1527;
+      border: 1px solid rgba(6,182,212,0.22);
       border-radius: 1rem;
       padding: 1.5rem;
       box-shadow: 0 4px 24px rgba(0,0,0,0.4);
@@ -88,7 +88,7 @@
 
     /* Glow card */
     .card-glow {
-      box-shadow: 0 0 30px rgba(59,130,246,0.08), 0 4px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 0 30px rgba(6,182,212,0.08), 0 4px 24px rgba(0,0,0,0.4);
     }
 
     /* Badges */
@@ -97,7 +97,7 @@
       border-radius: 9999px; padding: .15rem .65rem;
       font-size: .7rem; font-weight: 500; letter-spacing: .02em;
     }
-    .badge-blue   { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.25); }
+    .badge-blue   { background: rgba(6,182,212,0.15); color: #67e8f9; border: 1px solid rgba(6,182,212,0.25); }
     .badge-green  { background: rgba(16,185,129,0.12); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
     .badge-yellow { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.2); }
     .badge-red    { background: rgba(239,68,68,0.12);  color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
@@ -106,73 +106,73 @@
 
     /* Buttons */
     .btn-primary {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
+      background: linear-gradient(135deg, #06b6d4, #4f46e5);
       color: #fff; font-weight: 600; border-radius: .75rem;
       padding: .65rem 1.5rem; transition: all .2s; cursor: pointer;
-      box-shadow: 0 4px 15px rgba(59,130,246,0.3);
+      box-shadow: 0 4px 15px rgba(6,182,212,0.25);
       border: none; display: inline-flex; align-items: center; justify-content: center;
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(59,130,246,0.4); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(6,182,212,0.35); }
     .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
     .btn-ghost {
-      border: 1px solid rgba(59,130,246,0.2); border-radius: .75rem; padding: .5rem 1rem;
+      border: 1px solid rgba(6,182,212,0.2); border-radius: .75rem; padding: .5rem 1rem;
       color: #94a3b8; transition: all .2s; background: transparent; cursor: pointer;
     }
-    .btn-ghost:hover { border-color: #3b82f6; color: #e2e8f0; background: rgba(59,130,246,0.05); }
+    .btn-ghost:hover { border-color: #06b6d4; color: #e2e8f0; background: rgba(6,182,212,0.05); }
 
     /* Inputs */
     .input-field {
-      background: #0d1829;
-      border: 1px solid #2a3f60;
+      background: #080d19;
+      border: 1px solid rgba(6,182,212,0.20);
       border-radius: .75rem;
       padding: .65rem 1rem;
       color: #e2e8f0; width: 100%; outline: none;
       transition: all .2s;
       font-size: .875rem;
     }
-    .input-field:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+    .input-field:focus { border-color: #06b6d4; box-shadow: 0 0 0 3px rgba(6,182,212,0.15); }
     .input-field::placeholder { color: #475569; }
 
     /* Tabs */
-    .tab-active   { border-bottom: 2px solid #3b82f6; color: #e2e8f0; font-weight: 600; }
+    .tab-active   { border-bottom: 2px solid #06b6d4; color: #e2e8f0; font-weight: 600; }
     .tab-inactive { border-bottom: 2px solid transparent; color: #475569; }
     .tab-inactive:hover { color: #94a3b8; }
 
     /* Job card */
     .job-card {
-      background: #1a2640;
-      border: 1px solid #2a3f60;
+      background: #0d1527;
+      border: 1px solid rgba(6,182,212,0.15);
       border-radius: .875rem; padding: 1rem; cursor: pointer;
       transition: border-color .2s, background .2s, box-shadow .2s, transform .2s;
       animation: card-in .25s ease both;
     }
     @keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-    .job-card:hover { border-color: #3b82f6; background: #1e2e4a; transform: translateX(2px); box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-    .job-card-active { border-color: #3b82f6 !important; background: #1e3055 !important; box-shadow: 0 0 20px rgba(59,130,246,0.15); }
+    .job-card:hover { border-color: #06b6d4; background: #121e35; transform: translateX(2px); box-shadow: 0 4px 20px rgba(6,182,212,0.1); }
+    .job-card-active { border-color: #06b6d4 !important; background: #162542 !important; box-shadow: 0 0 20px rgba(6,182,212,0.2); }
 
     /* Skill pill */
     .skill-pill {
-      background: rgba(59,130,246,0.1); color: #93c5fd;
-      border: 1px solid rgba(59,130,246,0.15);
+      background: rgba(6,182,212,0.1); color: #67e8f9;
+      border: 1px solid rgba(6,182,212,0.15);
       border-radius: 9999px; padding: .1rem .55rem; font-size: .68rem;
     }
 
     /* Divider */
-    .divider { height: 1px; background: rgba(59,130,246,0.1); }
+    .divider { height: 1px; background: rgba(6,182,212,0.1); }
 
     /* Pipeline step */
     .pipeline-step {
       padding: .25rem .75rem; border-radius: .5rem; font-size: .7rem;
-      background: rgba(13,21,38,0.8); border: 1px solid rgba(59,130,246,0.12); color: #64748b;
+      background: rgba(13,21,38,0.8); border: 1px solid rgba(6,182,212,0.12); color: #64748b;
     }
     .pipeline-step-active {
-      background: rgba(59,130,246,0.1); border-color: #3b82f6; color: #93c5fd;
+      background: rgba(6,182,212,0.1); border-color: #06b6d4; color: #67e8f9;
     }
 
     /* Gradient border card */
     .gradient-border {
-      background: linear-gradient(#111c2e, #111c2e) padding-box,
-                  linear-gradient(135deg, rgba(59,130,246,0.4), rgba(139,92,246,0.2)) border-box;
+      background: linear-gradient(#0d1527, #0d1527) padding-box,
+                  linear-gradient(135deg, rgba(6,182,212,0.4), rgba(79,70,229,0.2)) border-box;
       border: 1px solid transparent;
     }
 
@@ -181,8 +181,8 @@
 
     .view-panel { will-change: opacity, transform; }
     .loading-panel {
-      border: 1px solid rgba(59,130,246,0.14);
-      background: linear-gradient(135deg, rgba(59,130,246,0.08), rgba(13,21,38,0.82));
+      border: 1px solid rgba(6,182,212,0.14);
+      background: linear-gradient(135deg, rgba(6,182,212,0.08), rgba(13,21,38,0.82));
       border-radius: .875rem;
       padding: 1rem;
       overflow: hidden;
@@ -190,13 +190,13 @@
     .loading-orb {
       width: 2.25rem; height: 2.25rem; border-radius: .75rem;
       display: inline-flex; align-items: center; justify-content: center;
-      background: rgba(59,130,246,0.12);
-      border: 1px solid rgba(59,130,246,0.25);
-      color: #93c5fd;
+      background: rgba(6,182,212,0.12);
+      border: 1px solid rgba(6,182,212,0.25);
+      color: #67e8f9;
     }
     .skeleton-line {
       height: .45rem; border-radius: 9999px;
-      background: linear-gradient(90deg, rgba(59,130,246,0.08), rgba(59,130,246,0.22), rgba(59,130,246,0.08));
+      background: linear-gradient(90deg, rgba(6,182,212,0.08), rgba(6,182,212,0.22), rgba(6,182,212,0.08));
       background-size: 200% 100%;
       animation: skeleton-sweep 1.2s ease-in-out infinite;
     }
@@ -209,7 +209,7 @@
     @keyframes cv-indeterminate { 0%{transform:translateX(-100%)} 100%{transform:translateX(400%)} }
     .cv-upload-bar { animation: cv-indeterminate 1.4s ease-in-out infinite; }
 
-    @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(59,130,246,0.2)} 50%{box-shadow:0 0 25px rgba(59,130,246,0.4)} }
+    @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(6,182,212,0.2)} 50%{box-shadow:0 0 25px rgba(6,182,212,0.4)} }
     .pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
     @keyframes slide-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
@@ -232,7 +232,7 @@
     .header-bg {
       background: linear-gradient(180deg, rgba(6,10,18,0.98) 0%, rgba(6,10,18,0.95) 100%);
       backdrop-filter: blur(20px);
-      border-bottom: 1px solid rgba(59,130,246,0.1);
+      border-bottom: 1px solid rgba(6,182,212,0.1);
     }
 
     /* Mobile responsive */
@@ -262,7 +262,7 @@
     .status-live { background: #10b981; box-shadow: 0 0 6px #10b981; animation: pulse-glow 2s infinite; }
 
     /* Hero typed */
-    .typed-cursor { color: #3b82f6; }
+    .typed-cursor { color: #06b6d4; }
 
     /* Progress bar */
     .progress-step {
@@ -275,14 +275,14 @@
     .bd-badge {
       display: inline-flex; align-items: center; gap: .3rem;
       padding: .15rem .5rem; border-radius: .4rem; font-size: .65rem;
-      background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15);
-      color: #93c5fd;
+      background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.15);
+      color: #67e8f9;
     }
 
     /* Accordion */
-    .accordion-item { border: 1px solid rgba(59,130,246,0.1); border-radius: .75rem; overflow: hidden; }
+    .accordion-item { border: 1px solid rgba(6,182,212,0.1); border-radius: .75rem; overflow: hidden; }
     .accordion-header { padding: .875rem 1rem; cursor: pointer; transition: background .15s; }
-    .accordion-header:hover { background: rgba(59,130,246,0.05); }
+    .accordion-header:hover { background: rgba(6,182,212,0.05); }
 
     [x-cloak] { display: none !important; }
   </style>
@@ -303,8 +303,8 @@
 
         <!-- Logo -->
         <div class="flex items-center gap-3 flex-shrink-0">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center">
-            <i class="fa-solid fa-magnifying-glass-chart text-white text-xs"></i>
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+            <i class="fa-solid fa-wave-square text-white text-xs"></i>
           </div>
           <div class="flex flex-col leading-tight">
             <span class="font-bold text-base tracking-tight text-white">Signal Path</span>
@@ -316,21 +316,21 @@
         <!-- Nav -->
         <nav class="flex gap-1 bg-black/30 rounded-xl p-1">
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'seeker' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'seeker' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('seeker')">
             <i class="fa-solid fa-user mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Individual</span>
             <span class="sm:hidden">Me</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'hr' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'hr' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('hr')">
             <i class="fa-solid fa-building mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Enterprise</span>
             <span class="sm:hidden">Biz</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'university' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'university' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('university')">
             <i class="fa-solid fa-graduation-cap mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">University</span>
@@ -364,8 +364,8 @@
 
       <!-- Headline -->
       <div class="text-center mb-8" data-aos="fade-up">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 font-medium mb-5">
-          <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 font-medium mb-5">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
           Live labor market data via Bright Data
         </div>
         <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
@@ -617,7 +617,7 @@
       </div>
 
       <!-- Lifelong Career Trajectory Map -->
-      <div class="card mb-5 bg-[#0d1526] border border-[rgba(59,130,246,0.15)]" x-show="jobs.length > 0" data-aos="fade-up" data-aos-delay="80">
+      <div class="card mb-5 bg-[#0d1526] border border-[rgba(6,182,212,0.15)]" x-show="jobs.length > 0" data-aos="fade-up" data-aos-delay="80">
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-5">
           <div>
             <p class="section-label mb-2">Lifelong Model</p>
@@ -633,14 +633,14 @@
           </div>
         </div>
 
-        <div class="relative rounded-xl bg-[#060a12] border border-[rgba(59,130,246,0.15)] p-4 overflow-hidden">
+        <div class="relative rounded-xl bg-[#060a12] border border-[rgba(6,182,212,0.15)] p-4 overflow-hidden">
           <div class="hidden xl:block absolute left-8 right-8 top-[48px] h-px bg-gradient-to-r from-blue-500/15 via-emerald-400/30 to-purple-400/15"></div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
             <template x-for="(milestone, i) in lifelongTrajectory()" :key="milestone.role">
-              <div class="group relative rounded-xl border border-[rgba(59,130,246,0.15)] bg-[#0d1526]/90 p-4 min-h-[250px] transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-blue-400/40 hover:shadow-[0_20px_45px_rgba(37,99,235,0.18)]">
+              <div class="group relative rounded-xl border border-[rgba(6,182,212,0.15)] bg-[#0d1526]/90 p-4 min-h-[250px] transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-blue-400/40 hover:shadow-[0_20px_45px_rgba(37,99,235,0.18)]">
                 <div class="flex items-start justify-between gap-3 mb-4">
                   <div class="flex items-center gap-2">
-                    <div class="w-9 h-9 rounded-full border border-blue-400/30 bg-blue-500/10 text-blue-200 flex items-center justify-center font-bold text-sm shadow-[0_0_24px_rgba(59,130,246,0.18)]" x-text="i + 1"></div>
+                    <div class="w-9 h-9 rounded-full border border-blue-400/30 bg-blue-500/10 text-blue-200 flex items-center justify-center font-bold text-sm shadow-[0_0_24px_rgba(6,182,212,0.18)]" x-text="i + 1"></div>
                     <div>
                       <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500">Milestone</p>
                       <p class="text-xs text-slate-400" x-text="milestone.years"></p>
@@ -2121,11 +2121,11 @@
           dataLabels: { position: 'top' } } },
         dataLabels: { enabled: true, formatter: v => v.toFixed(3),
           style: { colors: ['#94a3b8'], fontSize: '11px' } },
-        colors: ['#3b82f6'],
+        colors: ['#06b6d4'],
         xaxis: { categories: labels, labels: { style: { colors: '#64748b' } } },
         yaxis: { labels: { minWidth: 116, maxWidth: 170, offsetX: -4,
           style: { colors: '#94a3b8', fontSize: '12px' } } },
-        grid: { borderColor: 'rgba(59,130,246,0.08)', padding: { left: 6, right: 14 } },
+        grid: { borderColor: 'rgba(6,182,212,0.08)', padding: { left: 6, right: 14 } },
         theme: { mode: 'dark' },
         tooltip: { theme: 'dark' },
         responsive: [{
@@ -2236,10 +2236,10 @@
             particlesJS('particles-js', {
               particles: {
                 number: { value: 40, density: { enable: true, value_area: 900 } },
-                color: { value: '#3b82f6' },
+                color: { value: '#06b6d4' },
                 opacity: { value: 0.15, random: true },
                 size: { value: 2, random: true },
-                line_linked: { enable: true, distance: 150, color: '#3b82f6', opacity: 0.06, width: 1 },
+                line_linked: { enable: true, distance: 150, color: '#06b6d4', opacity: 0.06, width: 1 },
                 move: { enable: true, speed: 0.6, random: true, out_mode: 'out' },
               },
               interactivity: {
@@ -2593,22 +2593,22 @@
 
             if (data.status === 'rate_limited') {
               Swal.fire({ icon: 'warning', title: 'Rate Limited', text: data.message || 'Too many searches. Please wait 1 hour.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
               return;
             }
             if (data.status === 'invalid_query') {
               Swal.fire({ icon: 'info', title: 'Invalid Query', text: data.message || 'Please enter a valid job title.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
               return;
             }
             if (data.status !== 'ok') {
               Swal.fire({ icon: 'error', title: 'Search Failed', text: data.message || 'Something went wrong. Try again.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
               return;
             }
             if (!data.jobs || data.jobs.length === 0) {
               Swal.fire({ icon: 'info', title: 'No Results', text: 'No job postings found. Try a different role or location.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
               return;
             }
 
@@ -2624,12 +2624,12 @@
               const locLabel = this.locationSearched ? `for "${this.locationSearched}" ` : '';
               Swal.fire({ icon: 'success', title: 'Real jobs found via web search',
                 text: `LinkedIn/Indeed returned 0 results ${locLabel}— found real ${this.role} jobs from regional job boards via Bright Data web search.`,
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6',
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4',
                 timer: 6000, timerProgressBar: true });
             } else if (this.dataSource === 'fallback') {
               Swal.fire({ icon: 'warning', title: 'Live data unavailable',
                 text: 'Showing cached example jobs. Do not apply to these listings.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6',
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4',
                 timer: 5000, timerProgressBar: true });
             }
 
@@ -2643,7 +2643,7 @@
 
           } catch (err) {
             Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not reach the server. Check your connection.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
           } finally {
             this.searching = false;
             clearInterval(this._stepTimer);
@@ -2847,7 +2847,7 @@
           if (this.hrSearching) return;
           if (!this.hrYourCompany.trim()) {
             Swal.fire({ icon: 'info', title: 'Required', text: 'Please enter your company name.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
             return;
           }
           this.hrSearching = true;
@@ -2910,11 +2910,11 @@
               this.fetchHRRecommendations();
             } else {
               Swal.fire({ icon: 'error', title: 'Scan Failed', text: data.message || 'No postings found for this competitor.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
             }
           } catch {
             Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not reach the server.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#3b82f6' });
+              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
           } finally { this.hrSearching = false; this.hrScanStatus = ''; }
         },
 

@@ -30,7 +30,7 @@
 <body x-data="app()" x-init="init()" x-cloak>
 
   <!-- Particles background (only when idle) -->
-  <div id="particles-js" x-show="!jobs.length && !searching && activeTab === 'seeker'"></div>
+  <div id="particles-js" x-show="!searching && (activeTab === 'home' || (activeTab === 'seeker' && !jobs.length))"></div>
 
   <!-- ══════════════════════════════════════════
        HEADER
@@ -47,41 +47,60 @@
           </div>
           <div class="flex flex-col leading-tight">
             <span class="font-bold text-base tracking-tight text-white">Signal Path</span>
-            <span class="text-xs text-slate-500 hidden sm:block">Labor Market Intelligence · Powered by Bright Data</span>
+            <span class="text-xs text-slate-500 hidden sm:block">Career Intelligence Platform</span>
           </div>
           <span class="badge badge-accent hidden sm:inline-flex">v2.0</span>
         </div>
 
         <!-- Nav -->
-        <nav class="nav-shell flex gap-1 rounded-xl p-1">
-          <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+        <nav class="nav-shell flex gap-1 rounded-xl p-1 overflow-x-auto">
+          <button class="px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+            :class="activeTab === 'home' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
+            @click="setActiveTab('home')">
+            <i class="fa-solid fa-house mr-1.5 text-xs"></i>
+            <span class="hidden lg:inline">Home</span>
+            <span class="lg:hidden">Home</span>
+          </button>
+          <button class="px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'seeker' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('seeker')">
             <i class="fa-solid fa-user mr-1.5 text-xs"></i>
-            <span class="hidden sm:inline">Individual</span>
+            <span class="hidden sm:inline">Job Seekers</span>
             <span class="sm:hidden">Me</span>
           </button>
-          <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          <button class="px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'hr' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('hr')">
             <i class="fa-solid fa-building mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Enterprise</span>
             <span class="sm:hidden">Biz</span>
           </button>
-          <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
+          <button class="px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             :class="activeTab === 'university' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('university')">
             <i class="fa-solid fa-graduation-cap mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">University</span>
             <span class="sm:hidden">Uni</span>
           </button>
+          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
+            @click="setActiveTab('home'); $nextTick(() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }))">
+            Features
+          </button>
+          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
+            @click="setActiveTab('home'); $nextTick(() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }))">
+            Demo
+          </button>
+          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
+            @click="setActiveTab('home'); $nextTick(() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }))">
+            Contact
+          </button>
         </nav>
 
         <!-- Status -->
-        <div class="flex items-center gap-2 flex-shrink-0">
+        <div class="hidden sm:flex items-center gap-2 flex-shrink-0">
           <button class="hidden md:inline-flex btn-primary px-4 py-2 text-xs gap-2" @click="setActiveTab('seeker')">
             <i class="fa-solid fa-arrow-trend-up"></i>
-            Get Started
+            Start Analysis
           </button>
           <div x-show="!circuitOpen" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <div class="status-dot status-live"></div>
@@ -96,6 +115,176 @@
 
     </div>
   </header>
+
+  <!-- ══════════════════════════════════════════
+       PRODUCT HOMEPAGE
+  ══════════════════════════════════════════ -->
+  <main x-show="activeTab === 'home'" x-ref="homeView" class="view-panel">
+    <section class="hero-shell px-4 sm:px-6 py-14 sm:py-18">
+      <div class="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
+        <div>
+          <h1 class="hero-headline text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-white">
+            Career decisions, backed by <span class="text-accent">real market signals.</span>
+          </h1>
+          <p class="mt-5 text-lg text-slate-400 leading-relaxed max-w-2xl">
+            Signal Path helps job seekers, companies, and universities understand skill gaps, career pathways, hiring demand, and curriculum readiness without drowning users in dashboards.
+          </p>
+          <div class="mt-8 flex flex-col sm:flex-row gap-3">
+            <button class="btn-primary px-6 py-3 gap-2" @click="setActiveTab('seeker')">
+              <i class="fa-solid fa-file-arrow-up"></i>
+              Start Career Analysis
+            </button>
+            <button class="btn-ghost px-6 py-3 gap-2" @click="document.getElementById('paths')?.scrollIntoView({ behavior: 'smooth' })">
+              <i class="fa-solid fa-compass"></i>
+              Choose Your Path
+            </button>
+          </div>
+        </div>
+
+        <div class="card card-glow p-0 overflow-hidden">
+          <div class="p-5 border-b border-red-600/15 flex items-center justify-between">
+            <div>
+              <p class="section-label">Platform Preview</p>
+              <h2 class="text-xl font-semibold text-white mt-1">From market data to next action</h2>
+            </div>
+            <span class="badge badge-accent">Live Intelligence</span>
+          </div>
+          <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <i class="fa-solid fa-magnifying-glass-chart text-red-400"></i>
+              <p class="text-sm font-semibold text-white mt-3">Search a role</p>
+              <p class="text-xs text-slate-500 mt-1">See market-backed skills, roles, and salary signals.</p>
+            </div>
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <i class="fa-solid fa-route text-red-400"></i>
+              <p class="text-sm font-semibold text-white mt-3">Map the path</p>
+              <p class="text-xs text-slate-500 mt-1">Turn gaps into milestones and next learning moves.</p>
+            </div>
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <i class="fa-solid fa-building-user text-red-400"></i>
+              <p class="text-sm font-semibold text-white mt-3">Read hiring demand</p>
+              <p class="text-xs text-slate-500 mt-1">Understand competitor needs and workforce priorities.</p>
+            </div>
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <i class="fa-solid fa-graduation-cap text-red-400"></i>
+              <p class="text-sm font-semibold text-white mt-3">Improve programs</p>
+              <p class="text-xs text-slate-500 mt-1">Compare curriculum coverage against active market gaps.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="paths" class="px-4 sm:px-6 py-12">
+      <div class="max-w-screen-xl mx-auto">
+        <div class="max-w-2xl mb-7">
+          <p class="section-label">Choose Your Path</p>
+          <h2 class="text-3xl font-bold text-white mt-2">Three focused journeys, one intelligence engine.</h2>
+          <p class="text-slate-400 mt-3">Pick the path that matches your goal. Advanced dashboards appear only when they are useful.</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <button class="card text-left group hover:border-red-400/45 transition-all" @click="setActiveTab('seeker')">
+            <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center mb-5">
+              <i class="fa-solid fa-user-tie text-red-300"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">For Job Seekers</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Upload a CV, search a target role, discover skill gaps, compare salaries, and prepare for applications.</p>
+            <span class="mt-5 inline-flex items-center text-sm font-semibold text-red-300 group-hover:text-red-100">Open Job Seeker Dashboard <i class="fa-solid fa-arrow-right ml-2"></i></span>
+          </button>
+          <button class="card text-left group hover:border-red-400/45 transition-all" @click="setActiveTab('hr')">
+            <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center mb-5">
+              <i class="fa-solid fa-building text-red-300"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">For Companies</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Scan competitor postings, identify emerging skills, and turn hiring intelligence into talent strategy.</p>
+            <span class="mt-5 inline-flex items-center text-sm font-semibold text-red-300 group-hover:text-red-100">Open Enterprise Dashboard <i class="fa-solid fa-arrow-right ml-2"></i></span>
+          </button>
+          <button class="card text-left group hover:border-red-400/45 transition-all" @click="setActiveTab('university')">
+            <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center mb-5">
+              <i class="fa-solid fa-school text-red-300"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-white">For Universities</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Measure curriculum readiness, spot missing skills, and generate industry-aligned capstone briefs.</p>
+            <span class="mt-5 inline-flex items-center text-sm font-semibold text-red-300 group-hover:text-red-100">Open University Engine <i class="fa-solid fa-arrow-right ml-2"></i></span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="px-4 sm:px-6 py-12 border-t border-red-600/10">
+      <div class="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-8 items-start">
+        <div>
+          <p class="section-label">Key Benefits</p>
+          <h2 class="text-3xl font-bold text-white mt-2">Clear answers before complex analysis.</h2>
+          <p class="text-slate-400 mt-3 leading-relaxed">The homepage explains the product. The dashboards handle the work after users choose a journey.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="card">
+            <h3 class="font-semibold text-white">Less information overload</h3>
+            <p class="text-sm text-slate-400 mt-2">Advanced charts and analysis stay hidden until a role, CV, company, or curriculum is provided.</p>
+          </div>
+          <div class="card">
+            <h3 class="font-semibold text-white">Plain-language insights</h3>
+            <p class="text-sm text-slate-400 mt-2">Users see market-backed recommendations, not backend source names or technical pipeline jargon.</p>
+          </div>
+          <div class="card">
+            <h3 class="font-semibold text-white">Actionable next steps</h3>
+            <p class="text-sm text-slate-400 mt-2">Every path leads to a practical next move: search, upload, scan, compare, or improve.</p>
+          </div>
+          <div class="card">
+            <h3 class="font-semibold text-white">Responsive by default</h3>
+            <p class="text-sm text-slate-400 mt-2">The experience is structured for desktop review and mobile exploration without horizontal overflow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="demo" class="px-4 sm:px-6 py-12">
+      <div class="max-w-screen-xl mx-auto card">
+        <div class="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 items-center">
+          <div>
+            <p class="section-label">How It Works</p>
+            <h2 class="text-3xl font-bold text-white mt-2">Start simple. Reveal depth only when needed.</h2>
+            <p class="text-slate-400 mt-3 leading-relaxed">Choose a user path, provide a small amount of context, then Signal Path turns market intelligence into gaps, recommendations, and next actions.</p>
+            <button class="btn-primary mt-6 px-6 py-3 gap-2" @click="setActiveTab('seeker')">
+              Start Career Analysis
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <span class="badge badge-accent">01</span>
+              <h3 class="font-semibold text-white mt-4">Choose a path</h3>
+              <p class="text-xs text-slate-500 mt-2">Job seeker, company, or university.</p>
+            </div>
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <span class="badge badge-accent">02</span>
+              <h3 class="font-semibold text-white mt-4">Add context</h3>
+              <p class="text-xs text-slate-500 mt-2">Role, CV, competitor, or curriculum.</p>
+            </div>
+            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+              <span class="badge badge-accent">03</span>
+              <h3 class="font-semibold text-white mt-4">Act with clarity</h3>
+              <p class="text-xs text-slate-500 mt-2">Get gaps, roadmaps, and recommendations.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="px-4 sm:px-6 py-14">
+      <div class="max-w-screen-xl mx-auto text-center card">
+        <p class="section-label">Ready When You Are</p>
+        <h2 class="text-3xl font-bold text-white mt-2">Find the right path and start with one clear action.</h2>
+        <p class="text-slate-400 mt-3 max-w-2xl mx-auto">No setup wall. No crowded first screen. Choose your journey and let the platform reveal the right tools as you go.</p>
+        <div class="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
+          <button class="btn-primary px-6 py-3 gap-2" @click="setActiveTab('seeker')">Job Seekers <i class="fa-solid fa-arrow-right"></i></button>
+          <button class="btn-ghost px-6 py-3 gap-2" @click="setActiveTab('hr')">Enterprise</button>
+          <button class="btn-ghost px-6 py-3 gap-2" @click="setActiveTab('university')">Universities</button>
+        </div>
+      </div>
+    </section>
+  </main>
 
   <!-- ══════════════════════════════════════════
        INDIVIDUAL INTELLIGENCE TAB
@@ -255,7 +444,7 @@
                         <span class="text-[0.68rem] text-slate-300">• <span x-text="skill"></span></span>
                       </template>
                     </div>
-                    <p class="text-xs mt-3" :class="milestone.risk === 'High' ? 'text-red-400' : milestone.risk === 'Medium' ? 'text-amber-400' : 'text-emerald-400'">Risk: <span x-text="milestone.risk"></span></p>
+                    <p class="text-xs mt-3" :class="milestone.risk === 'High' ? 'text-red-400' : milestone.risk === 'Medium' ? 'text-amber-400' : 'text-emerald-400'">Risk rating: <span x-text="milestone.risk"></span></p>
                   </div>
                 </template>
               </div>
@@ -466,22 +655,22 @@
           <span x-show="locationSearched"> in <span class="text-accent font-semibold" x-text="locationSearched"></span></span>
         </p>
         <div class="flex gap-1.5 flex-wrap">
-          <span class="bd-badge"><i class="fa-solid fa-database text-xs"></i> SERP API</span>
-          <span x-show="dataSource === 'live'" class="bd-badge"><i class="fa-brands fa-linkedin text-xs"></i> LinkedIn Dataset</span>
-          <span x-show="dataSource === 'web_extracted'" class="bd-badge"><i class="fa-solid fa-unlock text-xs"></i> Web Unlocker</span>
-          <span class="bd-badge"><i class="fa-solid fa-robot text-xs"></i> Claude AI</span>
+          <span class="bd-badge"><i class="fa-solid fa-database text-xs"></i> Live market sources</span>
+          <span x-show="dataSource === 'live'" class="bd-badge"><i class="fa-brands fa-linkedin text-xs"></i> Verified job data</span>
+          <span x-show="dataSource === 'web_extracted'" class="bd-badge"><i class="fa-solid fa-unlock text-xs"></i> Open web insights</span>
+          <span class="bd-badge"><i class="fa-solid fa-robot text-xs"></i> AI-powered analysis</span>
         </div>
         <!-- Pipeline strip -->
         <div class="ml-auto flex items-center gap-1 text-xs flex-wrap hidden lg:flex">
           <span class="pipeline-step">① Validate</span>
           <i class="fa-solid fa-arrow-right text-slate-700 text-xs"></i>
-          <span class="pipeline-step">② SERP</span>
+          <span class="pipeline-step">② Market</span>
           <i class="fa-solid fa-arrow-right text-slate-700 text-xs"></i>
-          <span class="pipeline-step">③ Scrape</span>
+          <span class="pipeline-step">③ Gather</span>
           <i class="fa-solid fa-arrow-right text-slate-700 text-xs"></i>
-          <span class="pipeline-step">④ Extract</span>
+          <span class="pipeline-step">④ Analyze</span>
           <i class="fa-solid fa-arrow-right text-slate-700 text-xs"></i>
-          <span class="pipeline-step" :class="gaps.length > 0 ? 'pipeline-step-active' : ''">⑤ Pre-fetch</span>
+          <span class="pipeline-step" :class="gaps.length > 0 ? 'pipeline-step-active' : ''">⑤ Prepare</span>
         </div>
       </div>
 
@@ -537,15 +726,15 @@
 
               <div class="grid grid-cols-3 gap-2">
                 <div class="rounded-lg bg-black/25 border border-white/5 px-2 py-2">
-                  <p class="text-xs text-slate-600">Ready</p>
+                  <p class="text-xs text-slate-600">Time</p>
                   <p class="text-xs font-semibold text-slate-200" x-text="path.ready"></p>
                 </div>
                 <div class="rounded-lg bg-black/25 border border-white/5 px-2 py-2">
-                  <p class="text-xs text-slate-600">Pay</p>
+                  <p class="text-xs text-slate-600">Pay range</p>
                   <p class="text-xs font-semibold text-slate-200" x-text="path.pay"></p>
                 </div>
                 <div class="rounded-lg bg-black/25 border border-white/5 px-2 py-2">
-                  <p class="text-xs text-slate-600">Risk</p>
+                  <p class="text-xs text-slate-600">Risk rating</p>
                   <p class="text-xs font-semibold text-slate-200" x-text="path.risk"></p>
                 </div>
               </div>
@@ -692,8 +881,8 @@
           <div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
             <i class="fa-solid fa-hand-pointer text-red-400/60 text-lg"></i>
           </div>
-          <p class="text-slate-400 text-sm font-medium">Select a job to analyse</p>
-          <p class="text-slate-600 text-xs">Gap analysis · Company · Interview prep · Tailorman</p>
+          <p class="text-slate-400 text-sm font-medium">Select a job to view analysis</p>
+          <p class="text-slate-600 text-xs">Choose a job to see gaps, company insight, interview prep, tailoring, and salary guidance</p>
         </div>
 
         <!-- Analysis panel with selected job -->
@@ -763,7 +952,7 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-                <span>Analysing with Claude Sonnet…</span>
+                <span>Generating AI insight…</span>
               </div>
               <!-- No skills state — gap analysis requires user skills -->
               <div x-show="!analysing && analysis?._no_skills" class="flex flex-col items-center text-center gap-3 py-8">
@@ -786,7 +975,7 @@
                   </button>
                 </div>
               </div>
-              <div x-show="!analysing && !analysis && selectedJob && !analysis?._no_skills" class="text-slate-600 text-xs text-center py-4">Waiting for analysis…</div>
+              <div x-show="!analysing && !analysis && selectedJob && !analysis?._no_skills" class="text-slate-600 text-xs text-center py-4">Your gap report will appear here once analysis finishes.</div>
               <div x-show="analysis && !analysis?._no_skills" class="flex flex-col gap-4">
                 <div>
                   <p class="section-label mb-2 flex items-center gap-1.5">
@@ -829,7 +1018,7 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
                 </svg>
-                Fetching via Bright Data…
+                Gathering market signals…
               </div>
 
               <div class="flex flex-wrap gap-1.5">
@@ -918,13 +1107,13 @@
               <div x-show="companyProfile?.sources_used?.length > 0" class="flex items-center gap-1.5 flex-wrap">
                 <span class="text-xs text-slate-600">Sources:</span>
                 <template x-for="src in (companyProfile?.sources_used || [])" :key="src">
-                  <span class="bd-badge" x-text="src === 'claude_knowledge' ? 'Claude AI' : src === 'google' ? 'Google SERP' : src"></span>
+                  <span class="bd-badge" x-text="src === 'claude_knowledge' ? 'AI-powered analysis' : src === 'google' ? 'Market search' : src"></span>
                 </template>
-                <span class="text-slate-600 text-xs">via Bright Data</span>
+                <span class="text-slate-600 text-xs">via verified market sources</span>
               </div>
 
               <div x-show="!loadingCompany && !companyProfile" class="text-slate-600 text-xs text-center py-4">
-                <i class="fa-solid fa-circle-info mr-1"></i> No company data found.
+                <i class="fa-solid fa-circle-info mr-1"></i> Company insights will appear when market data is available.
               </div>
             </div>
 
@@ -971,7 +1160,7 @@
               </div>
               <div x-show="!loadingInterview && interviewQuestions?.length" class="flex flex-col gap-3">
                 <p class="text-xs text-slate-500">
-                  Predicted for <span class="text-slate-300" x-text="selectedJob?.title"></span>
+                  Estimated for <span class="text-slate-300" x-text="selectedJob?.title"></span>
                   <span x-show="selectedJob?.company"> at <span class="text-slate-300" x-text="selectedJob?.company"></span></span>
                 </p>
                 <template x-for="(q, i) in interviewQuestions" :key="i">
@@ -1152,13 +1341,13 @@
           How demand is scored
         </p>
         <p class="font-mono text-slate-300 text-xs leading-relaxed break-words whitespace-normal">
-          score = (0.35 × <span class="text-red-400 font-semibold">frequency</span> + 0.25 × <span class="text-emerald-400 font-semibold">freshness</span> + 0.20 × <span class="text-yellow-400 font-semibold">opportunity</span> + 0.10 × <span class="text-red-400 font-semibold">dual_signal</span> + 0.10 × <span class="text-pink-400 font-semibold">cross_source</span>) ×
+          score = (0.35 × <span class="text-red-400 font-semibold">frequency</span> + 0.25 × <span class="text-emerald-400 font-semibold">freshness</span> + 0.20 × <span class="text-yellow-400 font-semibold">opportunity</span> + 0.10 × <span class="text-red-400 font-semibold">market agreement</span> + 0.10 × <span class="text-pink-400 font-semibold">cross_source</span>) ×
           <span class="inline-flex items-center gap-1 cursor-help group relative">
             <span class="text-orange-400 font-bold underline decoration-dotted">1.3 bonus</span>
             <i class="fa-solid fa-circle-info text-orange-400/70 text-xs"></i>
             <span class="absolute bottom-full left-0 mb-2 w-64 p-3 rounded-xl bg-slate-900 border border-orange-400/30 text-slate-200 font-sans font-normal not-italic text-xs leading-relaxed shadow-xl z-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
               <span class="text-orange-400 font-semibold block mb-1">Cross-platform verification bonus</span>
-              Applied when a skill is confirmed by <strong>both</strong> the LinkedIn dataset <strong>and</strong> Bright Data SERP organic results. A 30% uplift rewards skills with multi-source consensus — if two independent data pipelines agree, the signal is real.
+              Applied when a skill is confirmed by <strong>both</strong> the verified market data <strong>and</strong> verified market sources organic results. A 30% uplift rewards skills with multi-source consensus — if two independent data pipelines agree, the signal is real.
             </span>
           </span>
         </p>
@@ -1166,7 +1355,7 @@
           <span class="text-red-400">frequency</span> = posting frequency ·
           <span class="text-emerald-400">freshness</span> = recency ·
           <span class="text-yellow-400">opportunity</span> = low competition ·
-          <span class="text-red-400">dual_signal</span> = LinkedIn+SERP ·
+          <span class="text-red-400">market agreement</span> = multiple market sources ·
           <span class="text-pink-400">cross_source</span> = multi-platform verified ·
           <span class="text-orange-400">1.3×</span> = cross-platform verified bonus
         </p>
@@ -1426,7 +1615,7 @@
         <div class="h-full bg-red-600 rounded-full cv-upload-bar"></div>
       </div>
       <div x-show="hrSearching" class="mt-3 text-xs text-slate-500">
-        <span x-text="hrScanStatus || 'Identifying competitors via Bright Data SERP → scraping job postings → fetching market news → Claude AI analysis'"></span>
+        <span x-text="hrScanStatus || 'Identifying competitors via verified market sources → reading job postings → gathering market news → AI-powered analysis'"></span>
       </div>
       <div x-show="hrScanError && !hrSearching" class="mt-3 flex items-start gap-2 px-3 py-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
         <i class="fa-solid fa-circle-exclamation text-red-400 text-xs mt-0.5 shrink-0"></i>
@@ -1436,7 +1625,7 @@
         <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
           <span>Auto-detected competitor: <span x-text="hrCompany" class="text-red-200 font-semibold"></span></span>
           <span>Role analyzed: <span x-text="hrRole" class="text-emerald-300 font-semibold"></span></span>
-          <span><span x-text="hrPostings" class="text-slate-200 font-semibold"></span> postings scanned via Bright Data</span>
+          <span><span x-text="hrPostings" class="text-slate-200 font-semibold"></span> postings scanned via verified market sources</span>
           <span x-show="hrNewsSignals" class="text-emerald-400">+ market news signals included</span>
         </div>
         <p x-show="hrDetectReason" class="text-xs text-slate-600 italic" x-text="'Why: ' + hrDetectReason"></p>
@@ -1548,7 +1737,7 @@
           <!-- Postings -->
           <div class="rounded-xl border border-slate-600/40 bg-slate-800/40 p-3 text-center">
             <p class="text-lg font-bold text-slate-200" x-text="hrPostings"></p>
-            <p class="text-xs text-slate-500 mt-0.5">Live postings · Bright Data</p>
+            <p class="text-xs text-slate-500 mt-0.5">Live market postings</p>
           </div>
         </div>
 
@@ -1647,7 +1836,7 @@
               <i class="fa-solid fa-circle-nodes text-accent"></i> Skill Priority Map
             </h2>
             <p class="text-xs text-slate-500 mt-0.5">
-              Top 5 · <span x-text="hrPostings"></span> postings via Bright Data ·
+              Top 5 · <span x-text="hrPostings"></span> postings via verified market sources ·
               <span x-text="hrDataScope === 'company' ? hrCompany + ' specific' : hrRole + ' market-wide'"></span>
             </p>
           </div>
@@ -1819,10 +2008,10 @@
                     </template>
                   </div>
 
-                  <!-- LinkedIn profiles — real URLs when Bright Data finds them, search link fallback -->
+                  <!-- LinkedIn profiles — real URLs when  finds them, search link fallback -->
                   <div x-show="p.profile_urls?.length > 0" class="mb-2">
                     <p class="text-xs font-semibold text-emerald-400 mb-1.5 flex items-center gap-1.5">
-                      <i class="fa-brands fa-linkedin text-xs"></i> Profiles found via Bright Data
+                      <i class="fa-brands fa-linkedin text-xs"></i> Profiles found via verified market sources
                     </p>
                     <div class="flex flex-col gap-1">
                       <template x-for="(url, pi) in p.profile_urls" :key="pi">
@@ -2109,9 +2298,9 @@
         <div>
           <p class="section-label mb-3">Quick Links</p>
           <div class="flex flex-col gap-2 text-sm">
-            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('seeker')">Individual Intelligence</button>
+            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('seeker')">Job Seeker Dashboard</button>
             <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('hr')">Enterprise Intelligence</button>
-            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('university')">University Curriculum Engine</button>
+            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('university')">University Readiness Engine</button>
           </div>
         </div>
         <div>

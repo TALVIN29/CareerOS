@@ -47,7 +47,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
     function app() {
       return {
-        activeTab: 'seeker',
+        activeTab: 'home',
         role: '',
         location: '',
         skills: '',
@@ -77,11 +77,11 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         inferredRole: '',
         roleError: false,
         searchSteps: [
-          'Validating role with Claude AI…',
-          'Bright Data SERP → LinkedIn job URLs…',
-          'Bright Data LinkedIn Dataset → full job data…',
+          'Checking your target role…',
+          'Finding relevant job postings…',
+          'Reading verified market data…',
           'Scam detection + 5-layer verification…',
-          'Claude extracts skills · scoring demand…',
+          'AI analysis extracts skill signals…',
           'Ranking gaps by market demand score…'
         ],
         searchStepIdx: 0,
@@ -518,7 +518,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
             if (this.dataSource === 'web_extracted') {
               const locLabel = this.locationSearched ? `for "${this.locationSearched}" ` : '';
               Swal.fire({ icon: 'success', title: 'Real jobs found via web search',
-                text: `LinkedIn/Indeed returned 0 results ${locLabel}— found real ${this.role} jobs from regional job boards via Bright Data web search.`,
+                text: `Primary job boards returned 0 results ${locLabel}— found real ${this.role} jobs from regional job boards via verified market sources web search.`,
                 background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626',
                 timer: 6000, timerProgressBar: true });
             } else if (this.dataSource === 'fallback') {
@@ -748,7 +748,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           this.hrSearching = true;
           this.hrSkills = [];
           this.hrPostings = 0;
-          this.hrScanStatus = 'Step 1/3 — Finding competitors via Bright Data SERP…';
+          this.hrScanStatus = 'Step 1/3 — Finding competitors via verified market sources…';
           try {
             this.hrScanError = '';
             let competitor, detectedRole, newsSnippets = '';
@@ -763,7 +763,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               this.hrScanStatus = `Step 2/3 — Scanning ${competitor}'s live ${detectedRole} postings…`;
             } else {
               // Step 1: auto-detect competitor
-              this.hrScanStatus = 'Step 1/3 — Finding competitors via Bright Data SERP…';
+              this.hrScanStatus = 'Step 1/3 — Finding competitors via verified market sources…';
               const detectRes = await fetch(`${API}/api/hr/detect-competitor`, {
                 method: 'POST', headers: _headers(),
                 body: JSON.stringify({ your_company: this.hrYourCompany, role: this.hrRole, location: this.hrLocation }),

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Signal Path — Labor Market Intelligence</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%2306b6d4'/%3E%3Cpath%20d='M28%2018a10%2010%200%201%200%207%2017l9%209%204-4-9-9a10%2010%200%200%200-11-13zm0%206a4%204%200%201%201%200%208%204%204%200%200%201%200-8z'%20fill='white'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%2064%2064'%3E%3Crect%20width='64'%20height='64'%20rx='14'%20fill='%23dc2626'/%3E%3Cpath%20d='M28%2018a10%2010%200%201%200%207%2017l9%209%204-4-9-9a10%2010%200%200%200-11-13zm0%206a4%204%200%201%201%200%208%204%204%200%200%201%200-8z'%20fill='white'/%3E%3C/svg%3E">
 
   <!-- Core libraries -->
   <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2/dist/apexcharts.min.js"></script>
@@ -42,34 +42,34 @@
 
         <!-- Logo -->
         <div class="flex items-center gap-3 flex-shrink-0">
-          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-indigo-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.3)]">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-600 to-rose-700 flex items-center justify-center shadow-[0_0_12px_rgba(220,38,38,0.3)]">
             <i class="fa-solid fa-wave-square text-white text-xs"></i>
           </div>
           <div class="flex flex-col leading-tight">
             <span class="font-bold text-base tracking-tight text-white">Signal Path</span>
             <span class="text-xs text-slate-500 hidden sm:block">Labor Market Intelligence · Powered by Bright Data</span>
           </div>
-          <span class="badge badge-blue hidden sm:inline-flex">v2.0</span>
+          <span class="badge badge-accent hidden sm:inline-flex">v2.0</span>
         </div>
 
         <!-- Nav -->
-        <nav class="flex gap-1 bg-black/30 rounded-xl p-1">
+        <nav class="nav-shell flex gap-1 rounded-xl p-1">
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'seeker' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'seeker' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('seeker')">
             <i class="fa-solid fa-user mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Individual</span>
             <span class="sm:hidden">Me</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'hr' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'hr' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('hr')">
             <i class="fa-solid fa-building mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">Enterprise</span>
             <span class="sm:hidden">Biz</span>
           </button>
           <button class="px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
-            :class="activeTab === 'university' ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/10' : 'text-slate-400 hover:text-white'"
+            :class="activeTab === 'university' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('university')">
             <i class="fa-solid fa-graduation-cap mr-1.5 text-xs"></i>
             <span class="hidden sm:inline">University</span>
@@ -79,6 +79,10 @@
 
         <!-- Status -->
         <div class="flex items-center gap-2 flex-shrink-0">
+          <button class="hidden md:inline-flex btn-primary px-4 py-2 text-xs gap-2" @click="setActiveTab('seeker')">
+            <i class="fa-solid fa-arrow-trend-up"></i>
+            Get Started
+          </button>
           <div x-show="!circuitOpen" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
             <div class="status-dot status-live"></div>
             <span class="text-xs font-medium text-emerald-400">Live</span>
@@ -99,15 +103,15 @@
   <main x-show="activeTab === 'seeker'" x-ref="seekerView" class="view-panel">
 
     <!-- ═══ HERO STATE ═══ -->
-    <div x-show="!jobs.length" class="min-h-[92vh] flex flex-col items-center justify-center px-4 py-16 relative">
+    <div x-show="!jobs.length" class="hero-shell min-h-[calc(100vh-66px)] flex flex-col items-center justify-start px-4 pt-10 pb-14 relative">
 
       <!-- Headline -->
-      <div class="text-center mb-8" data-aos="fade-up">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-xs text-cyan-300 font-medium mb-5">
-          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+      <div class="text-center mb-8 max-w-4xl" data-aos="fade-up">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600/10 border border-red-600/20 text-xs text-red-200 font-medium mb-5">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
           Live labor market data via Bright Data
         </div>
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
+        <h1 class="hero-headline text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
           LinkedIn shows you jobs.<br>
           <span class="text-accent">Signal Path shows you</span><br>
           what's standing between you.
@@ -115,16 +119,26 @@
         <p class="text-slate-400 text-base sm:text-lg max-w-lg mx-auto min-h-[28px]">
           <span id="typed-hero"></span>
         </p>
+        <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+          <button class="btn-primary px-6 py-3 gap-2" @click="document.querySelector('[x-model=&quot;role&quot;]')?.focus()">
+            <i class="fa-solid fa-magnifying-glass-chart"></i>
+            Explore Services
+          </button>
+          <button class="btn-ghost px-6 py-3 gap-2" @click="setActiveTab('hr')">
+            <i class="fa-solid fa-building"></i>
+            Contact Enterprise
+          </button>
+        </div>
       </div>
 
       <!-- Agent pipeline — visible BEFORE search (for judges) -->
-      <div class="flex items-center gap-2 mb-8 flex-wrap justify-center text-xs" data-aos="fade-up" data-aos-delay="50">
+      <div class="hidden 2xl:flex items-center gap-2 mb-8 flex-wrap justify-center text-xs" data-aos="fade-up" data-aos-delay="50">
         <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-brands fa-linkedin text-blue-400"></i> Bright Data SERP
+          <i class="fa-brands fa-linkedin text-red-400"></i> Bright Data SERP
         </span>
         <i class="fa-solid fa-arrow-right text-slate-700"></i>
         <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-solid fa-database text-blue-400"></i> LinkedIn Dataset
+          <i class="fa-solid fa-database text-red-400"></i> LinkedIn Dataset
         </span>
         <i class="fa-solid fa-arrow-right text-slate-700"></i>
         <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
@@ -132,11 +146,11 @@
         </span>
         <i class="fa-solid fa-arrow-right text-slate-700"></i>
         <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-solid fa-robot text-purple-400"></i> Claude AI Analysis
+          <i class="fa-solid fa-robot text-red-400"></i> Claude AI Analysis
         </span>
         <i class="fa-solid fa-arrow-right text-slate-700"></i>
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-300 font-medium">
-          <i class="fa-solid fa-chart-bar text-blue-400"></i> Your Gap Report
+        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600/20 border border-red-500/40 text-red-200 font-medium">
+          <i class="fa-solid fa-chart-bar text-red-400"></i> Your Gap Report
         </span>
       </div>
 
@@ -147,7 +161,7 @@
           <!-- Job Title -->
           <div class="mb-4">
             <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-briefcase text-blue-400/70"></i>
+              <i class="fa-solid fa-briefcase text-red-400/70"></i>
               Job Title
               <span x-show="inferredRole && role === inferredRole" class="badge badge-green text-xs ml-auto">
                 <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-detected from CV
@@ -164,7 +178,7 @@
           <!-- Location -->
           <div class="mb-4">
             <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-blue-400/70"></i>
+              <i class="fa-solid fa-location-dot text-red-400/70"></i>
               Location
             </label>
             <input class="input-field py-3 text-base" type="text" x-model="location"
@@ -172,9 +186,9 @@
           </div>
 
           <!-- CV Upload (primary action) -->
-          <label class="flex items-center gap-3 w-full px-4 py-3.5 border border-dashed border-blue-500/20 rounded-xl cursor-pointer hover:border-blue-500/40 hover:bg-blue-500/5 transition-all group">
-            <div class="w-9 h-9 rounded-lg bg-blue-500/10 border border-blue-500/15 flex items-center justify-center group-hover:bg-blue-500/15 transition-all shrink-0">
-              <i class="fa-solid fa-cloud-arrow-up text-blue-400"></i>
+          <label class="flex items-center gap-3 w-full px-4 py-3.5 border border-dashed border-red-600/20 rounded-xl cursor-pointer hover:border-red-500/40 hover:bg-red-600/5 transition-all group">
+            <div class="w-9 h-9 rounded-lg bg-red-600/10 border border-red-600/15 flex items-center justify-center group-hover:bg-red-600/15 transition-all shrink-0">
+              <i class="fa-solid fa-cloud-arrow-up text-red-400"></i>
             </div>
             <div>
               <p class="text-sm font-medium text-slate-300" x-text="cvUploading ? 'Reading your CV…' : cvStatus && cvStatus.startsWith('✓') ? 'CV uploaded successfully' : 'Upload your CV'"></p>
@@ -184,7 +198,7 @@
             <input type="file" accept=".pdf,.doc,.docx" class="hidden" @change="uploadCV($event)" />
           </label>
           <div x-show="cvUploading" class="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden mt-2 mb-1">
-            <div class="h-full bg-blue-500 rounded-full cv-upload-bar"></div>
+            <div class="h-full bg-red-600 rounded-full cv-upload-bar"></div>
           </div>
           <p x-show="cvStatus && !cvStatus.startsWith('✓') && cvStatus !== 'Parsing…'" x-text="cvStatus" class="text-red-400 text-xs mt-1"></p>
 
@@ -198,7 +212,7 @@
           <!-- Skills (manual entry) -->
           <div class="mb-5">
             <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-code text-blue-400/70"></i>
+              <i class="fa-solid fa-code text-red-400/70"></i>
               Your Skills
               <span class="text-slate-600 font-normal">— needed to compute YOUR actual gaps</span>
             </label>
@@ -217,17 +231,17 @@
           </button>
 
           <!-- Agent progress during search -->
-          <div x-show="searching" class="mt-5 space-y-2 border-t border-blue-500/10 pt-5">
+          <div x-show="searching" class="mt-5 space-y-2 border-t border-red-600/10 pt-5">
             <p class="text-xs text-slate-500 font-medium mb-3 flex items-center gap-2">
-              <i class="fa-solid fa-circle-nodes text-blue-400 animate-pulse"></i>
+              <i class="fa-solid fa-circle-nodes text-red-400 animate-pulse"></i>
               AI Agent Pipeline Running
             </p>
             <template x-for="(step, i) in searchSteps" :key="i">
               <div class="flex items-center gap-3" :class="i >= searchStepIdx + 1 ? 'opacity-20' : 'opacity-100'">
                 <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                  :class="i < searchStepIdx ? 'bg-emerald-500/15 border-emerald-500/40' : i === searchStepIdx ? 'bg-blue-500/15 border-blue-500/40' : 'border-slate-700'">
+                  :class="i < searchStepIdx ? 'bg-emerald-500/15 border-emerald-500/40' : i === searchStepIdx ? 'bg-red-600/15 border-red-500/40' : 'border-slate-700'">
                   <i x-show="i < searchStepIdx" class="fa-solid fa-check text-emerald-400" style="font-size:.6rem"></i>
-                  <div x-show="i === searchStepIdx" class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></div>
+                  <div x-show="i === searchStepIdx" class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
                 </div>
                 <span x-text="step" class="text-xs"
                   :class="i === searchStepIdx ? 'text-slate-200 font-medium' : i < searchStepIdx ? 'text-slate-500 line-through' : 'text-slate-700'"></span>
@@ -263,9 +277,9 @@
             <input class="input-field py-2.5 text-sm" type="text" x-model="skills"
               placeholder="Python, SQL, Tableau" @keydown.enter="doSearch()" />
           </div>
-          <label class="flex items-center gap-3 w-full px-3 py-3 border border-dashed border-cyan-500/20 rounded-xl cursor-pointer hover:border-cyan-500/40 hover:bg-cyan-500/5 transition-all group">
-            <div class="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-500/15 flex items-center justify-center group-hover:bg-cyan-500/15 transition-all shrink-0">
-              <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i>
+          <label class="flex items-center gap-3 w-full px-3 py-3 border border-dashed border-red-600/20 rounded-xl cursor-pointer hover:border-red-500/40 hover:bg-red-600/5 transition-all group">
+            <div class="w-9 h-9 rounded-lg bg-red-600/10 border border-red-600/15 flex items-center justify-center group-hover:bg-red-600/15 transition-all shrink-0">
+              <i class="fa-solid fa-cloud-arrow-up text-red-400"></i>
             </div>
             <div class="min-w-0">
               <p class="text-sm font-medium text-slate-300" x-text="cvUploading ? 'Reading CV…' : cvStatus && cvStatus.startsWith('✓') ? 'CV uploaded' : 'Upload CV'"></p>
@@ -275,7 +289,7 @@
             <input type="file" accept=".pdf,.doc,.docx" class="hidden" @change="uploadCV($event)" />
           </label>
           <div x-show="cvUploading" class="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden">
-            <div class="h-full bg-cyan-500 rounded-full cv-upload-bar"></div>
+            <div class="h-full bg-red-600 rounded-full cv-upload-bar"></div>
           </div>
           <button class="btn-primary py-2.5 px-4 text-sm whitespace-nowrap w-full" @click="doSearch()" :disabled="searching">
             <svg x-show="searching" class="animate-spin w-3.5 h-3.5 mr-1 inline" fill="none" viewBox="0 0 24 24">
@@ -318,7 +332,7 @@
       </div>
 
       <!-- Strategy accordion -->
-      <button class="card mb-3 w-full text-left flex items-center justify-between gap-3 hover:border-cyan-400/40 transition-all"
+      <button class="card mb-3 w-full text-left flex items-center justify-between gap-3 hover:border-red-400/40 transition-all"
         @click="strategyCollapsed = !strategyCollapsed">
         <div class="min-w-0">
           <p class="text-xs text-slate-500">Strategy Map</p>
@@ -329,7 +343,7 @@
             3 Paths Available
           </p>
         </div>
-        <span class="badge badge-blue shrink-0" x-text="strategyCollapsed ? 'Expand Strategy Map' : 'Collapse Strategy Map'"></span>
+        <span class="badge badge-accent shrink-0" x-text="strategyCollapsed ? 'Expand Strategy Map' : 'Collapse Strategy Map'"></span>
       </button>
 
       <div x-show="!strategyCollapsed" x-transition>
@@ -352,16 +366,16 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <template x-for="path in careerPaths()" :key="path.id">
             <div class="rounded-xl border p-4 bg-slate-900/40 flex flex-col gap-3 min-h-[245px]"
-              :class="path.id === 'apply' ? 'border-emerald-500/25' : path.id === 'stretch' ? 'border-yellow-500/25' : 'border-blue-500/25'">
+              :class="path.id === 'apply' ? 'border-emerald-500/25' : path.id === 'stretch' ? 'border-yellow-500/25' : 'border-red-500/25'">
               <div class="flex items-start justify-between gap-3">
                 <div>
                   <p class="text-xs font-semibold uppercase tracking-[0.12em]"
-                    :class="path.id === 'apply' ? 'text-emerald-400' : path.id === 'stretch' ? 'text-yellow-400' : 'text-blue-400'"
+                    :class="path.id === 'apply' ? 'text-emerald-400' : path.id === 'stretch' ? 'text-yellow-400' : 'text-red-400'"
                     x-text="path.label"></p>
                   <h3 class="text-base font-bold text-white mt-1 leading-snug" x-text="path.role"></h3>
                 </div>
                 <span class="badge text-xs font-bold"
-                  :class="path.id === 'apply' ? 'badge-green' : path.id === 'stretch' ? 'badge-yellow' : 'badge-blue'"
+                  :class="path.id === 'apply' ? 'badge-green' : path.id === 'stretch' ? 'badge-yellow' : 'badge-accent'"
                   x-text="path.match + '%'"></span>
               </div>
 
@@ -391,7 +405,7 @@
                 </div>
               </div>
 
-              <div class="mt-auto pt-3 border-t border-blue-500/10">
+              <div class="mt-auto pt-3 border-t border-red-600/10">
                 <p class="text-xs text-slate-300 leading-relaxed">
                   <i class="fa-solid fa-arrow-right text-slate-500 mr-1"></i>
                   <span x-text="path.action"></span>
@@ -403,12 +417,12 @@
       </div>
 
       <!-- Lifelong Career Trajectory Map -->
-      <div class="card mb-5 bg-[#0d1526] border border-[rgba(6,182,212,0.15)]" x-show="jobs.length > 0" data-aos="fade-up" data-aos-delay="80">
+      <div class="card mb-5 bg-[#151515] border border-[rgba(220,38,38,0.15)]" x-show="jobs.length > 0" data-aos="fade-up" data-aos-delay="80">
         <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3 mb-5">
           <div>
             <p class="section-label mb-2">Lifelong Model</p>
             <h2 class="font-semibold text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-timeline text-blue-400 text-sm"></i>
+              <i class="fa-solid fa-timeline text-red-400 text-sm"></i>
               Lifelong Career Trajectory Map
             </h2>
             <p class="text-xs text-slate-500 mt-1 max-w-2xl">Five progressive milestones generated from your searched role, market salary range, and highest-demand skill gaps.</p>
@@ -419,14 +433,14 @@
           </div>
         </div>
 
-        <div class="relative rounded-xl bg-[#060a12] border border-[rgba(6,182,212,0.15)] p-4 overflow-hidden">
-          <div class="hidden xl:block absolute left-8 right-8 top-[48px] h-px bg-gradient-to-r from-blue-500/15 via-emerald-400/30 to-purple-400/15"></div>
+        <div class="relative rounded-xl bg-[#050505] border border-[rgba(220,38,38,0.15)] p-4 overflow-hidden">
+          <div class="hidden xl:block absolute left-8 right-8 top-[48px] h-px bg-gradient-to-r from-red-900/20 via-red-500/35 to-rose-900/20"></div>
           <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-3">
             <template x-for="(milestone, i) in lifelongTrajectory()" :key="milestone.role">
-              <div class="group relative rounded-xl border border-[rgba(6,182,212,0.15)] bg-[#0d1526]/90 p-4 min-h-[250px] transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-blue-400/40 hover:shadow-[0_20px_45px_rgba(37,99,235,0.18)]">
+              <div class="group relative rounded-xl border border-[rgba(220,38,38,0.15)] bg-[#151515]/90 p-4 min-h-[250px] transition duration-200 hover:-translate-y-1 hover:scale-[1.02] hover:border-red-400/40 hover:shadow-[0_20px_45px_rgba(220,38,38,0.18)]">
                 <div class="flex items-start justify-between gap-3 mb-4">
                   <div class="flex items-center gap-2">
-                    <div class="w-9 h-9 rounded-full border border-blue-400/30 bg-blue-500/10 text-blue-200 flex items-center justify-center font-bold text-sm shadow-[0_0_24px_rgba(6,182,212,0.18)]" x-text="i + 1"></div>
+                    <div class="w-9 h-9 rounded-full border border-red-400/30 bg-red-600/10 text-red-200 flex items-center justify-center font-bold text-sm shadow-[0_0_24px_rgba(220,38,38,0.18)]" x-text="i + 1"></div>
                     <div>
                       <p class="text-[10px] uppercase tracking-[0.14em] text-slate-500">Milestone</p>
                       <p class="text-xs text-slate-400" x-text="milestone.years"></p>
@@ -439,7 +453,7 @@
 
                 <h3 class="text-sm font-bold text-white leading-snug min-h-[40px]" x-text="milestone.role"></h3>
                 <p class="text-xs text-slate-500 mt-2">Average salary range</p>
-                <p class="text-sm font-semibold text-blue-200 mt-1" x-text="milestone.salary"></p>
+                <p class="text-sm font-semibold text-red-200 mt-1" x-text="milestone.salary"></p>
 
                 <div class="mt-4">
                   <p class="section-label mb-2">Crossing Gaps</p>
@@ -450,7 +464,7 @@
                   </div>
                 </div>
 
-                <div class="mt-4 pt-3 border-t border-blue-500/10">
+                <div class="mt-4 pt-3 border-t border-red-600/10">
                   <p class="text-xs text-slate-400 leading-relaxed" x-text="milestone.signal"></p>
                 </div>
               </div>
@@ -499,13 +513,13 @@
                   <span x-show="job.is_verified !== false" class="badge badge-green" style="font-size:.6rem;">
                     <i class="fa-solid fa-shield-check"></i> Verified
                   </span>
-                  <span x-show="job.is_remote" class="badge badge-blue" style="font-size:.6rem;">Remote</span>
+                  <span x-show="job.is_remote" class="badge badge-accent" style="font-size:.6rem;">Remote</span>
                   <span x-show="job.salary && job.salary !== 'Not disclosed'" class="text-slate-400" x-text="job.salary"></span>
                 </div>
                 <div class="flex items-center gap-2">
                   <span class="text-slate-500" x-text="fmtDate(job.date_posted)"></span>
                   <a x-show="job.url" :href="job.url" target="_blank" rel="noopener" @click.stop
-                    class="text-accent hover:text-blue-300 font-semibold flex items-center gap-1">
+                    class="text-accent hover:text-red-200 font-semibold flex items-center gap-1">
                     Apply <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                   </a>
                 </div>
@@ -521,8 +535,8 @@
 
         <!-- Empty state -->
         <div x-show="!selectedJob" class="flex flex-col items-center justify-center text-center py-14 gap-3 px-4">
-          <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-            <i class="fa-solid fa-hand-pointer text-blue-400/60 text-lg"></i>
+          <div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+            <i class="fa-solid fa-hand-pointer text-red-400/60 text-lg"></i>
           </div>
           <p class="text-slate-400 text-sm font-medium">Select a job to analyse</p>
           <p class="text-slate-600 text-xs">Gap analysis · Company · Interview prep · Tailorman</p>
@@ -532,7 +546,7 @@
         <div x-show="selectedJob" class="flex flex-col gap-0 overflow-hidden">
 
           <!-- Job header -->
-          <div class="p-4 border-b border-blue-500/10">
+          <div class="p-4 border-b border-red-600/10">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <p class="font-semibold text-sm text-white" x-text="selectedJob?.title"></p>
@@ -550,7 +564,7 @@
           </div>
 
           <!-- Tabs -->
-          <div class="flex border-b border-blue-500/10 text-xs overflow-x-auto">
+          <div class="flex border-b border-red-600/10 text-xs overflow-x-auto">
             <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
               :class="analysisTab === 'gaps' ? 'tab-active' : 'tab-inactive'"
               @click="analysisTab = 'gaps'">
@@ -576,7 +590,7 @@
               @click="analysisTab = 'tailor'; if(!tailormanResult && skills) runTailorman()">
               <i class="fa-solid fa-pen-nib text-xs"></i>
               Tailor
-              <span class="badge badge-purple" style="font-size:.55rem;padding:.05rem .3rem;margin-left:.1rem">PRO</span>
+              <span class="badge badge-red" style="font-size:.55rem;padding:.05rem .3rem;margin-left:.1rem">PRO</span>
             </button>
             <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
               :class="analysisTab === 'salary' ? 'tab-active' : 'tab-inactive'"
@@ -665,8 +679,8 @@
               </div>
 
               <div class="flex flex-wrap gap-1.5">
-                <span x-show="selectedJob?.company_industry" class="badge badge-blue" x-text="selectedJob?.company_industry"></span>
-                <span x-show="selectedJob?.company_size" class="badge badge-blue" x-text="selectedJob?.company_size + ' employees'"></span>
+                <span x-show="selectedJob?.company_industry" class="badge badge-accent" x-text="selectedJob?.company_industry"></span>
+                <span x-show="selectedJob?.company_size" class="badge badge-accent" x-text="selectedJob?.company_size + ' employees'"></span>
                 <span x-show="selectedJob?.salary !== 'Not disclosed'" class="badge badge-yellow" x-text="selectedJob?.salary"></span>
               </div>
 
@@ -676,7 +690,7 @@
                   Ratings
                 </p>
                 <div class="flex gap-2 flex-wrap">
-                  <div x-show="companyProfile?.overall_rating" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-black/30 border border-blue-500/10 min-w-[60px]">
+                  <div x-show="companyProfile?.overall_rating" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-black/30 border border-red-600/10 min-w-[60px]">
                     <div class="flex gap-0.5">
                       <template x-for="i in 5" :key="i">
                         <i class="fa-solid fa-star text-xs" :class="i <= Math.round(companyProfile?.overall_rating || 0) ? 'text-yellow-400' : 'text-slate-700'"></i>
@@ -690,11 +704,11 @@
                     <span class="text-xs text-slate-600">Glassdoor</span>
                     <a x-show="companyProfile?.glassdoor_url" :href="companyProfile?.glassdoor_url" target="_blank" class="text-xs text-accent hover:underline">→</a>
                   </div>
-                  <div x-show="companyProfile?.indeed_rating" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-black/30 border border-blue-500/15">
-                    <span class="text-sm font-bold text-blue-400" x-text="(companyProfile?.indeed_rating||0).toFixed(1)"></span>
+                  <div x-show="companyProfile?.indeed_rating" class="flex flex-col items-center gap-1 px-3 py-2 rounded-xl bg-black/30 border border-red-600/15">
+                    <span class="text-sm font-bold text-red-400" x-text="(companyProfile?.indeed_rating||0).toFixed(1)"></span>
                     <span class="text-xs text-slate-600">Indeed</span>
                   </div>
-                  <div x-show="companyProfile?.recommend_pct || companyProfile?.ceo_approval_pct" class="flex flex-col gap-1 px-3 py-2 rounded-xl bg-black/30 border border-blue-500/10 text-xs">
+                  <div x-show="companyProfile?.recommend_pct || companyProfile?.ceo_approval_pct" class="flex flex-col gap-1 px-3 py-2 rounded-xl bg-black/30 border border-red-600/10 text-xs">
                     <div x-show="companyProfile?.recommend_pct" class="flex justify-between gap-3">
                       <span class="text-slate-500">Recommend</span>
                       <span class="text-slate-200 font-medium" x-text="companyProfile?.recommend_pct + '%'"></span>
@@ -709,15 +723,15 @@
               </div>
 
               <div x-show="companyProfile?.culture_summary">
-                <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-users text-blue-400/60 text-xs"></i> Culture</p>
-                <p class="text-xs text-slate-400 leading-relaxed bg-blue-500/5 rounded-lg p-3 border border-blue-500/10" x-text="companyProfile?.culture_summary || companyProfile?.description"></p>
+                <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-users text-red-400/60 text-xs"></i> Culture</p>
+                <p class="text-xs text-slate-400 leading-relaxed bg-red-600/5 rounded-lg p-3 border border-red-600/10" x-text="companyProfile?.culture_summary || companyProfile?.description"></p>
               </div>
 
               <div x-show="(companyProfile?.employee_reviews || []).length > 0">
-                <p class="section-label mb-2 flex items-center gap-1.5"><i class="fa-solid fa-comment-dots text-blue-400/60 text-xs"></i> Reviews</p>
+                <p class="section-label mb-2 flex items-center gap-1.5"><i class="fa-solid fa-comment-dots text-red-400/60 text-xs"></i> Reviews</p>
                 <div class="flex flex-col gap-2">
                   <template x-for="(rev, i) in (companyProfile?.employee_reviews || []).slice(0,3)" :key="i">
-                    <div class="border-l-2 border-blue-500/20 pl-3 py-1">
+                    <div class="border-l-2 border-red-600/20 pl-3 py-1">
                       <p class="text-xs text-slate-300 leading-relaxed italic" x-text="String.fromCharCode(34) + rev.text + String.fromCharCode(34)"></p>
                       <div class="flex gap-2 mt-1">
                         <span x-show="rev.rating" class="text-yellow-400 text-xs" x-text="'★ ' + rev.rating"></span>
@@ -777,7 +791,7 @@
                   </div>
                 </template>
               </div>
-              <div x-show="selectedJob?.source" class="pt-2 border-t border-blue-500/10 text-xs text-slate-500 flex items-center gap-2">
+              <div x-show="selectedJob?.source" class="pt-2 border-t border-red-600/10 text-xs text-slate-500 flex items-center gap-2">
                 <i class="fa-solid fa-database text-slate-600"></i>
                 Source: <span class="text-slate-300" x-text="selectedJob?.source"></span>
                 <span x-show="selectedJob?.date_posted">· <span class="text-accent" x-text="fmtDate(selectedJob?.date_posted)"></span></span>
@@ -807,7 +821,7 @@
                   <span x-show="selectedJob?.company"> at <span class="text-slate-300" x-text="selectedJob?.company"></span></span>
                 </p>
                 <template x-for="(q, i) in interviewQuestions" :key="i">
-                  <div class="rounded-xl p-3 border border-blue-500/10 bg-black/20">
+                  <div class="rounded-xl p-3 border border-red-600/10 bg-black/20">
                     <div class="flex items-start gap-2.5">
                       <span class="text-accent font-bold text-xs shrink-0 mt-0.5 w-6" x-text="'Q' + (i+1)"></span>
                       <div class="flex-1">
@@ -815,9 +829,9 @@
                         <p class="text-slate-500 text-xs mt-1.5 leading-relaxed" x-text="'💡 ' + q.tip"></p>
                         <span class="inline-block mt-1.5 text-xs px-1.5 py-0.5 rounded-md font-medium"
                           :class="{
-                            'bg-blue-500/10 text-blue-400 border border-blue-500/15': q.type === 'technical',
+                            'bg-red-600/10 text-red-400 border border-red-600/15': q.type === 'technical',
                             'bg-yellow-500/10 text-yellow-400 border border-yellow-500/15': q.type === 'behavioural',
-                            'bg-purple-500/10 text-purple-400 border border-purple-500/15': q.type === 'situational'
+                            'bg-red-600/10 text-red-400 border border-red-600/15': q.type === 'situational'
                           }"
                           x-text="q.type"></span>
                       </div>
@@ -829,8 +843,8 @@
                 </button>
               </div>
               <div x-show="!loadingInterview && !interviewQuestions" class="flex flex-col items-center text-center py-8 gap-2">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center mb-1">
-                  <i class="fa-solid fa-comments text-blue-400/60 text-base"></i>
+                <div class="w-10 h-10 rounded-xl bg-red-600/10 border border-red-600/15 flex items-center justify-center mb-1">
+                  <i class="fa-solid fa-comments text-red-400/60 text-base"></i>
                 </div>
                 <p class="text-sm text-slate-300 font-medium">Interview prep loading</p>
                 <p class="text-xs text-slate-600">Questions will appear shortly</p>
@@ -841,8 +855,8 @@
             <div x-show="analysisTab === 'tailor'" class="flex flex-col gap-3">
               <!-- No CV -->
               <div x-show="!skills" class="flex flex-col items-center gap-3 py-6 text-center">
-                <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
-                  <i class="fa-solid fa-pen-nib text-purple-400 text-lg"></i>
+                <div class="w-12 h-12 rounded-xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+                  <i class="fa-solid fa-pen-nib text-red-400 text-lg"></i>
                 </div>
                 <p class="text-sm text-slate-300 font-medium">Let's tailor this for you</p>
                 <p class="text-xs text-slate-500 max-w-xs leading-relaxed">
@@ -877,8 +891,8 @@
                 </div>
                 <div x-show="!loadingTailor && tailormanResult" class="flex flex-col gap-4 text-xs">
                   <div x-show="tailormanResult?.tailored_summary">
-                    <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-id-card text-purple-400 text-xs"></i> CV Summary</p>
-                    <p class="text-slate-300 leading-relaxed italic border-l-2 border-purple-500/40 pl-3 bg-purple-500/5 py-2 rounded-r-lg" x-text="tailormanResult?.tailored_summary"></p>
+                    <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-id-card text-red-400 text-xs"></i> CV Summary</p>
+                    <p class="text-slate-300 leading-relaxed italic border-l-2 border-red-500/40 pl-3 bg-red-600/5 py-2 rounded-r-lg" x-text="tailormanResult?.tailored_summary"></p>
                   </div>
                   <div x-show="(tailormanResult?.skills_to_emphasise || []).length > 0">
                     <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-trophy text-yellow-400 text-xs"></i> Skills to Emphasise</p>
@@ -889,8 +903,8 @@
                     </div>
                   </div>
                   <div x-show="tailormanResult?.cover_letter_opening">
-                    <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-envelope-open-text text-blue-400 text-xs"></i> Cover Letter Opening</p>
-                    <p class="text-slate-300 leading-relaxed italic border-l-2 border-blue-500/40 pl-3 bg-blue-500/5 py-2 rounded-r-lg" x-text="tailormanResult?.cover_letter_opening"></p>
+                    <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-envelope-open-text text-red-400 text-xs"></i> Cover Letter Opening</p>
+                    <p class="text-slate-300 leading-relaxed italic border-l-2 border-red-500/40 pl-3 bg-red-600/5 py-2 rounded-r-lg" x-text="tailormanResult?.cover_letter_opening"></p>
                   </div>
                   <div x-show="tailormanResult?.gap_framing">
                     <p class="section-label mb-1.5 flex items-center gap-1.5"><i class="fa-solid fa-bridge-water text-slate-400 text-xs"></i> Address Gaps</p>
@@ -900,7 +914,7 @@
                     <p class="section-label mb-2 flex items-center gap-1.5"><i class="fa-solid fa-microphone text-accent text-xs"></i> Talking Points</p>
                     <div class="flex flex-col gap-2">
                       <template x-for="(pt, i) in (tailormanResult?.interview_talking_points || [])" :key="i">
-                        <div class="flex gap-2.5 p-2 rounded-lg bg-black/20 border border-blue-500/10">
+                        <div class="flex gap-2.5 p-2 rounded-lg bg-black/20 border border-red-600/10">
                           <span class="text-accent font-mono text-xs mt-0.5 shrink-0 w-5" x-text="String(i+1).padStart(2,'0')"></span>
                           <div>
                             <p class="text-slate-200" x-text="pt.point"></p>
@@ -935,7 +949,7 @@
                 </div>
               </div>
               <div x-show="salaryIntel" class="flex flex-col gap-3">
-                <div class="rounded-xl border border-cyan-500/15 bg-cyan-500/5 p-4">
+                <div class="rounded-xl border border-red-600/15 bg-red-600/5 p-4">
                   <p class="section-label mb-2">Market Median</p>
                   <p class="text-2xl font-bold text-white" x-text="(salaryIntel?.currency_symbol || '$') + (salaryIntel?.market_median || 0).toLocaleString()"></p>
                   <p class="text-xs text-slate-500 mt-1" x-text="salaryIntel?.market_context"></p>
@@ -978,13 +992,13 @@
       </div>
 
       <!-- Formula explainer -->
-      <div class="mb-3 px-4 py-3 rounded-xl bg-slate-800/60 border border-blue-500/20 text-xs">
+      <div class="mb-3 px-4 py-3 rounded-xl bg-slate-800/60 border border-red-600/20 text-xs">
         <p class="text-slate-200 font-semibold mb-2 flex items-center gap-1.5">
-          <i class="fa-solid fa-function text-blue-400 text-xs"></i>
+          <i class="fa-solid fa-function text-red-400 text-xs"></i>
           How demand is scored
         </p>
         <p class="font-mono text-slate-300 text-xs leading-relaxed break-words whitespace-normal">
-          score = (0.35 × <span class="text-blue-400 font-semibold">frequency</span> + 0.25 × <span class="text-emerald-400 font-semibold">freshness</span> + 0.20 × <span class="text-yellow-400 font-semibold">opportunity</span> + 0.10 × <span class="text-purple-400 font-semibold">dual_signal</span> + 0.10 × <span class="text-pink-400 font-semibold">cross_source</span>) ×
+          score = (0.35 × <span class="text-red-400 font-semibold">frequency</span> + 0.25 × <span class="text-emerald-400 font-semibold">freshness</span> + 0.20 × <span class="text-yellow-400 font-semibold">opportunity</span> + 0.10 × <span class="text-red-400 font-semibold">dual_signal</span> + 0.10 × <span class="text-pink-400 font-semibold">cross_source</span>) ×
           <span class="inline-flex items-center gap-1 cursor-help group relative">
             <span class="text-orange-400 font-bold underline decoration-dotted">1.3 bonus</span>
             <i class="fa-solid fa-circle-info text-orange-400/70 text-xs"></i>
@@ -995,10 +1009,10 @@
           </span>
         </p>
         <p class="text-slate-400 mt-2 break-words leading-relaxed">
-          <span class="text-blue-400">frequency</span> = posting frequency ·
+          <span class="text-red-400">frequency</span> = posting frequency ·
           <span class="text-emerald-400">freshness</span> = recency ·
           <span class="text-yellow-400">opportunity</span> = low competition ·
-          <span class="text-purple-400">dual_signal</span> = LinkedIn+SERP ·
+          <span class="text-red-400">dual_signal</span> = LinkedIn+SERP ·
           <span class="text-pink-400">cross_source</span> = multi-platform verified ·
           <span class="text-orange-400">1.3×</span> = cross-platform verified bonus
         </p>
@@ -1019,7 +1033,7 @@
             <div class="accordion-header flex items-center justify-between" @click="toggleRoadmap(gap.skill)">
               <div class="flex items-center gap-2.5">
                 <span class="font-medium text-slate-200 text-sm" x-text="gap.skill"></span>
-                <span class="badge badge-blue text-xs" x-text="'Score: ' + (gap.demand_score || gap.score || 0).toFixed(2)"></span>
+                <span class="badge badge-accent text-xs" x-text="'Score: ' + (gap.demand_score || gap.score || 0).toFixed(2)"></span>
               </div>
               <div class="flex items-center gap-2">
                 <span x-show="roadmaps[gap.skill]?.status === 'pending'" class="badge badge-yellow text-xs">
@@ -1042,7 +1056,7 @@
                   x-text="roadmaps[gap.skill]?.why_it_matters"></p>
                 <div class="flex flex-col gap-0">
                   <template x-for="(step, idx) in (roadmaps[gap.skill]?.steps || [])" :key="idx">
-                    <div class="flex gap-3 py-3 border-b border-blue-500/8 last:border-0">
+                    <div class="flex gap-3 py-3 border-b border-red-600/10 last:border-0">
                       <span class="text-accent font-bold text-xs mt-0.5 shrink-0 w-6" x-text="String(idx + 1).padStart(2, '0')"></span>
                       <div class="flex-1">
                         <p class="font-medium text-slate-200" x-text="step.action"></p>
@@ -1082,7 +1096,7 @@
           <span x-show="loadingSalary && !salaryIntel" class="text-xs text-slate-500 animate-pulse flex items-center gap-1.5">
             <i class="fa-solid fa-circle-notch fa-spin text-xs"></i> Analysing…
           </span>
-          <span x-show="salaryIntel" class="badge badge-blue text-xs" x-text="(salaryIntel?.currency || '') + ' · ' + (locationSearched || 'Global')"></span>
+          <span x-show="salaryIntel" class="badge badge-accent text-xs" x-text="(salaryIntel?.currency || '') + ' · ' + (locationSearched || 'Global')"></span>
         </div>
       </div>
 
@@ -1107,8 +1121,8 @@
               <p class="text-slate-300 font-medium" x-text="(salaryIntel?.currency_symbol || '$') + (salaryIntel?.market_max || 0).toLocaleString()"></p>
             </div>
           </div>
-          <div class="w-full h-2 rounded-full bg-black/40 border border-blue-500/10 overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-blue-700 via-accent to-emerald-400 rounded-full" style="width:100%"></div>
+          <div class="w-full h-2 rounded-full bg-black/40 border border-red-600/10 overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-red-950 via-accent to-red-500 rounded-full" style="width:100%"></div>
           </div>
           <p class="text-xs text-slate-500 mt-2 leading-relaxed italic" x-text="salaryIntel?.market_context"></p>
         </div>
@@ -1121,7 +1135,7 @@
           </h3>
           <div class="flex flex-col gap-0">
             <template x-for="(tip, i) in (salaryIntel?.increase_tips || [])" :key="i">
-              <div class="flex gap-3 py-3 border-b border-blue-500/8 last:border-0 items-start">
+              <div class="flex gap-3 py-3 border-b border-red-600/10 last:border-0 items-start">
                 <span class="text-accent font-bold text-xs mt-0.5 shrink-0 w-5" x-text="String(i+1).padStart(2,'0')"></span>
                 <div class="flex-1">
                   <p class="text-sm text-slate-200" x-text="tip.action"></p>
@@ -1166,8 +1180,8 @@
               </select>
             </div>
             <div class="flex items-end">
-              <label class="flex items-center gap-2 rounded-xl border border-blue-500/15 bg-black/20 px-3 py-2.5 text-xs text-slate-300 w-full cursor-pointer">
-                <input type="checkbox" x-model="fairRemote" class="accent-blue-500">
+              <label class="flex items-center gap-2 rounded-xl border border-red-600/15 bg-black/20 px-3 py-2.5 text-xs text-slate-300 w-full cursor-pointer">
+                <input type="checkbox" x-model="fairRemote" class="accent-red-600">
                 Remote premium
               </label>
             </div>
@@ -1255,7 +1269,7 @@
       </button>
 
       <div x-show="hrSearching" class="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden mt-4">
-        <div class="h-full bg-blue-500 rounded-full cv-upload-bar"></div>
+        <div class="h-full bg-red-600 rounded-full cv-upload-bar"></div>
       </div>
       <div x-show="hrSearching" class="mt-3 text-xs text-slate-500">
         <span x-text="hrScanStatus || 'Identifying competitors via Bright Data SERP → scraping job postings → fetching market news → Claude AI analysis'"></span>
@@ -1266,7 +1280,7 @@
       </div>
       <div x-show="hrPostings > 0 && !hrSearching" class="mt-3 flex flex-col gap-1.5">
         <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
-          <span>Auto-detected competitor: <span x-text="hrCompany" class="text-blue-300 font-semibold"></span></span>
+          <span>Auto-detected competitor: <span x-text="hrCompany" class="text-red-200 font-semibold"></span></span>
           <span>Role analyzed: <span x-text="hrRole" class="text-emerald-300 font-semibold"></span></span>
           <span><span x-text="hrPostings" class="text-slate-200 font-semibold"></span> postings scanned via Bright Data</span>
           <span x-show="hrNewsSignals" class="text-emerald-400">+ market news signals included</span>
@@ -1277,8 +1291,8 @@
 
     <!-- ── Empty state ── -->
     <div x-show="!hrSearching && hrSkills.length === 0" class="flex flex-col items-center justify-center py-20 text-center gap-3">
-      <div class="w-16 h-16 rounded-2xl bg-blue-500/10 border border-blue-500/15 flex items-center justify-center">
-        <i class="fa-solid fa-satellite-dish text-blue-400/60 text-2xl"></i>
+      <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+        <i class="fa-solid fa-satellite-dish text-red-400/60 text-2xl"></i>
       </div>
       <p class="text-slate-400 text-sm font-medium">No scan run yet</p>
       <p class="text-slate-600 text-xs">Fill in company, role, and market above then click Run Market Intelligence</p>
@@ -1293,9 +1307,9 @@
             <h2 class="font-semibold text-slate-200 text-base">Scanned Competitor</h2>
           </div>
           <div class="grid grid-cols-2 gap-3">
-            <div class="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3">
+            <div class="rounded-xl border border-red-600/20 bg-red-600/5 p-3">
               <p class="text-xs text-slate-500 mb-1">Competitor</p>
-              <p class="text-sm font-bold text-cyan-200 truncate" x-text="hrCompany"></p>
+              <p class="text-sm font-bold text-red-200 truncate" x-text="hrCompany"></p>
             </div>
             <div class="rounded-xl border border-slate-600/40 bg-slate-800/40 p-3">
               <p class="text-xs text-slate-500 mb-1">Postings</p>
@@ -1312,16 +1326,16 @@
         <div class="card" x-show="hrPostingLinks.length > 0">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <i class="fa-brands fa-linkedin text-cyan-400 text-sm"></i>
+              <i class="fa-brands fa-linkedin text-red-400 text-sm"></i>
               <h2 class="font-semibold text-slate-200 text-sm">Scraped Job Posts</h2>
             </div>
-            <span class="badge badge-blue text-xs" x-text="hrPostingLinks.length"></span>
+            <span class="badge badge-accent text-xs" x-text="hrPostingLinks.length"></span>
           </div>
           <div class="flex flex-col gap-2 max-h-[48vh] overflow-y-auto scroll-panel">
             <template x-for="(url, i) in hrPostingLinks.slice(0, 12)" :key="i">
               <a :href="url" target="_blank" rel="noopener"
-                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/40 border border-cyan-500/10 hover:border-cyan-500/30 hover:bg-cyan-500/5 transition-all text-xs text-cyan-300 group">
-                <i class="fa-brands fa-linkedin text-cyan-400/60 shrink-0 text-sm"></i>
+                class="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800/40 border border-red-600/10 hover:border-red-500/30 hover:bg-red-600/5 transition-all text-xs text-red-200 group">
+                <i class="fa-brands fa-linkedin text-red-400/60 shrink-0 text-sm"></i>
                 <div class="flex flex-col min-w-0">
                   <span class="font-medium text-slate-200" x-text="'Posting #' + (i+1)"></span>
                   <span class="truncate text-slate-500" x-text="url.replace('https://www.linkedin.com/jobs/view/','').replace(/\?.*/, '').replace(/\/$/, '')"></span>
@@ -1368,8 +1382,8 @@
         <!-- 3 KPI tiles -->
         <div class="grid grid-cols-3 gap-3 mb-4">
           <!-- Competitor -->
-          <div class="rounded-xl border border-blue-500/20 bg-blue-500/5 p-3 text-center">
-            <p class="text-lg font-bold text-blue-300 truncate" x-text="hrCompany"></p>
+          <div class="rounded-xl border border-red-600/20 bg-red-600/5 p-3 text-center">
+            <p class="text-lg font-bold text-red-200 truncate" x-text="hrCompany"></p>
             <p class="text-xs text-slate-500 mt-0.5">Competitor scanned</p>
           </div>
           <!-- Top signal -->
@@ -1399,10 +1413,10 @@
             </h2>
             <p class="text-slate-500 text-xs mt-0.5">
               <template x-if="hrDataScope === 'company'">
-                <span>What <span class="text-blue-300 font-medium" x-text="hrCompany"></span>'s job postings reveal — and the gap vs your team</span>
+                <span>What <span class="text-red-200 font-medium" x-text="hrCompany"></span>'s job postings reveal — and the gap vs your team</span>
               </template>
               <template x-if="hrDataScope !== 'company'">
-                <span>Market-wide <span class="text-blue-300 font-medium" x-text="hrRole"></span> signals in <span x-text="hrLocation || 'this market'"></span> — limited <span x-text="hrCompany"></span>-specific postings found</span>
+                <span>Market-wide <span class="text-red-200 font-medium" x-text="hrRole"></span> signals in <span x-text="hrLocation || 'this market'"></span> — limited <span x-text="hrCompany"></span>-specific postings found</span>
               </template>
             </p>
           </div>
@@ -1483,7 +1497,7 @@
               <span x-text="hrDataScope === 'company' ? hrCompany + ' specific' : hrRole + ' market-wide'"></span>
             </p>
           </div>
-          <span class="badge badge-blue px-3 py-1" x-text="hrCompany"></span>
+          <span class="badge badge-accent px-3 py-1" x-text="hrCompany"></span>
         </div>
         <!-- Skill Priority Tiles — pure HTML, no chart library, no overflow issues -->
         <div class="grid gap-3 mb-4" :style="'grid-template-columns: repeat(' + Math.min(hrSkills.length, 5) + ', minmax(0, 1fr))'">
@@ -1491,13 +1505,13 @@
             <div class="rounded-xl p-3 flex flex-col items-center gap-2 border transition-all text-center"
                  :class="i === 0 ? 'bg-red-500/10 border-red-500/30' :
                          i < 3   ? 'bg-amber-500/8 border-amber-500/20' :
-                                   'bg-blue-500/5 border-blue-500/15'">
+                                   'bg-red-600/5 border-red-600/15'">
               <span class="w-3 h-3 rounded-full shrink-0"
-                    :class="i === 0 ? 'bg-red-500' : i < 3 ? 'bg-amber-400' : 'bg-blue-400'"></span>
+                    :class="i === 0 ? 'bg-red-500' : i < 3 ? 'bg-amber-400' : 'bg-red-500'"></span>
               <p class="font-semibold text-slate-100 text-xs capitalize leading-snug w-full" x-text="sk.skill"></p>
               <p class="text-xs font-mono text-slate-500" x-text="sk.score.toFixed(3)"></p>
               <span class="text-xs font-semibold"
-                    :class="i === 0 ? 'text-red-400' : i < 3 ? 'text-amber-400' : 'text-blue-400'"
+                    :class="i === 0 ? 'text-red-400' : i < 3 ? 'text-amber-400' : 'text-red-400'"
                     x-text="i === 0 ? 'Hire now' : i < 3 ? 'Develop team' : 'Monitor'"></span>
             </div>
           </template>
@@ -1508,7 +1522,7 @@
           <button @click="open=!open"
             class="w-full flex items-center justify-between text-xs text-slate-500 hover:text-slate-300 transition-colors mb-1">
             <span class="flex items-center gap-1.5">
-              <i class="fa-solid fa-table-list text-blue-400/60 text-xs"></i>
+              <i class="fa-solid fa-table-list text-red-400/60 text-xs"></i>
               All <span x-text="hrSkills.length"></span> skills ranked
             </span>
             <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
@@ -1517,7 +1531,7 @@
             <div class="overflow-x-auto mt-2">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="border-b border-blue-500/10 text-left">
+                  <tr class="border-b border-red-600/10 text-left">
                     <th class="pb-2 section-label w-10">#</th>
                     <th class="pb-2 section-label">Skill</th>
                     <th class="pb-2 section-label">Score</th>
@@ -1526,14 +1540,14 @@
                 </thead>
                 <tbody>
                   <template x-for="(sk, idx) in hrSkills.slice(0, 12)" :key="sk.skill">
-                    <tr class="border-b border-blue-500/8 hover:bg-blue-500/5 transition-colors">
+                    <tr class="border-b border-red-600/10 hover:bg-red-600/5 transition-colors">
                       <td class="py-2 text-slate-600 font-mono text-xs" x-text="idx + 1"></td>
                       <td class="py-2 font-medium text-slate-200 capitalize" x-text="sk.skill"></td>
                       <td class="py-2">
                         <div class="flex items-center gap-2">
-                          <div class="bg-black/40 border border-blue-500/10 rounded-full h-1 w-20">
+                          <div class="bg-black/40 border border-red-600/10 rounded-full h-1 w-20">
                             <div class="h-1 rounded-full transition-all"
-                              :class="idx === 0 ? 'bg-red-500' : idx < 3 ? 'bg-amber-400' : 'bg-blue-400'"
+                              :class="idx === 0 ? 'bg-red-500' : idx < 3 ? 'bg-amber-400' : 'bg-red-500'"
                               :style="'width:' + Math.min(100, (sk.score / (hrSkills[0]?.score || 1)) * 100) + '%'"></div>
                           </div>
                           <span class="text-xs text-slate-500 font-mono" x-text="sk.score.toFixed(3)"></span>
@@ -1541,7 +1555,7 @@
                       </td>
                       <td class="py-2">
                         <span class="text-xs font-medium"
-                          :class="idx === 0 ? 'text-red-400' : idx < 3 ? 'text-amber-400' : 'text-blue-400'"
+                          :class="idx === 0 ? 'text-red-400' : idx < 3 ? 'text-amber-400' : 'text-red-400'"
                           x-text="idx === 0 ? 'Critical' : idx < 3 ? 'Growing' : 'Emerging'"></span>
                       </td>
                     </tr>
@@ -1555,9 +1569,9 @@
                 <i class="fa-solid fa-function text-xs"></i> How score is computed
                 <i class="fa-solid fa-chevron-down text-xs transition-transform" :class="f ? 'rotate-180' : ''"></i>
               </button>
-              <div x-show="f" x-transition class="mt-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-blue-500/20 text-xs">
+              <div x-show="f" x-transition class="mt-2 px-3 py-2.5 rounded-lg bg-slate-800/60 border border-red-600/20 text-xs">
                 <p class="font-mono text-slate-400 break-words leading-relaxed">
-                  score = (0.35 × <span class="text-blue-400">freq</span> + 0.25 × <span class="text-emerald-400">freshness</span> + 0.20 × <span class="text-yellow-400">opportunity</span> + 0.20 × <span class="text-purple-400">signals</span>) × <span class="text-orange-400">1.3 bonus</span>
+                  score = (0.35 × <span class="text-red-400">freq</span> + 0.25 × <span class="text-emerald-400">freshness</span> + 0.20 × <span class="text-yellow-400">opportunity</span> + 0.20 × <span class="text-red-400">signals</span>) × <span class="text-orange-400">1.3 bonus</span>
                 </p>
               </div>
             </div>
@@ -1568,7 +1582,7 @@
       <!-- Section 4: Training Academy Roadmap -->
       <div class="card">
         <h2 class="font-semibold text-slate-200 flex items-center gap-2 text-base mb-1">
-          <i class="fa-solid fa-graduation-cap text-purple-400"></i> Internal Training Academy Roadmap
+          <i class="fa-solid fa-graduation-cap text-red-400"></i> Internal Training Academy Roadmap
         </h2>
         <p class="text-slate-500 text-xs mb-5">Upskill your existing team toward the skills the market demands — hand this to your L&D team</p>
         <div x-show="hrLoadingRec && !hrTrainingRoadmap?.length" class="flex items-center gap-2 text-slate-500 text-xs py-3">
@@ -1576,10 +1590,10 @@
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4" x-show="hrTrainingRoadmap?.length > 0">
           <template x-for="(item, i) in hrTrainingRoadmap" :key="i">
-            <div class="rounded-xl border border-purple-500/15 bg-slate-900/40 p-4 flex flex-col gap-3">
+            <div class="rounded-xl border border-red-600/15 bg-slate-900/40 p-4 flex flex-col gap-3">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <span class="w-7 h-7 rounded-full bg-purple-500/20 border border-purple-500/30 text-purple-300 text-xs font-bold flex items-center justify-center" x-text="i+1"></span>
+                  <span class="w-7 h-7 rounded-full bg-red-600/20 border border-red-500/30 text-red-200 text-xs font-bold flex items-center justify-center" x-text="i+1"></span>
                   <span class="font-semibold text-slate-100 text-sm capitalize" x-text="item.skill"></span>
                 </div>
                 <span class="text-xs text-slate-500 flex items-center gap-1 shrink-0">
@@ -1596,7 +1610,7 @@
                 </template>
               </ul>
               <a :href="item.link || '#'" target="_blank" rel="noopener"
-                class="mt-auto flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 text-blue-300 hover:bg-blue-500/20 transition-all text-xs font-medium">
+                class="mt-auto flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-600/10 border border-red-600/20 text-red-200 hover:bg-red-600/20 transition-all text-xs font-medium">
                 <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                 <span x-text="item.resource"></span>
               </a>
@@ -1659,8 +1673,8 @@
                     <div class="flex flex-col gap-1">
                       <template x-for="(url, pi) in p.profile_urls" :key="pi">
                         <a :href="url" target="_blank" rel="noopener"
-                          class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all text-xs text-blue-300 group">
-                          <i class="fa-brands fa-linkedin text-blue-400 text-xs shrink-0"></i>
+                          class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-red-600/10 border border-red-600/20 hover:bg-red-600/20 transition-all text-xs text-red-200 group">
+                          <i class="fa-brands fa-linkedin text-red-400 text-xs shrink-0"></i>
                           <span class="truncate" x-text="url.replace('https://www.linkedin.com/in/','').replace(/\?.*$/,'').replace(/-/g,' ')"></span>
                           <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-auto opacity-60 group-hover:opacity-100 shrink-0"></i>
                         </a>
@@ -1669,8 +1683,8 @@
                   </div>
                   <!-- Fallback: LinkedIn people search (always shown) -->
                   <a :href="p.linkedin_search_url" target="_blank" rel="noopener"
-                     class="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 transition-all text-xs text-blue-300 group w-full">
-                    <i class="fa-brands fa-linkedin text-blue-400 text-xs shrink-0"></i>
+                     class="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/10 border border-red-600/20 hover:bg-red-600/20 transition-all text-xs text-red-200 group w-full">
+                    <i class="fa-brands fa-linkedin text-red-400 text-xs shrink-0"></i>
                     <span class="truncate">Search LinkedIn — open to work · <span x-text="hrRole || 'this role'"></span></span>
                     <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-auto opacity-60 group-hover:opacity-100 shrink-0"></i>
                   </a>
@@ -1711,7 +1725,7 @@
       <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
         <div>
           <div class="flex items-center gap-2 mb-1">
-            <i class="fa-solid fa-graduation-cap text-purple-400 text-sm"></i>
+            <i class="fa-solid fa-graduation-cap text-red-400 text-sm"></i>
             <span class="section-label">Future-State Curriculum Engine</span>
           </div>
           <h1 class="text-2xl font-bold text-white tracking-tight">Graduate readiness from live market signals</h1>
@@ -1766,8 +1780,8 @@
       <section class="min-w-0">
 
     <div x-show="!uniReport && !uniScanning" class="flex flex-col items-center justify-center py-20 text-center gap-3">
-      <div class="w-16 h-16 rounded-2xl bg-purple-500/10 border border-purple-500/15 flex items-center justify-center">
-        <i class="fa-solid fa-map-location-dot text-purple-400/70 text-2xl"></i>
+      <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+        <i class="fa-solid fa-map-location-dot text-red-400/70 text-2xl"></i>
       </div>
       <p class="text-slate-400 text-sm font-medium">No curriculum scan yet</p>
       <p class="text-slate-600 text-xs">Run the scan to compare course coverage against current hiring demand.</p>
@@ -1795,7 +1809,7 @@
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-5">
           <div>
             <h2 class="font-semibold text-slate-200 flex items-center gap-2 text-base">
-              <i class="fa-solid fa-gauge-high text-purple-400"></i>
+              <i class="fa-solid fa-gauge-high text-red-400"></i>
               Curriculum Readiness
             </h2>
             <p class="text-xs text-slate-500 mt-1">
@@ -1808,11 +1822,11 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-          <div class="rounded-xl border border-purple-500/20 bg-purple-500/5 p-4">
+          <div class="rounded-xl border border-red-600/20 bg-red-600/5 p-4">
             <p class="text-xs text-slate-500 mb-1">Readiness</p>
             <p class="text-3xl font-bold text-white" x-text="uniReport?.readiness + '%'"></p>
             <div class="h-1.5 rounded-full bg-slate-800 mt-3 overflow-hidden">
-              <div class="h-full rounded-full bg-purple-400" :style="'width:' + uniReport?.readiness + '%'"></div>
+              <div class="h-full rounded-full bg-red-500" :style="'width:' + uniReport?.readiness + '%'"></div>
             </div>
           </div>
           <div class="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4">
@@ -1841,7 +1855,7 @@
           </h2>
           <div class="flex flex-col gap-3">
             <template x-for="skill in uniReport?.skills" :key="skill.name">
-              <div class="rounded-xl border border-blue-500/10 bg-black/20 p-3">
+              <div class="rounded-xl border border-red-600/10 bg-black/20 p-3">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <span class="text-sm font-semibold text-slate-200" x-text="skill.name"></span>
                   <span class="text-xs font-semibold"
@@ -1863,14 +1877,14 @@
 
         <div class="card">
           <h2 class="font-semibold text-slate-200 flex items-center gap-2 mb-4">
-            <i class="fa-solid fa-clipboard-check text-blue-400 text-sm"></i>
+            <i class="fa-solid fa-clipboard-check text-red-400 text-sm"></i>
             Course Actions
           </h2>
           <div class="flex flex-col gap-3">
             <template x-for="(action, i) in uniReport?.actions" :key="action.title">
               <div class="rounded-xl border border-white/5 bg-black/20 p-4">
                 <div class="flex items-start gap-3">
-                  <span class="w-7 h-7 rounded-full bg-blue-500/15 border border-blue-500/25 text-blue-300 text-xs font-bold flex items-center justify-center shrink-0" x-text="i+1"></span>
+                  <span class="w-7 h-7 rounded-full bg-red-600/15 border border-red-500/25 text-red-200 text-xs font-bold flex items-center justify-center shrink-0" x-text="i+1"></span>
                   <div>
                     <p class="text-sm font-semibold text-slate-100" x-text="action.title"></p>
                     <p class="text-xs text-slate-400 leading-relaxed mt-1" x-text="action.detail"></p>
@@ -1898,7 +1912,7 @@
             <p class="text-sm text-slate-200 font-semibold" x-text="uniReport?.capstone.title"></p>
             <p class="text-xs text-slate-500 leading-relaxed mt-2" x-text="uniReport?.capstone.detail"></p>
           </div>
-          <div class="rounded-xl border border-blue-500/15 bg-blue-500/5 p-4">
+          <div class="rounded-xl border border-red-600/15 bg-red-600/5 p-4">
             <p class="section-label mb-2">Deliverables</p>
             <ul class="flex flex-col gap-2">
               <template x-for="item in uniReport?.capstone.deliverables" :key="item">
@@ -1906,11 +1920,11 @@
               </template>
             </ul>
           </div>
-          <div class="rounded-xl border border-purple-500/15 bg-purple-500/5 p-4">
+          <div class="rounded-xl border border-red-600/15 bg-red-600/5 p-4">
             <p class="section-label mb-2">Assessment Signals</p>
             <ul class="flex flex-col gap-2">
               <template x-for="item in uniReport?.capstone.signals" :key="item">
-                <li class="text-xs text-slate-300 flex gap-2"><i class="fa-solid fa-circle-dot text-purple-400 mt-0.5"></i><span x-text="item"></span></li>
+                <li class="text-xs text-slate-300 flex gap-2"><i class="fa-solid fa-circle-dot text-red-400 mt-0.5"></i><span x-text="item"></span></li>
               </template>
             </ul>
           </div>
@@ -1920,6 +1934,50 @@
       </section>
     </div>
   </main>
+
+  <footer class="relative z-10 border-t border-red-600/15 bg-black/60">
+    <div class="max-w-screen-xl mx-auto px-4 sm:px-6 py-8">
+      <div class="grid grid-cols-1 md:grid-cols-[1.2fr_1fr_1fr] gap-6">
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-red-600 to-rose-800 flex items-center justify-center shadow-[0_0_20px_rgba(220,38,38,0.22)]">
+              <i class="fa-solid fa-wave-square text-white text-xs"></i>
+            </div>
+            <div>
+              <p class="font-bold text-white">Signal Path</p>
+              <p class="text-xs text-slate-500">Labor market intelligence for careers, employers, and universities.</p>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 leading-relaxed max-w-md">
+            A closed-loop intelligence workspace that turns job demand, candidate gaps, and curriculum signals into clearer decisions.
+          </p>
+        </div>
+        <div>
+          <p class="section-label mb-3">Quick Links</p>
+          <div class="flex flex-col gap-2 text-sm">
+            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('seeker')">Individual Intelligence</button>
+            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('hr')">Enterprise Intelligence</button>
+            <button class="text-left text-slate-400 hover:text-red-200 transition-colors" @click="setActiveTab('university')">University Curriculum Engine</button>
+          </div>
+        </div>
+        <div>
+          <p class="section-label mb-3">Contact</p>
+          <div class="rounded-xl border border-red-600/15 bg-red-600/5 p-4">
+            <p class="text-sm font-semibold text-white">Explore Signal Path</p>
+            <p class="text-xs text-slate-400 mt-1">Use the Enterprise view to scan competitors and identify market-ready talent signals.</p>
+            <button class="btn-primary mt-4 w-full py-2.5 text-sm gap-2" @click="setActiveTab('hr')">
+              <i class="fa-solid fa-paper-plane"></i>
+              Contact Enterprise
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-8 pt-5 border-t border-white/5 flex flex-col sm:flex-row justify-between gap-3 text-xs text-slate-600">
+        <span>© 2026 Signal Path. All rights reserved.</span>
+        <span>Built for live labor-market intelligence.</span>
+      </div>
+    </div>
+  </footer>
 
   <!-- ══════════════════════════════════════════
        ALPINE.JS APP (unchanged logic)

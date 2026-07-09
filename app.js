@@ -15,11 +15,11 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           dataLabels: { position: 'top' } } },
         dataLabels: { enabled: true, formatter: v => v.toFixed(3),
           style: { colors: ['#94a3b8'], fontSize: '11px' } },
-        colors: ['#06b6d4'],
+        colors: ['#dc2626'],
         xaxis: { categories: labels, labels: { style: { colors: '#64748b' } } },
         yaxis: { labels: { minWidth: 116, maxWidth: 170, offsetX: -4,
           style: { colors: '#94a3b8', fontSize: '12px' } } },
-        grid: { borderColor: 'rgba(6,182,212,0.08)', padding: { left: 6, right: 14 } },
+        grid: { borderColor: 'rgba(220,38,38,0.08)', padding: { left: 6, right: 14 } },
         theme: { mode: 'dark' },
         tooltip: { theme: 'dark' },
         responsive: [{
@@ -131,10 +131,10 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
             particlesJS('particles-js', {
               particles: {
                 number: { value: 40, density: { enable: true, value_area: 900 } },
-                color: { value: '#06b6d4' },
+                color: { value: '#dc2626' },
                 opacity: { value: 0.15, random: true },
                 size: { value: 2, random: true },
-                line_linked: { enable: true, distance: 150, color: '#06b6d4', opacity: 0.06, width: 1 },
+                line_linked: { enable: true, distance: 150, color: '#dc2626', opacity: 0.06, width: 1 },
                 move: { enable: true, speed: 0.6, random: true, out_mode: 'out' },
               },
               interactivity: {
@@ -488,22 +488,22 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
             if (data.status === 'rate_limited') {
               Swal.fire({ icon: 'warning', title: 'Rate Limited', text: data.message || 'Too many searches. Please wait 1 hour.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
               return;
             }
             if (data.status === 'invalid_query') {
               Swal.fire({ icon: 'info', title: 'Invalid Query', text: data.message || 'Please enter a valid job title.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
               return;
             }
             if (data.status !== 'ok') {
               Swal.fire({ icon: 'error', title: 'Search Failed', text: data.message || 'Something went wrong. Try again.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
               return;
             }
             if (!data.jobs || data.jobs.length === 0) {
               Swal.fire({ icon: 'info', title: 'No Results', text: 'No job postings found. Try a different role or location.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
               return;
             }
 
@@ -519,12 +519,12 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               const locLabel = this.locationSearched ? `for "${this.locationSearched}" ` : '';
               Swal.fire({ icon: 'success', title: 'Real jobs found via web search',
                 text: `LinkedIn/Indeed returned 0 results ${locLabel}— found real ${this.role} jobs from regional job boards via Bright Data web search.`,
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4',
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626',
                 timer: 6000, timerProgressBar: true });
             } else if (this.dataSource === 'fallback') {
               Swal.fire({ icon: 'warning', title: 'Live data unavailable',
                 text: 'Showing cached example jobs. Do not apply to these listings.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4',
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626',
                 timer: 5000, timerProgressBar: true });
             }
 
@@ -538,7 +538,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
           } catch (err) {
             Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not reach the server. Check your connection.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
           } finally {
             this.searching = false;
             clearInterval(this._stepTimer);
@@ -742,7 +742,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           if (this.hrSearching) return;
           if (!this.hrYourCompany.trim()) {
             Swal.fire({ icon: 'info', title: 'Required', text: 'Please enter your company name.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
             return;
           }
           this.hrSearching = true;
@@ -805,11 +805,11 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               this.fetchHRRecommendations();
             } else {
               Swal.fire({ icon: 'error', title: 'Scan Failed', text: data.message || 'No postings found for this competitor.',
-                background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
             }
           } catch {
             Swal.fire({ icon: 'error', title: 'Network Error', text: 'Could not reach the server.',
-              background: '#0d1526', color: '#e2e8f0', confirmButtonColor: '#06b6d4' });
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
           } finally { this.hrSearching = false; this.hrScanStatus = ''; }
         },
 

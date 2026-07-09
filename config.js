@@ -6,11 +6,11 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        canvas: '#04060f',
-        surface: '#090e1c',
-        card: '#0d1527',
-        border: 'rgba(6,182,212,0.15)',
-        accent: '#06b6d4',
+        canvas: '#050505',
+        surface: '#101010',
+        card: '#151515',
+        border: 'rgba(220,38,38,0.15)',
+        accent: '#ef4444',
       },
       fontFamily: { sans: ['Inter', 'sans-serif'] },
     },

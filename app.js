@@ -48,6 +48,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
     function app() {
       return {
         activeTab: 'home',
+        mobileMenuOpen: false,
         role: '',
         location: '',
         skills: '',
@@ -80,8 +81,8 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           'Checking your target role…',
           'Finding relevant job postings…',
           'Reading verified market data…',
-          'Scam detection + 5-layer verification…',
-          'AI analysis extracts skill signals…',
+          'Checking credibility signals…',
+          'AI-powered analysis extracts skill signals…',
           'Ranking gaps by market demand score…'
         ],
         searchStepIdx: 0,
@@ -167,6 +168,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         },
 
         setActiveTab(tab) {
+          this.mobileMenuOpen = false;
           if (this.activeTab === tab) return;
           this.activeTab = tab;
           if (tab === 'hr') this.maybeInitRadar();
@@ -785,7 +787,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               this.hrScanStatus = `Step 2/3 — Scanning ${competitor}'s live ${detectedRole} postings…`;
             }
 
-            // Step 2: scrape competitor
+            // Step 2: read competitor postings
             const res = await fetch(`${API}/api/hr/competitors`, {
               method: 'POST', headers: _headers(),
               body: JSON.stringify({ company_name: competitor, role: this.hrRole, location: this.hrLocation }),

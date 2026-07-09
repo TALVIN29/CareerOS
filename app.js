@@ -175,6 +175,33 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           this.$nextTick(() => this.animateActiveView());
         },
 
+        navCtaLabel() {
+          return {
+            home: 'Get Started',
+            seeker: 'Start Career Analysis',
+            hr: 'Run Enterprise Scan',
+            university: 'Benchmark Curriculum',
+          }[this.activeTab] || 'Get Started';
+        },
+
+        navCtaAction() {
+          if (this.activeTab === 'home') {
+            document.getElementById('paths')?.scrollIntoView({ behavior: 'smooth' });
+            return;
+          }
+          if (this.activeTab === 'seeker') {
+            document.querySelector('[x-model="role"]')?.focus();
+            return;
+          }
+          if (this.activeTab === 'hr') {
+            document.querySelector('[x-model="hrYourCompany"]')?.focus();
+            return;
+          }
+          if (this.activeTab === 'university') {
+            document.querySelector('[x-model="uniInstitution"]')?.focus();
+          }
+        },
+
         animateActiveView() {
           const el = this.$refs[`${this.activeTab}View`];
           if (!el) return;

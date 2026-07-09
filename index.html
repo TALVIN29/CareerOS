@@ -79,37 +79,17 @@
             :class="activeTab === 'university' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('university')">
             <i class="fa-solid fa-graduation-cap mr-1.5 text-xs"></i>
-            <span class="hidden sm:inline">University</span>
+            <span class="hidden sm:inline">Universities</span>
             <span class="sm:hidden">Uni</span>
-          </button>
-          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
-            @click="setActiveTab('home'); $nextTick(() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }))">
-            Features
-          </button>
-          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
-            @click="setActiveTab('home'); $nextTick(() => document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' }))">
-            Demo
-          </button>
-          <button class="hidden xl:inline-flex px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-white transition-all"
-            @click="setActiveTab('home'); $nextTick(() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' }))">
-            Contact
           </button>
         </nav>
 
-        <!-- Status -->
+        <!-- CTA -->
         <div class="hidden sm:flex items-center gap-2 flex-shrink-0">
-          <button class="hidden md:inline-flex btn-primary px-4 py-2 text-xs gap-2" @click="setActiveTab('seeker')">
+          <button class="hidden md:inline-flex btn-primary px-4 py-2 text-xs gap-2" @click="navCtaAction()">
             <i class="fa-solid fa-arrow-trend-up"></i>
-            Start Career Analysis
+            <span x-text="navCtaLabel()"></span>
           </button>
-          <div x-show="!circuitOpen" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-            <div class="status-dot status-live"></div>
-            <span class="text-xs font-medium text-emerald-400">Live</span>
-          </div>
-          <div x-show="circuitOpen" class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-            <div class="status-dot bg-amber-400"></div>
-            <span class="text-xs font-medium text-amber-400">Demo</span>
-          </div>
         </div>
         <button class="md:hidden w-10 h-10 rounded-xl border border-red-600/20 bg-black/40 text-slate-200 flex items-center justify-center"
           @click="mobileMenuOpen = !mobileMenuOpen" :aria-expanded="mobileMenuOpen.toString()" aria-label="Open navigation menu">
@@ -131,9 +111,9 @@
           <button class="px-3 py-3 rounded-xl text-left text-sm font-medium transition-all"
             :class="activeTab === 'university' ? 'bg-red-600 text-white' : 'text-slate-100 hover:bg-red-600/10 hover:text-white'"
             @click="setActiveTab('university')"><i class="fa-solid fa-graduation-cap mr-2 text-xs"></i> Universities</button>
-          <button class="btn-primary mt-2 w-full py-3 gap-2" @click="setActiveTab('seeker')">
+          <button class="btn-primary mt-2 w-full py-3 gap-2" @click="navCtaAction(); mobileMenuOpen = false">
             <i class="fa-solid fa-arrow-trend-up"></i>
-            Start Career Analysis
+            Get Started
           </button>
         </div>
       </div>
@@ -445,12 +425,12 @@
             </p>
             <div class="mt-6 flex flex-col sm:flex-row xl:flex-col 2xl:flex-row gap-3">
               <button class="btn-primary px-5 py-3 gap-2" @click="document.querySelector('[x-model=&quot;role&quot;]')?.focus()">
-                Search Jobs Now
+                Start Career Analysis
                 <i class="fa-solid fa-arrow-right"></i>
               </button>
-              <button class="btn-ghost px-5 py-3 gap-2" @click="setActiveTab('university')">
-                <i class="fa-regular fa-circle-play"></i>
-                Watch Demo
+              <button class="btn-ghost px-5 py-3 gap-2" @click="setActiveTab('home'); $nextTick(() => document.getElementById('paths')?.scrollIntoView({ behavior: 'smooth' }))">
+                <i class="fa-solid fa-compass"></i>
+                Explore Platform
               </button>
             </div>
           </div>

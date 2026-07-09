@@ -146,7 +146,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           }
 
           // Init typed.js
-          if (typeof Typed !== 'undefined') {
+          if (typeof Typed !== 'undefined' && document.querySelector('#typed-hero')) {
             new Typed('#typed-hero', {
               strings: [
                 'Know exactly which skills the market demands.',

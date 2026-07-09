@@ -103,151 +103,305 @@
   <main x-show="activeTab === 'seeker'" x-ref="seekerView" class="view-panel">
 
     <!-- ═══ HERO STATE ═══ -->
-    <div x-show="!jobs.length" class="hero-shell min-h-[calc(100vh-66px)] flex flex-col items-center justify-start px-4 pt-10 pb-14 relative">
+    <div x-show="!jobs.length" class="hero-shell min-h-[calc(100vh-66px)] px-4 sm:px-6 py-5 relative">
+      <div class="max-w-[1560px] mx-auto grid grid-cols-1 xl:grid-cols-[390px_1fr_360px] gap-4 items-stretch">
 
-      <!-- Headline -->
-      <div class="text-center mb-8 max-w-4xl" data-aos="fade-up">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600/10 border border-red-600/20 text-xs text-red-200 font-medium mb-5">
-          <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-          Live labor market data via Bright Data
-        </div>
-        <h1 class="hero-headline text-3xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight mb-5">
-          LinkedIn shows you jobs.<br>
-          <span class="text-accent">Signal Path shows you</span><br>
-          what's standing between you.
-        </h1>
-        <p class="text-slate-400 text-base sm:text-lg max-w-lg mx-auto min-h-[28px]">
-          <span id="typed-hero"></span>
-        </p>
-        <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
-          <button class="btn-primary px-6 py-3 gap-2" @click="document.querySelector('[x-model=&quot;role&quot;]')?.focus()">
-            <i class="fa-solid fa-magnifying-glass-chart"></i>
-            Explore Services
-          </button>
-          <button class="btn-ghost px-6 py-3 gap-2" @click="setActiveTab('hr')">
-            <i class="fa-solid fa-building"></i>
-            Contact Enterprise
-          </button>
-        </div>
-      </div>
-
-      <!-- Agent pipeline — visible BEFORE search (for judges) -->
-      <div class="hidden 2xl:flex items-center gap-2 mb-8 flex-wrap justify-center text-xs" data-aos="fade-up" data-aos-delay="50">
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-brands fa-linkedin text-red-400"></i> Bright Data SERP
-        </span>
-        <i class="fa-solid fa-arrow-right text-slate-700"></i>
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-solid fa-database text-red-400"></i> LinkedIn Dataset
-        </span>
-        <i class="fa-solid fa-arrow-right text-slate-700"></i>
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-solid fa-shield-check text-emerald-400"></i> Scam Detection
-        </span>
-        <i class="fa-solid fa-arrow-right text-slate-700"></i>
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-slate-300">
-          <i class="fa-solid fa-robot text-red-400"></i> Claude AI Analysis
-        </span>
-        <i class="fa-solid fa-arrow-right text-slate-700"></i>
-        <span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-600/20 border border-red-500/40 text-red-200 font-medium">
-          <i class="fa-solid fa-chart-bar text-red-400"></i> Your Gap Report
-        </span>
-      </div>
-
-      <!-- Search card -->
-      <div class="w-full max-w-xl" data-aos="fade-up" data-aos-delay="100">
-        <div class="glass-card card-glow" style="padding: 1.75rem;">
-
-          <!-- Job Title -->
-          <div class="mb-4">
-            <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-briefcase text-red-400/70"></i>
-              Job Title
-              <span x-show="inferredRole && role === inferredRole" class="badge badge-green text-xs ml-auto">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Auto-detected from CV
-              </span>
-            </label>
-            <input class="input-field py-3 text-base transition-all" type="text" x-model="role"
-              :class="roleError ? 'border-red-500/60 ring-2 ring-red-500/20 animate-shake' : (inferredRole && role === inferredRole ? 'border-emerald-500/40' : '')"
-              @input="roleError = false" placeholder="e.g. Data Analyst, Software Engineer" @keydown.enter="doSearch()" />
-            <p x-show="roleError" class="text-red-400 text-xs mt-1.5 flex items-center gap-1">
-              <i class="fa-solid fa-circle-exclamation"></i> Enter a job title or upload your CV first
-            </p>
-          </div>
-
-          <!-- Location -->
-          <div class="mb-4">
-            <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-red-400/70"></i>
-              Location
-            </label>
-            <input class="input-field py-3 text-base" type="text" x-model="location"
-              placeholder="e.g. Kuala Lumpur · Singapore · London" @keydown.enter="doSearch()" />
-          </div>
-
-          <!-- CV Upload (primary action) -->
-          <label class="flex items-center gap-3 w-full px-4 py-3.5 border border-dashed border-red-600/20 rounded-xl cursor-pointer hover:border-red-500/40 hover:bg-red-600/5 transition-all group">
-            <div class="w-9 h-9 rounded-lg bg-red-600/10 border border-red-600/15 flex items-center justify-center group-hover:bg-red-600/15 transition-all shrink-0">
-              <i class="fa-solid fa-cloud-arrow-up text-red-400"></i>
+        <!-- Left Story Rail -->
+        <section class="card min-h-[680px] flex flex-col justify-between p-5 lg:p-6 overflow-hidden">
+          <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-red-600/10 border border-red-600/20 text-xs text-red-200 font-medium mb-5">
+              <i class="fa-regular fa-gem text-red-400"></i>
+              AI-Powered Job Intelligence
             </div>
-            <div>
-              <p class="text-sm font-medium text-slate-300" x-text="cvUploading ? 'Reading your CV…' : cvStatus && cvStatus.startsWith('✓') ? 'CV uploaded successfully' : 'Upload your CV'"></p>
-              <p class="text-xs text-slate-500" x-text="cvUploading ? 'Extracting skills with AI — takes ~10s' : cvStatus && cvStatus.startsWith('✓') ? cvStatus : 'PDF or DOCX · Auto-detects your role and skills'"></p>
-            </div>
-            <i x-show="cvStatus && cvStatus.startsWith('✓')" class="fa-solid fa-circle-check text-emerald-400 ml-auto"></i>
-            <input type="file" accept=".pdf,.doc,.docx" class="hidden" @change="uploadCV($event)" />
-          </label>
-          <div x-show="cvUploading" class="w-full h-1 bg-slate-700/60 rounded-full overflow-hidden mt-2 mb-1">
-            <div class="h-full bg-red-600 rounded-full cv-upload-bar"></div>
-          </div>
-          <p x-show="cvStatus && !cvStatus.startsWith('✓') && cvStatus !== 'Parsing…'" x-text="cvStatus" class="text-red-400 text-xs mt-1"></p>
-
-          <!-- OR divider -->
-          <div class="flex items-center gap-3 my-4">
-            <div class="flex-1 h-px bg-slate-700/60"></div>
-            <span class="text-xs text-slate-500 font-medium px-1">or enter your skills manually</span>
-            <div class="flex-1 h-px bg-slate-700/60"></div>
-          </div>
-
-          <!-- Skills (manual entry) -->
-          <div class="mb-5">
-            <label class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-2">
-              <i class="fa-solid fa-code text-red-400/70"></i>
-              Your Skills
-              <span class="text-slate-600 font-normal">— needed to compute YOUR actual gaps</span>
-            </label>
-            <input class="input-field py-3" type="text" x-model="skills"
-              placeholder="e.g. Python, SQL, Excel, Tableau" @keydown.enter="doSearch()" />
-          </div>
-
-          <!-- Find My Gaps button -->
-          <button class="btn-primary w-full py-4 text-base font-bold gap-2" @click="doSearch()" :disabled="searching">
-            <svg x-show="searching" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-            </svg>
-            <i x-show="!searching" class="fa-solid fa-rocket text-lg"></i>
-            <span x-text="searching ? 'Agent Running…' : 'Find My Gaps'"></span>
-          </button>
-
-          <!-- Agent progress during search -->
-          <div x-show="searching" class="mt-5 space-y-2 border-t border-red-600/10 pt-5">
-            <p class="text-xs text-slate-500 font-medium mb-3 flex items-center gap-2">
-              <i class="fa-solid fa-circle-nodes text-red-400 animate-pulse"></i>
-              AI Agent Pipeline Running
+            <h1 class="hero-headline text-3xl sm:text-4xl xl:text-[2.55rem] font-bold leading-tight text-white">
+              Know the Market.<br>
+              Close the Gaps.<br>
+              Advance <span class="text-accent">Your Career.</span>
+            </h1>
+            <p class="text-slate-400 text-base leading-relaxed mt-5 max-w-sm">
+              Real-time job insights, skill gap analysis, and personalized roadmaps to help you stay competitive and future-ready.
             </p>
-            <template x-for="(step, i) in searchSteps" :key="i">
-              <div class="flex items-center gap-3" :class="i >= searchStepIdx + 1 ? 'opacity-20' : 'opacity-100'">
-                <div class="w-5 h-5 rounded-full border flex items-center justify-center shrink-0"
-                  :class="i < searchStepIdx ? 'bg-emerald-500/15 border-emerald-500/40' : i === searchStepIdx ? 'bg-red-600/15 border-red-500/40' : 'border-slate-700'">
-                  <i x-show="i < searchStepIdx" class="fa-solid fa-check text-emerald-400" style="font-size:.6rem"></i>
-                  <div x-show="i === searchStepIdx" class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                </div>
-                <span x-text="step" class="text-xs"
-                  :class="i === searchStepIdx ? 'text-slate-200 font-medium' : i < searchStepIdx ? 'text-slate-500 line-through' : 'text-slate-700'"></span>
+            <div class="mt-6 flex flex-col sm:flex-row xl:flex-col 2xl:flex-row gap-3">
+              <button class="btn-primary px-5 py-3 gap-2" @click="document.querySelector('[x-model=&quot;role&quot;]')?.focus()">
+                Search Jobs Now
+                <i class="fa-solid fa-arrow-right"></i>
+              </button>
+              <button class="btn-ghost px-5 py-3 gap-2" @click="setActiveTab('university')">
+                <i class="fa-regular fa-circle-play"></i>
+                Watch Demo
+              </button>
+            </div>
+          </div>
+
+          <div class="landing-orbit my-8 min-h-[150px] rounded-2xl border border-red-600/10 bg-black/20"></div>
+
+          <div class="space-y-5">
+            <div class="flex gap-4">
+              <div class="w-11 h-11 rounded-xl border border-red-600/25 bg-red-600/10 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-chart-line text-red-400"></i>
               </div>
-            </template>
+              <div>
+                <p class="text-sm font-semibold text-white">Real-time Market Data</p>
+                <p class="text-xs text-slate-400 leading-relaxed mt-1">Live job postings and salary insights from top sources.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-11 h-11 rounded-xl border border-red-600/25 bg-red-600/10 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-crosshairs text-red-400"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-white">AI Skill Gap Analysis</p>
+                <p class="text-xs text-slate-400 leading-relaxed mt-1">Discover critical gaps and get personalized learning recommendations.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-11 h-11 rounded-xl border border-red-600/25 bg-red-600/10 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-map text-red-400"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-white">Career Roadmaps</p>
+                <p class="text-xs text-slate-400 leading-relaxed mt-1">AI-generated trajectories to help you grow and advance.</p>
+              </div>
+            </div>
+            <div class="flex gap-4">
+              <div class="w-11 h-11 rounded-xl border border-red-600/25 bg-red-600/10 flex items-center justify-center shrink-0">
+                <i class="fa-regular fa-file-lines text-red-400"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-white">Resume & Interview Prep</p>
+                <p class="text-xs text-slate-400 leading-relaxed mt-1">Optimize your resume and practice with AI-powered feedback.</p>
+              </div>
+            </div>
           </div>
+        </section>
+
+        <!-- Center Dashboard -->
+        <section class="flex flex-col gap-4 min-w-0">
+          <div class="card p-0 overflow-hidden">
+            <div class="flex border-b border-red-600/15 text-sm overflow-x-auto">
+              <button class="px-5 py-4 text-white font-semibold border-b-2 border-red-500">Job Search</button>
+              <label class="px-5 py-4 text-slate-400 hover:text-white cursor-pointer whitespace-nowrap">
+                CV Upload & Analyze
+                <input type="file" accept=".pdf,.doc,.docx" class="hidden" @change="uploadCV($event)" />
+              </label>
+              <button class="px-5 py-4 text-slate-400 hover:text-white whitespace-nowrap" @click="document.querySelector('[x-model=&quot;skills&quot;]')?.focus()">Manual Skills</button>
+            </div>
+            <div class="p-4">
+              <div class="grid grid-cols-1 lg:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+                <div>
+                  <label class="text-xs text-slate-400 mb-2 block">Job Title / Role</label>
+                  <div class="relative">
+                    <i class="fa-solid fa-briefcase absolute left-3 top-1/2 -translate-y-1/2 text-red-400 text-xs"></i>
+                    <input class="input-field py-3 pl-9" type="text" x-model="role"
+                      :class="roleError ? 'border-red-500/60 ring-2 ring-red-500/20 animate-shake' : (inferredRole && role === inferredRole ? 'border-emerald-500/40' : '')"
+                      @input="roleError = false" placeholder="e.g. Data Analyst" @keydown.enter="doSearch()" />
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-slate-400 mb-2 block">Location</label>
+                  <div class="relative">
+                    <i class="fa-solid fa-location-dot absolute left-3 top-1/2 -translate-y-1/2 text-red-400 text-xs"></i>
+                    <input class="input-field py-3 pl-9" type="text" x-model="location"
+                      placeholder="e.g. Remote, Singapore" @keydown.enter="doSearch()" />
+                  </div>
+                </div>
+                <button data-testid="landing-search-submit" class="btn-primary h-[46px] px-6 gap-2 whitespace-nowrap" @click="doSearch()" :disabled="searching">
+                  <svg x-show="searching" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                  </svg>
+                  <span x-text="searching ? 'Searching…' : 'Search Jobs'"></span>
+                  <i x-show="!searching" class="fa-solid fa-magnifying-glass text-xs"></i>
+                </button>
+              </div>
+              <p x-show="roleError" class="text-red-400 text-xs mt-2 flex items-center gap-1">
+                <i class="fa-solid fa-circle-exclamation"></i> Enter a job title or upload your CV first
+              </p>
+              <div class="mt-4">
+                <label class="text-xs text-slate-500 mb-2 block">Manual Skills</label>
+                <input class="input-field py-2.5" type="text" x-model="skills"
+                  placeholder="e.g. Python, SQL, Excel, Tableau" @keydown.enter="doSearch()" />
+              </div>
+              <div class="mt-4 flex flex-wrap items-center gap-2 text-xs">
+                <span class="text-slate-500">Popular:</span>
+                <button class="px-3 py-1.5 rounded-lg bg-black/30 border border-white/5 text-slate-300 hover:border-red-500/30" @click="role='Data Analyst'">Data Analyst</button>
+                <button class="px-3 py-1.5 rounded-lg bg-black/30 border border-white/5 text-slate-300 hover:border-red-500/30" @click="role='Product Manager'">Product Manager</button>
+                <button class="px-3 py-1.5 rounded-lg bg-black/30 border border-white/5 text-slate-300 hover:border-red-500/30" @click="role='UI/UX Designer'">UI/UX Designer</button>
+                <button class="px-3 py-1.5 rounded-lg bg-black/30 border border-white/5 text-slate-300 hover:border-red-500/30" @click="role='Software Engineer'">Software Engineer</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center justify-between gap-3 mb-5">
+              <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-white">Career Path & Trajectory</h2>
+                <span class="badge badge-accent">5 Milestones</span>
+              </div>
+              <button class="text-xs text-red-300 hover:text-red-100">View Full Roadmap <i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+            <div class="relative">
+              <div class="hidden lg:block absolute left-10 right-10 top-4 h-px bg-red-500/50"></div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <template x-for="(milestone, i) in lifelongTrajectory()" :key="milestone.role">
+                  <div class="relative rounded-xl border border-red-600/20 bg-black/30 p-4 min-h-[185px] hover:border-red-400/45 hover:-translate-y-1 transition-all">
+                    <div class="w-6 h-6 rounded-full bg-red-700 border border-red-300/40 text-white text-xs font-bold flex items-center justify-center mb-5 relative z-10" x-text="i + 1"></div>
+                    <p class="text-sm font-semibold text-white leading-tight" x-text="milestone.role"></p>
+                    <p class="text-xs text-slate-500 mt-2" x-text="milestone.years"></p>
+                    <p class="text-sm font-semibold text-red-300 mt-2" x-text="milestone.salary"></p>
+                    <p class="text-xs text-slate-500 mt-3">Key Gaps</p>
+                    <div class="mt-1 flex flex-col gap-1">
+                      <template x-for="skill in milestone.gaps" :key="skill">
+                        <span class="text-[0.68rem] text-slate-300">• <span x-text="skill"></span></span>
+                      </template>
+                    </div>
+                    <p class="text-xs mt-3" :class="milestone.risk === 'High' ? 'text-red-400' : milestone.risk === 'Medium' ? 'text-amber-400' : 'text-emerald-400'">Risk: <span x-text="milestone.risk"></span></p>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <h2 class="font-semibold text-white">Latest Job Openings</h2>
+                <span class="text-xs px-2 py-1 rounded-lg bg-white/5 border border-white/5 text-slate-400">2,842 Jobs Found</span>
+              </div>
+              <button class="text-xs text-red-300 hover:text-red-100">View All Jobs <i class="fa-solid fa-arrow-right ml-1"></i></button>
+            </div>
+            <div class="divide-y divide-white/5">
+              <template x-for="job in [
+                { company: 'Grab', title: 'Data Analyst', location: 'Singapore · Hybrid', salary: '$70K - $95K', skills: ['SQL','Python','Tableau','Excel'], icon: 'G' },
+                { company: 'Shopee', title: 'Senior Data Analyst', location: 'Singapore · Hybrid', salary: '$85K - $120K', skills: ['SQL','BigQuery','Python','Looker'], icon: 'S' },
+                { company: 'Wise', title: 'Product Analyst', location: 'Singapore · Remote', salary: '$65K - $90K', skills: ['SQL','Analytics','A/B Testing','Excel'], icon: 'W' }
+              ]" :key="job.title">
+                <div class="flex items-center gap-4 py-3">
+                  <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-red-500 to-red-800 flex items-center justify-center text-white text-xs font-bold" x-text="job.icon"></div>
+                  <div class="min-w-0 flex-1">
+                    <p class="text-sm font-semibold text-white" x-text="job.title"></p>
+                    <p class="text-xs text-slate-500"><span x-text="job.company"></span> · <span x-text="job.location"></span></p>
+                  </div>
+                  <div class="hidden md:flex gap-1.5">
+                    <template x-for="skill in job.skills" :key="skill">
+                      <span class="px-2 py-1 rounded-md bg-white/5 text-xs text-slate-300" x-text="skill"></span>
+                    </template>
+                  </div>
+                  <p class="text-sm text-white whitespace-nowrap" x-text="job.salary"></p>
+                  <i class="fa-regular fa-bookmark text-red-400"></i>
+                </div>
+              </template>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Insight Rail -->
+        <aside class="flex flex-col gap-4">
+          <div class="card">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold text-white">Your Market Snapshot</h2>
+              <span class="text-xs px-2 py-1 rounded-lg bg-black/30 border border-white/5 text-slate-400">This Month</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+                <p class="text-2xl font-bold text-white">2,842</p>
+                <p class="text-xs text-slate-500">Active Jobs</p>
+              </div>
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+                <p class="text-2xl font-bold text-white">$92,450</p>
+                <p class="text-xs text-slate-500">Avg. Salary</p>
+              </div>
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+                <p class="text-2xl font-bold text-white">18</p>
+                <p class="text-xs text-slate-500">Top Skills</p>
+              </div>
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
+                <p class="text-2xl font-bold text-white">High</p>
+                <p class="text-xs text-slate-500">Market Demand</p>
+              </div>
+            </div>
+            <button class="btn-ghost w-full mt-4 py-2.5 text-xs">View Full Market Report <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+
+          <div class="card">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold text-white">Job Analysis</h2>
+              <span class="badge badge-red">AI Insights</span>
+            </div>
+            <div class="flex gap-4 text-xs border-b border-red-600/15 mb-4">
+              <span class="text-white border-b-2 border-red-500 pb-2">Gaps</span>
+              <span class="text-slate-500 pb-2">Company</span>
+              <span class="text-slate-500 pb-2">Verify</span>
+              <span class="text-slate-500 pb-2">Interview</span>
+              <span class="text-slate-500 pb-2">Tailor</span>
+            </div>
+            <p class="text-xs text-slate-400 mb-3">Top Skill Gaps</p>
+            <div class="space-y-3">
+              <template x-for="gap in [
+                { skill: 'Advanced SQL', risk: 'High Priority', pct: 28 },
+                { skill: 'Data Modeling', risk: 'High Priority', pct: 32 },
+                { skill: 'Python', risk: 'Medium Priority', pct: 45 },
+                { skill: 'Tableau', risk: 'Medium Priority', pct: 55 },
+                { skill: 'Statistics', risk: 'Low Priority', pct: 68 }
+              ]" :key="gap.skill">
+                <div class="grid grid-cols-[1fr_auto_70px_32px] gap-2 items-center text-xs">
+                  <span class="text-slate-300" x-text="gap.skill"></span>
+                  <span class="px-2 py-1 rounded-md bg-red-600/10 text-red-200" x-text="gap.risk"></span>
+                  <div class="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div class="h-full bg-red-500 rounded-full" :style="'width:' + gap.pct + '%'"></div>
+                  </div>
+                  <span class="text-slate-500 text-right" x-text="gap.pct + '%'"></span>
+                </div>
+              </template>
+            </div>
+            <button class="btn-ghost w-full mt-5 py-2.5 text-xs">View Learning Recommendations <i class="fa-solid fa-arrow-right ml-1"></i></button>
+          </div>
+
+          <div class="card bg-red-950/20 border-red-500/25">
+            <div class="flex items-center gap-3">
+              <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center">
+                <i class="fa-solid fa-bullseye text-red-300"></i>
+              </div>
+              <div>
+                <h2 class="font-semibold text-white">Recommended For You</h2>
+                <p class="text-xs text-slate-400">Focus on these skills to increase your marketability.</p>
+              </div>
+            </div>
+            <div class="mt-5 flex items-center justify-between gap-4">
+              <button class="btn-primary flex-1 py-3 text-sm gap-2">Start Learning Path <i class="fa-solid fa-arrow-right"></i></button>
+              <div class="w-20 h-20 rounded-full border-4 border-red-500 flex items-center justify-center shadow-[0_0_28px_rgba(220,38,38,0.35)]">
+                <div class="text-center">
+                  <p class="text-2xl font-bold text-white">72%</p>
+                  <p class="text-[0.58rem] text-slate-500">Match</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="max-w-[1560px] mx-auto mt-4 card">
+        <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-[1fr_1fr_1fr_1fr_2fr] gap-4 items-center">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-users text-red-400"></i>
+            <div><p class="text-xl font-bold text-white">500K+</p><p class="text-xs text-slate-500">Jobs Analyzed</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-crosshairs text-red-400"></i>
+            <div><p class="text-xl font-bold text-white">50K+</p><p class="text-xs text-slate-500">Skills Mapped</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-cube text-red-400"></i>
+            <div><p class="text-xl font-bold text-white">10K+</p><p class="text-xs text-slate-500">Companies</p></div>
+          </div>
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-user-group text-red-400"></i>
+            <div><p class="text-xl font-bold text-white">100K+</p><p class="text-xs text-slate-500">Users Empowered</p></div>
+          </div>
+          <blockquote class="hidden xl:block border-l border-red-600/20 pl-6 text-sm italic text-slate-400">
+            “Signal Path helped me identify the right skills and land my dream role.”
+            <span class="block text-xs text-slate-500 mt-2">— Sarah L., Data Analyst</span>
+          </blockquote>
         </div>
       </div>
     </div>

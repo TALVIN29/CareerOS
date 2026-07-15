@@ -1796,7 +1796,7 @@
               <p class="text-xs text-slate-500" x-text="'Score ' + (j.validation ? j.validation.score : '—')"></p>
             </div>
             <span class="badge shrink-0" :class="statusBadgeClass(j.status)" x-text="formatStatus(j.status)"></span>
-            <button class="btn-ghost text-xs shrink-0" @click="selectedVerifyJobId = j.id; hrTab = (verifyRole === 'manager' ? 'approvals' : 'listings')">Open</button>
+            <button class="btn-ghost text-xs shrink-0" @click="verifyRole === 'manager' ? (openApprovalReview(j.id), hrTab = 'approvals') : (selectedVerifyJobId = j.id, hrTab = 'listings')">Open</button>
           </div>
         </template>
         <p class="text-xs text-slate-600" x-show="(verifyRole === 'manager' ? verifyJobs.filter(j => j.status === 'pending_approval') : verifyJobs.filter(j => j.status === 'needs_changes')).length === 0">Nothing needs your attention right now.</p>
@@ -2136,22 +2136,236 @@
     </div>
     </div>
 
-    <!-- ══ APPROVALS (stub — Day 4) ══ -->
-    <div x-show="hrTab === 'approvals'" class="card text-sm text-slate-400">
-      <i class="fa-solid fa-clipboard-check text-accent text-sm mr-2"></i>
-      Approval queue coming next.
+    <!-- ══ APPROVALS ══ -->
+    <div x-show="hrTab === 'approvals'" class="flex flex-col gap-6">
+
+      <!-- Non-manager banner -->
+      <div class="card !py-3 !px-4 flex items-center gap-2 border border-yellow-500/20 bg-yellow-500/5" x-show="verifyRole !== 'manager'">
+        <i class="fa-solid fa-circle-info text-yellow-400 text-sm shrink-0"></i>
+        <p class="text-xs text-yellow-200">Switch to Hiring Manager to act on approvals — you can still view the queue below.</p>
+      </div>
+
+      <!-- Pending queue -->
+      <div class="card" x-show="!selectedApprovalId">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-clipboard-check text-accent text-sm"></i>
+          <span class="section-label">Pending Approval</span>
+        </div>
+        <template x-for="j in verifyJobs.filter(j => j.status === 'pending_approval')" :key="j.id">
+          <div class="flex items-center justify-between gap-3 py-3 border-b border-red-600/10 last:border-0">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm text-slate-200 truncate" x-text="j.title"></p>
+              <p class="text-xs text-slate-500 truncate" x-text="j.department + ' · ' + ((VerifySeeds.PERSONAS.find(p => p.id === j.recruiterId) || {}).name || '—') + ' · Submitted ' + fmtDate(j.updatedAt)"></p>
+            </div>
+            <span class="text-sm font-semibold shrink-0" :class="scoreColorClass(j.validation ? j.validation.score : null)" x-text="j.validation ? j.validation.score : '—'"></span>
+            <button class="btn-ghost text-xs shrink-0" @click="openApprovalReview(j.id)">Review</button>
+          </div>
+        </template>
+        <p class="text-xs text-slate-600 py-6 text-center" x-show="verifyJobs.filter(j => j.status === 'pending_approval').length === 0">No jobs pending approval.</p>
+      </div>
+
+      <!-- Detail / review -->
+      <template x-if="selectedApprovalId && selectedApprovalJob()">
+        <div class="flex flex-col gap-5">
+          <div class="flex items-center justify-between gap-3">
+            <button class="btn-ghost text-xs gap-2 inline-flex items-center" @click="closeApprovalReview()">
+              <i class="fa-solid fa-arrow-left"></i> Back to Queue
+            </button>
+            <span class="badge" :class="statusBadgeClass(selectedApprovalJob().status)" x-text="formatStatus(selectedApprovalJob().status)"></span>
+          </div>
+
+          <!-- Vacancy summary -->
+          <div class="card">
+            <p class="section-label mb-3">Vacancy Summary</p>
+            <div class="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+              <p class="text-slate-500">Title <span class="text-slate-200" x-text="selectedApprovalJob().title"></span></p>
+              <p class="text-slate-500">Department <span class="text-slate-200" x-text="selectedApprovalJob().department"></span></p>
+              <p class="text-slate-500">Location <span class="text-slate-200" x-text="(selectedApprovalJob().location || '—') + ' · ' + selectedApprovalJob().workplace"></span></p>
+              <p class="text-slate-500">Employment / Seniority <span class="text-slate-200" x-text="selectedApprovalJob().employmentType + ' · ' + selectedApprovalJob().seniority"></span></p>
+              <p class="text-slate-500 sm:col-span-2">Salary (MYR) <span class="text-slate-200" x-text="(selectedApprovalJob().salaryMin || '—') + ' – ' + (selectedApprovalJob().salaryMax || '—') + (selectedApprovalJob().salaryVisible ? '' : ' (hidden)')"></span></p>
+            </div>
+          </div>
+
+          <!-- Authorisation -->
+          <div class="card">
+            <p class="section-label mb-3">Authorisation</p>
+            <div class="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+              <p class="text-slate-500">Requisition <span class="text-slate-200" x-text="selectedApprovalJob().requisitionId || '—'"></span></p>
+              <p class="text-slate-500">Target Start Date <span class="text-slate-200" x-text="selectedApprovalJob().targetStartDate || '—'"></span></p>
+              <p class="text-slate-500">Headcount Approved <span :class="selectedApprovalJob().headcountApproved ? 'text-emerald-400' : 'text-red-400'" x-text="selectedApprovalJob().headcountApproved ? '✓ Yes' : '✗ No'"></span></p>
+              <p class="text-slate-500">Budget Approved <span :class="selectedApprovalJob().budgetApproved ? 'text-emerald-400' : 'text-red-400'" x-text="selectedApprovalJob().budgetApproved ? '✓ Yes' : '✗ No'"></span></p>
+              <p class="text-slate-500 sm:col-span-2">Justification <span class="text-slate-200" x-text="selectedApprovalJob().justification || '—'"></span></p>
+            </div>
+          </div>
+
+          <!-- Score + warnings -->
+          <div class="card" x-show="selectedApprovalJob().validation">
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <p class="section-label">Job Integrity Score</p>
+              <span class="text-2xl font-bold" :class="scoreColorClass(selectedApprovalJob().validation.score)" x-text="selectedApprovalJob().validation.score"></span>
+            </div>
+            <div class="flex flex-col gap-2">
+              <template x-for="w in selectedApprovalJob().validation.warnings" :key="w.id">
+                <div class="p-2.5 rounded-lg border border-yellow-500/20 bg-yellow-500/5 flex items-center justify-between gap-2">
+                  <span class="text-xs text-yellow-300" x-text="w.message"></span>
+                  <span class="badge shrink-0" :class="w.acknowledged ? 'badge-green' : 'badge-yellow'" x-text="w.acknowledged ? 'Acknowledged' : 'Open'"></span>
+                </div>
+              </template>
+              <p class="text-xs text-slate-600" x-show="!selectedApprovalJob().validation.warnings.length">No open warnings.</p>
+            </div>
+          </div>
+
+          <!-- Market comparison -->
+          <div class="card">
+            <p class="section-label mb-2">Market Comparison</p>
+            <template x-if="benchmarkFor(selectedApprovalJob())">
+              <p class="text-xs text-slate-400">Proposed <span class="text-slate-200" x-text="'MYR ' + (selectedApprovalJob().salaryMin || '—') + '–' + (selectedApprovalJob().salaryMax || '—')"></span> vs. benchmark median <span class="text-slate-200" x-text="'MYR ' + benchmarkFor(selectedApprovalJob()).medianSalaryMin + '–' + benchmarkFor(selectedApprovalJob()).medianSalaryMax"></span> <span class="text-slate-600">(Demonstration market benchmark)</span></p>
+            </template>
+            <p class="text-xs text-slate-600" x-show="!benchmarkFor(selectedApprovalJob())">Limited comparable market evidence for this title.</p>
+          </div>
+
+          <!-- Recruiter comments -->
+          <div class="card" x-show="selectedApprovalJob().approval && selectedApprovalJob().approval.comments">
+            <p class="section-label mb-2">Recruiter Comments</p>
+            <p class="text-xs text-slate-400" x-text="selectedApprovalJob().approval && selectedApprovalJob().approval.comments"></p>
+          </div>
+
+          <!-- Change history -->
+          <div class="card">
+            <p class="section-label mb-3">Change History</p>
+            <div class="flex flex-col gap-2">
+              <template x-for="a in jobAudit(selectedApprovalJob().id)" :key="a.id">
+                <div class="flex items-center justify-between gap-3 py-1.5 border-b border-red-600/5 last:border-0 text-xs">
+                  <span class="text-slate-500 shrink-0" x-text="new Date(a.ts).toLocaleString()"></span>
+                  <span class="text-slate-300 flex-1 text-center truncate" x-text="a.actorName + ' · ' + a.action"></span>
+                  <span class="text-slate-500 shrink-0" x-text="(a.fromStatus ? formatStatus(a.fromStatus) : '—') + ' → ' + formatStatus(a.toStatus)"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Attestation + actions -->
+          <div class="card">
+            <template x-if="!canApproveSelected().ok">
+              <p class="text-xs text-yellow-400"><i class="fa-solid fa-triangle-exclamation mr-1.5"></i><span x-text="canApproveSelected().reason"></span></p>
+            </template>
+            <template x-if="canApproveSelected().ok">
+              <div class="flex flex-col gap-4">
+                <div>
+                  <label class="text-xs text-slate-500 mb-1 block">Comments (optional)</label>
+                  <textarea rows="2" class="input-field" x-model="approvalComments" placeholder="Add a comment for the audit trail…"></textarea>
+                </div>
+                <label class="flex items-start gap-2 text-xs text-slate-300">
+                  <input type="checkbox" class="accent-red-600 mt-0.5" x-model="attestChecked">
+                  I confirm that this vacancy is currently approved, funded, and intended to be filled, and that the advertised responsibilities and requirements reflect the department's actual needs.
+                </label>
+                <div class="flex flex-wrap items-center gap-3">
+                  <button class="btn-primary text-xs px-5 py-2.5" :class="!attestChecked ? 'opacity-50 cursor-not-allowed' : ''" :disabled="!attestChecked" @click="approveSelectedJob()">Approve Job</button>
+                  <button class="btn-ghost text-xs px-5 py-2.5" @click="requestChangesOnJob(selectedApprovalJob().id)">Request Changes</button>
+                  <button class="btn-ghost text-xs px-5 py-2.5 text-red-400" @click="rejectJob(selectedApprovalJob().id)">Reject Job</button>
+                </div>
+                <p class="text-xs text-slate-500" x-show="!attestChecked">Attestation required to approve</p>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
     </div>
 
-    <!-- ══ JOB LISTINGS (stub — Day 4) ══ -->
-    <div x-show="hrTab === 'listings'" class="card text-sm text-slate-400">
-      <i class="fa-solid fa-list-check text-accent text-sm mr-2"></i>
-      Job listings table coming next.
+    <!-- ══ JOB LISTINGS ══ -->
+    <div x-show="hrTab === 'listings'" class="flex flex-col gap-6">
+      <div class="card" x-show="verifyJobs.length">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-list-check text-accent text-sm"></i>
+          <span class="section-label">Job Listings</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-slate-500 text-left border-b border-red-600/10">
+                <th class="py-2 pr-3 font-medium">Role</th>
+                <th class="py-2 pr-3 font-medium">Department</th>
+                <th class="py-2 pr-3 font-medium">Recruiter</th>
+                <th class="py-2 pr-3 font-medium">Manager</th>
+                <th class="py-2 pr-3 font-medium">Score</th>
+                <th class="py-2 pr-3 font-medium">Status</th>
+                <th class="py-2 pr-3 font-medium">Updated</th>
+                <th class="py-2 pr-3 font-medium">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="j in verifyJobs.slice().sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))" :key="j.id">
+                <tr class="border-b border-red-600/5 text-slate-300">
+                  <td class="py-2 pr-3 whitespace-nowrap" x-text="j.title"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="j.department"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="(VerifySeeds.PERSONAS.find(p => p.id === j.recruiterId) || {}).name || '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="(VerifySeeds.PERSONAS.find(p => p.id === j.hiringManagerId) || {}).name || '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap" x-text="j.validation ? j.validation.score : '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap"><span class="badge" :class="statusBadgeClass(j.status)" x-text="formatStatus(j.status)"></span></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="new Date(j.updatedAt).toLocaleString()"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap">
+                    <div class="flex items-center gap-2">
+                      <button class="btn-ghost text-xs" x-show="j.status === 'draft' || j.status === 'needs_changes'" @click="editJob(j.id)">Edit</button>
+                      <button class="btn-ghost text-xs" x-show="j.status === 'draft' && VerifyEngine.canSubmit(j)" @click="submitJobFromListing(j.id)">Submit for Approval</button>
+                      <button class="btn-ghost text-xs" x-show="j.status === 'pending_approval'" @click="openApprovalReview(j.id); hrTab = 'approvals'">Review</button>
+                      <button class="btn-ghost text-xs" x-show="j.status === 'approved'" @click="publishJob(j.id)">Publish Job</button>
+                      <button class="btn-ghost text-xs" x-show="j.status === 'published'" @click="closeJob(j.id)">Close Job</button>
+                      <button class="btn-ghost text-xs" x-show="j.status === 'rejected'" @click="editJob(j.id)">Revise</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card flex flex-col items-center justify-center py-16 text-center gap-3" x-show="!verifyJobs.length">
+        <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+          <i class="fa-solid fa-file-circle-plus text-red-400/60 text-2xl"></i>
+        </div>
+        <p class="text-slate-400 text-sm font-medium">No jobs yet — create your first draft</p>
+        <button class="btn-primary gap-2 py-2.5 px-5 mt-1" @click="openCreateTab()">
+          <i class="fa-solid fa-plus"></i> Create a Job Draft
+        </button>
+      </div>
     </div>
 
-    <!-- ══ AUDIT LOG (stub — Day 4) ══ -->
-    <div x-show="hrTab === 'audit'" class="card text-sm text-slate-400">
-      <i class="fa-solid fa-timeline text-accent text-sm mr-2"></i>
-      Audit log coming next.
+    <!-- ══ AUDIT LOG ══ -->
+    <div x-show="hrTab === 'audit'" class="flex flex-col gap-6">
+      <div class="card">
+        <div class="flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-timeline text-accent text-sm"></i>
+            <span class="section-label">Audit Log</span>
+          </div>
+          <input type="text" class="input-field !w-56" x-model="auditFilter" placeholder="Filter by job, actor, or action…">
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-slate-500 text-left border-b border-red-600/10">
+                <th class="py-2 pr-3 font-medium">Timestamp</th>
+                <th class="py-2 pr-3 font-medium">Actor</th>
+                <th class="py-2 pr-3 font-medium">Action</th>
+                <th class="py-2 pr-3 font-medium">Job</th>
+                <th class="py-2 pr-3 font-medium">Transition</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="a in filteredAudit()" :key="a.id">
+                <tr class="border-b border-red-600/5 text-slate-300">
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="new Date(a.ts).toLocaleString()"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap"><span x-text="a.actorName"></span> <span class="badge badge-soft ml-1" x-text="formatStatus(a.actorRole)"></span></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-400" x-text="a.action"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap" x-text="jobTitle(a.jobId)"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="(a.fromStatus ? formatStatus(a.fromStatus) : '—') + ' → ' + formatStatus(a.toStatus)"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+          <p class="text-xs text-slate-600 py-6 text-center" x-show="!filteredAudit().length">No audit events match this filter.</p>
+        </div>
+      </div>
     </div>
 
     <!-- ══ MARKET INTEL (existing Enterprise content) ══ -->

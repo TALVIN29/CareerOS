@@ -174,6 +174,10 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         wizardStep: 1,
         verifyDraft: null,
         wizardValidating: false,
+        selectedApprovalId: null,
+        attestChecked: false,
+        approvalComments: '',
+        auditFilter: '',
 
         init() {
           this.initVerify();
@@ -430,6 +434,150 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
         removeRequirementRow(i) {
           this.verifyDraft.requirements.splice(i, 1);
+        },
+
+        // ── Approvals / Job Listings / Audit (Day 4) ────────────────────
+        openApprovalReview(id) {
+          this.selectedApprovalId = id;
+          this.selectedVerifyJobId = id;
+          this.attestChecked = false;
+          this.approvalComments = '';
+        },
+
+        closeApprovalReview() {
+          this.selectedApprovalId = null;
+        },
+
+        selectedApprovalJob() {
+          return this.verifyJobs.find(j => j.id === this.selectedApprovalId) || null;
+        },
+
+        canApproveSelected() {
+          const job = this.selectedApprovalJob();
+          if (!job) return { ok: false, reason: 'Job not found.' };
+          return window.VerifyEngine.canApprove(job, this.verifyCurrentUser().id);
+        },
+
+        approveSelectedJob() {
+          if (!this.selectedApprovalId || !this.attestChecked) return;
+          const check = this.canApproveSelected();
+          if (!check.ok) return;
+          try {
+            window.VerifyStore.transition(this.selectedApprovalId, 'approve', { attestation: true, comment: this.approvalComments || null });
+            this.refreshVerify();
+            this.closeApprovalReview();
+            Swal.fire({ icon: 'success', title: 'Job Approved', timer: 1800, showConfirmButton: false,
+              background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Approve', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        requestChangesOnJob(id) {
+          try {
+            window.VerifyStore.transition(id, 'request_changes', { comment: this.approvalComments || null });
+            this.refreshVerify();
+            this.closeApprovalReview();
+            Swal.fire({ icon: 'success', title: 'Changes Requested', timer: 1800, showConfirmButton: false,
+              background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Request Changes', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        rejectJob(id) {
+          Swal.fire({
+            icon: 'warning', title: 'Reject Job', input: 'textarea',
+            inputLabel: 'Reason for rejection', inputPlaceholder: 'Explain why this job is being rejected…',
+            showCancelButton: true, confirmButtonText: 'Reject Job', confirmButtonColor: '#dc2626',
+            background: '#151515', color: '#e2e8f0',
+            inputValidator: value => !value?.trim() ? 'A comment is required to reject a job.' : null,
+          }).then(result => {
+            if (!result.isConfirmed) return;
+            try {
+              window.VerifyStore.transition(id, 'reject', { comment: result.value });
+              this.refreshVerify();
+              this.closeApprovalReview();
+              Swal.fire({ icon: 'success', title: 'Job Rejected', timer: 1800, showConfirmButton: false,
+                background: '#151515', color: '#e2e8f0' });
+            } catch (err) {
+              Swal.fire({ icon: 'error', title: 'Cannot Reject', text: err.message,
+                background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+            }
+          });
+        },
+
+        publishJob(id) {
+          try {
+            window.VerifyStore.transition(id, 'publish');
+            this.refreshVerify();
+            Swal.fire({ icon: 'success', title: 'Published', timer: 1800, showConfirmButton: false,
+              background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Publish', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        closeJob(id) {
+          try {
+            window.VerifyStore.transition(id, 'close');
+            this.refreshVerify();
+            Swal.fire({ icon: 'success', title: 'Job Closed', timer: 1800, showConfirmButton: false,
+              background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Close Job', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        editJob(id) {
+          const job = window.VerifyStore.getJob(id);
+          if (!job) return;
+          this.verifyDraft = JSON.parse(JSON.stringify(job));
+          this.selectedVerifyJobId = id;
+          this.hrTab = 'create';
+          this.wizardStep = 1;
+        },
+
+        submitJobFromListing(id) {
+          try {
+            window.VerifyStore.transition(id, 'submit');
+            this.refreshVerify();
+            Swal.fire({ icon: 'success', title: 'Submitted for Approval',
+              text: 'A hiring manager must approve this job before it can be published.',
+              timer: 2400, showConfirmButton: false, background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Submit', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        jobTitle(jobId) {
+          const job = this.verifyJobs.find(j => j.id === jobId);
+          return job ? job.title : (jobId || '—');
+        },
+
+        filteredAudit() {
+          const q = (this.auditFilter || '').toLowerCase().trim();
+          if (!q) return this.verifyAudit;
+          return this.verifyAudit.filter(a =>
+            this.jobTitle(a.jobId).toLowerCase().includes(q) ||
+            (a.actorName || '').toLowerCase().includes(q) ||
+            (a.actorRole || '').toLowerCase().includes(q) ||
+            (a.action || '').toLowerCase().includes(q)
+          );
+        },
+
+        jobAudit(jobId) {
+          return window.VerifyStore.listAudit(jobId);
+        },
+
+        benchmarkFor(job) {
+          if (!job) return null;
+          return window.VerifyEngine.findBenchmark(job.title);
         },
 
         statusBadgeClass(status) {

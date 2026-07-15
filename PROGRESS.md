@@ -10,8 +10,8 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 | 1 | verify-engine.js + verify-seeds.js + tests (16/16 green) | ✅ Done |
 | 2 | verify-store.js + employer workspace shell (sub-tabs, Overview) | ✅ Done |
 | 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | ✅ Done |
-| 4 | Approvals + Job Listings + Audit Log | 🔨 In progress |
-| 5 | Homepage repositioning + three.js hero + demo narrative + reset | ⬜ |
+| 4 | Approvals + Job Listings + Audit Log | ✅ Done |
+| 5 | Homepage repositioning + three.js hero + demo narrative + reset | 🔨 In progress |
 | 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ⬜ |
 | 7 | README/docs + AI provenance + final tests + deploy check | ⬜ |
 
@@ -36,6 +36,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - Validation results panel: D3 radial gauge (`viz.js`, animated, color by threshold) + component weight bars + GSAP score count-up; Blockers/Warnings(acknowledge)/Passed sections with why-it-matters + Edit Relevant Field jump; AI-assisted + demo-benchmark + human-accountability footer.
 - Submit gate: disabled button always carries reason (blockers / score / unacknowledged warnings). Business rules stay in engine/store.
 - `viz.js` new (D3 v7 CDN). Demo draft loads with id reset so each load creates fresh job.
+
+## Day 4 — Approvals + Listings + Audit (done)
+
+- Approvals: pending queue + detail (vacancy, authorisation, score, warnings, market comparison, recruiter comments, per-job history), exact spec attestation sentence gates Approve, Request Changes/Reject require comment, separation of duties enforced visibly, non-manager banner.
+- Job Listings: status-appropriate actions (Edit/Submit/Review/Publish/Close/Revise), empty state CTA.
+- Audit Log: filterable reverse-chron table, actor + role badge, from→to status.
+- All mutations via store.transition → engine guard → audit event. Tests 16 PASS.
 
 ## Decisions log
 

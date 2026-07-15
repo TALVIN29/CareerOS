@@ -8,8 +8,8 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 | Day | Scope | Status |
 |---|---|---|
 | 1 | verify-engine.js + verify-seeds.js + tests (16/16 green) | ✅ Done |
-| 2 | verify-store.js + employer workspace shell (sub-tabs, Overview) | 🔨 In progress |
-| 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | ⬜ |
+| 2 | verify-store.js + employer workspace shell (sub-tabs, Overview) | ✅ Done |
+| 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | 🔨 In progress |
 | 4 | Approvals + Job Listings + Audit Log | ⬜ |
 | 5 | Homepage repositioning + three.js hero + demo narrative + reset | ⬜ |
 | 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ⬜ |
@@ -22,6 +22,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - `tests/verify-engine.test.js`: 16 test groups, plain node:assert. `npm test`.
 - Review pass (fixed): stale-validation submit bypass (MAJOR), publish-gate self-approval recheck, fail-closed employer verification.
 - Deliberate omissions: impersonation-risk blocker (not rule-detectable); M/C scoring uses explainable discrete tiers.
+
+## Day 2 — Store + employer shell (done)
+
+- `verify-store.js`: localStorage layer (`spv.jobs/audit/role/seedVersion`), seeds validated on load, plausible audit history per seed status, corrupt-JSON self-heal, `transition()` delegates to engine, `reset()`.
+- `index.html`: engine/seeds/store script tags; nav "Enterprise"→"Employers"; employer workspace — role switcher (Recruiter/Hiring Manager/HR Admin), Reset Demo Data, 6 sub-tabs (Overview·Create Job·Approvals·Job Listings·Audit Log·Market Intel), Overview with status tiles + Action Required + recent-jobs table. Legacy competitor-scan UI wrapped untouched under Market Intel.
+- `app.js`: verify state + actions (initVerify, setVerifyRole, resetVerifyData, status helpers).
+- Roles are `recruiter|manager|hr_admin` (match persona data). Store resolves deps via globals only (package.json type:module makes require() in UMD a trap).
 
 ## Decisions log
 

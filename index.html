@@ -72,7 +72,7 @@
             :class="activeTab === 'hr' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
             @click="setActiveTab('hr')">
             <i class="fa-solid fa-building mr-1.5 text-xs"></i>
-            <span class="hidden sm:inline">Enterprise</span>
+            <span class="hidden sm:inline">Employers</span>
             <span class="sm:hidden">Biz</span>
           </button>
           <button class="px-2 sm:px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
@@ -107,7 +107,7 @@
             @click="setActiveTab('seeker')"><i class="fa-solid fa-user mr-2 text-xs"></i> Job Seekers</button>
           <button class="px-3 py-3 rounded-xl text-left text-sm font-medium transition-all"
             :class="activeTab === 'hr' ? 'bg-red-600 text-white' : 'text-slate-100 hover:bg-red-600/10 hover:text-white'"
-            @click="setActiveTab('hr')"><i class="fa-solid fa-building mr-2 text-xs"></i> Enterprise</button>
+            @click="setActiveTab('hr')"><i class="fa-solid fa-building mr-2 text-xs"></i> Employers</button>
           <button class="px-3 py-3 rounded-xl text-left text-sm font-medium transition-all"
             :class="activeTab === 'university' ? 'bg-red-600 text-white' : 'text-slate-100 hover:bg-red-600/10 hover:text-white'"
             @click="setActiveTab('university')"><i class="fa-solid fa-graduation-cap mr-2 text-xs"></i> Universities</button>
@@ -1690,6 +1690,182 @@
   ══════════════════════════════════════════ -->
   <main x-show="activeTab === 'hr'" x-ref="hrView" class="view-panel max-w-screen-xl mx-auto px-4 sm:px-6 py-6">
 
+    <!-- ── Employer workspace header ── -->
+    <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+      <div>
+        <h1 class="text-xl font-semibold text-white">Employer Workspace</h1>
+        <p class="text-xs text-slate-500 mt-0.5">Signal Path Verify — job posting integrity &amp; approval</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="nav-shell flex gap-1 rounded-xl p-1">
+          <button class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            :class="verifyRole === 'recruiter' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
+            @click="setVerifyRole('recruiter')">Recruiter</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            :class="verifyRole === 'manager' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
+            @click="setVerifyRole('manager')">Hiring Manager</button>
+          <button class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+            :class="verifyRole === 'hr_admin' ? 'bg-red-600 text-white shadow-lg shadow-red-600/20' : 'text-slate-400 hover:text-white'"
+            @click="setVerifyRole('hr_admin')">HR Admin</button>
+        </div>
+        <button class="btn-ghost text-xs gap-2 inline-flex items-center" @click="resetVerifyData()">
+          <i class="fa-solid fa-rotate-left"></i> Reset Demo Data
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Employer sub-tab bar ── -->
+    <div class="flex border-b border-red-600/10 text-xs overflow-x-auto mb-6">
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'overview' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'overview'">
+        <i class="fa-solid fa-gauge text-xs"></i> Overview
+      </button>
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'create' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'create'">
+        <i class="fa-solid fa-file-circle-plus text-xs"></i> Create Job
+      </button>
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'approvals' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'approvals'">
+        <i class="fa-solid fa-clipboard-check text-xs"></i> Approvals
+      </button>
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'listings' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'listings'">
+        <i class="fa-solid fa-list-check text-xs"></i> Job Listings
+      </button>
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'audit' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'audit'">
+        <i class="fa-solid fa-timeline text-xs"></i> Audit Log
+      </button>
+      <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
+        :class="hrTab === 'market' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'market'">
+        <i class="fa-solid fa-satellite-dish text-xs"></i> Market Intel
+      </button>
+    </div>
+
+    <!-- ══ OVERVIEW ══ -->
+    <div x-show="hrTab === 'overview'" class="flex flex-col gap-6">
+      <div>
+        <p class="text-sm text-slate-300">Welcome back, <span class="font-semibold text-white" x-text="verifyCurrentUser().name"></span> <span class="text-slate-500" x-text="'· ' + formatStatus(verifyCurrentUser().role)"></span></p>
+      </div>
+
+      <!-- Status tiles -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div class="card !p-3">
+          <p class="text-2xl font-semibold text-white" x-text="verifyStatusCounts().draft"></p>
+          <p class="text-xs text-slate-500 mt-1">Drafts</p>
+        </div>
+        <div class="card !p-3">
+          <p class="text-2xl font-semibold text-white" x-text="verifyStatusCounts().needs_changes"></p>
+          <span class="badge badge-yellow mt-1">Needs Changes</span>
+        </div>
+        <div class="card !p-3">
+          <p class="text-2xl font-semibold text-white" x-text="verifyStatusCounts().pending_approval"></p>
+          <span class="badge badge-accent mt-1">Pending Approval</span>
+        </div>
+        <div class="card !p-3">
+          <p class="text-2xl font-semibold text-white" x-text="verifyStatusCounts().approved"></p>
+          <span class="badge badge-green mt-1">Approved</span>
+        </div>
+        <div class="card !p-3">
+          <p class="text-2xl font-semibold text-white" x-text="verifyStatusCounts().published"></p>
+          <span class="badge badge-green mt-1">Published</span>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div x-show="verifyJobs.length === 0" class="flex flex-col items-center justify-center py-16 text-center gap-3">
+        <div class="w-16 h-16 rounded-2xl bg-red-600/10 border border-red-600/15 flex items-center justify-center">
+          <i class="fa-solid fa-file-circle-plus text-red-400/60 text-2xl"></i>
+        </div>
+        <p class="text-slate-400 text-sm font-medium">No jobs yet — create your first draft</p>
+        <button class="btn-primary gap-2 py-2.5 px-5 mt-1" @click="hrTab = 'create'">
+          <i class="fa-solid fa-plus"></i> Create a Job Draft
+        </button>
+      </div>
+
+      <!-- Action Required -->
+      <div class="card" x-show="verifyJobs.length > 0">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-triangle-exclamation text-accent text-sm"></i>
+          <span class="section-label">Action Required</span>
+        </div>
+        <template x-for="j in (verifyRole === 'manager' ? verifyJobs.filter(j => j.status === 'pending_approval') : verifyJobs.filter(j => j.status === 'needs_changes'))" :key="j.id">
+          <div class="flex items-center justify-between gap-3 py-2.5 border-b border-red-600/10 last:border-0">
+            <div class="min-w-0">
+              <p class="text-sm text-slate-200 truncate" x-text="j.title"></p>
+              <p class="text-xs text-slate-500" x-text="'Score ' + (j.validation ? j.validation.score : '—')"></p>
+            </div>
+            <span class="badge shrink-0" :class="statusBadgeClass(j.status)" x-text="formatStatus(j.status)"></span>
+            <button class="btn-ghost text-xs shrink-0" @click="selectedVerifyJobId = j.id; hrTab = (verifyRole === 'manager' ? 'approvals' : 'listings')">Open</button>
+          </div>
+        </template>
+        <p class="text-xs text-slate-600" x-show="(verifyRole === 'manager' ? verifyJobs.filter(j => j.status === 'pending_approval') : verifyJobs.filter(j => j.status === 'needs_changes')).length === 0">Nothing needs your attention right now.</p>
+      </div>
+
+      <!-- Recent jobs table -->
+      <div class="card" x-show="verifyJobs.length > 0">
+        <div class="flex items-center gap-2 mb-3">
+          <i class="fa-solid fa-list-check text-accent text-sm"></i>
+          <span class="section-label">Recent Jobs</span>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-slate-500 text-left border-b border-red-600/10">
+                <th class="py-2 pr-3 font-medium">Role</th>
+                <th class="py-2 pr-3 font-medium">Department</th>
+                <th class="py-2 pr-3 font-medium">Recruiter</th>
+                <th class="py-2 pr-3 font-medium">Manager</th>
+                <th class="py-2 pr-3 font-medium">Score</th>
+                <th class="py-2 pr-3 font-medium">Status</th>
+                <th class="py-2 pr-3 font-medium">Updated</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="j in verifyJobs.slice().sort((a,b) => new Date(b.updatedAt) - new Date(a.updatedAt))" :key="j.id">
+                <tr class="border-b border-red-600/5 text-slate-300">
+                  <td class="py-2 pr-3 whitespace-nowrap" x-text="j.title"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="j.department"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="(VerifySeeds.PERSONAS.find(p => p.id === j.recruiterId) || {}).name || '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="(VerifySeeds.PERSONAS.find(p => p.id === j.hiringManagerId) || {}).name || '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap" x-text="j.validation ? j.validation.score : '—'"></td>
+                  <td class="py-2 pr-3 whitespace-nowrap"><span class="badge" :class="statusBadgeClass(j.status)" x-text="formatStatus(j.status)"></span></td>
+                  <td class="py-2 pr-3 whitespace-nowrap text-slate-500" x-text="new Date(j.updatedAt).toLocaleString()"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CREATE JOB (stub — Day 3) ══ -->
+    <div x-show="hrTab === 'create'" class="card text-sm text-slate-400">
+      <i class="fa-solid fa-file-circle-plus text-accent text-sm mr-2"></i>
+      Job creation wizard coming next.
+    </div>
+
+    <!-- ══ APPROVALS (stub — Day 4) ══ -->
+    <div x-show="hrTab === 'approvals'" class="card text-sm text-slate-400">
+      <i class="fa-solid fa-clipboard-check text-accent text-sm mr-2"></i>
+      Approval queue coming next.
+    </div>
+
+    <!-- ══ JOB LISTINGS (stub — Day 4) ══ -->
+    <div x-show="hrTab === 'listings'" class="card text-sm text-slate-400">
+      <i class="fa-solid fa-list-check text-accent text-sm mr-2"></i>
+      Job listings table coming next.
+    </div>
+
+    <!-- ══ AUDIT LOG (stub — Day 4) ══ -->
+    <div x-show="hrTab === 'audit'" class="card text-sm text-slate-400">
+      <i class="fa-solid fa-timeline text-accent text-sm mr-2"></i>
+      Audit log coming next.
+    </div>
+
+    <!-- ══ MARKET INTEL (existing Enterprise content) ══ -->
+    <div x-show="hrTab === 'market'">
+
     <!-- ── Search bar (TOP, full-width) ── -->
     <div class="glass-card card-glow mb-6">
       <div class="flex items-center gap-2 mb-1">
@@ -2177,6 +2353,8 @@
       </section>
     </div><!-- end results -->
 
+    </div><!-- end hrTab === 'market' -->
+
   </main>
 
   <!-- ══════════════════════════════════════════
@@ -2446,6 +2624,9 @@
   ══════════════════════════════════════════ -->
   <script src="./demo-api.js"></script>
   <script src="./api.js"></script>
+  <script src="./verify-engine.js"></script>
+  <script src="./verify-seeds.js"></script>
+  <script src="./verify-store.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

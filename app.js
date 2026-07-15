@@ -123,7 +123,18 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         uniScanning: false,
         uniReport: null,
 
+        // Signal Path Verify (employer workspace)
+        hrTab: 'overview',
+        verifyRole: 'recruiter',
+        verifyJobs: [],
+        verifyAudit: [],
+        selectedVerifyJobId: null,
+        wizardStep: 1,
+        verifyDraft: null,
+
         init() {
+          this.initVerify();
+
           // Init AOS
           AOS.init({ duration: 500, once: true, offset: 50 });
 
@@ -173,6 +184,79 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           this.activeTab = tab;
           if (tab === 'hr') this.maybeInitRadar();
           this.$nextTick(() => this.animateActiveView());
+        },
+
+        // ── Signal Path Verify ──────────────────────────────────────────
+        initVerify() {
+          window.VerifyStore.init();
+          this.refreshVerify();
+        },
+
+        refreshVerify() {
+          this.verifyJobs = window.VerifyStore.listJobs();
+          this.verifyAudit = window.VerifyStore.listAudit();
+          this.verifyRole = window.VerifyStore.getRole();
+        },
+
+        setVerifyRole(r) {
+          window.VerifyStore.setRole(r);
+          this.verifyRole = r;
+        },
+
+        resetVerifyData() {
+          Swal.fire({
+            icon: 'warning', title: 'Reset Demo Data?',
+            text: 'This clears all jobs and audit history and restores the 5 seed jobs.',
+            showCancelButton: true, confirmButtonText: 'Reset', confirmButtonColor: '#dc2626',
+            background: '#151515', color: '#e2e8f0',
+          }).then(result => {
+            if (!result.isConfirmed) return;
+            window.VerifyStore.reset();
+            this.refreshVerify();
+            this.selectedVerifyJobId = null;
+            this.hrTab = 'overview';
+            Swal.fire({ icon: 'success', title: 'Demo Data Reset', text: 'Restored the 5 seed jobs.',
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626', timer: 1600, showConfirmButton: false });
+          });
+        },
+
+        verifyStatusCounts() {
+          const counts = { draft: 0, needs_changes: 0, pending_approval: 0, approved: 0, published: 0 };
+          this.verifyJobs.forEach(j => { if (counts[j.status] !== undefined) counts[j.status] += 1; });
+          return counts;
+        },
+
+        verifyCurrentUser() {
+          return window.VerifyStore.currentUser();
+        },
+
+        statusBadgeClass(status) {
+          return {
+            draft: 'badge-soft',
+            validating: 'badge-soft',
+            needs_changes: 'badge-yellow',
+            pending_approval: 'badge-accent',
+            approved: 'badge-green',
+            published: 'badge-green',
+            rejected: 'badge-red',
+            closed: 'badge-soft',
+          }[status] || 'badge-soft';
+        },
+
+        formatStatus(status) {
+          return {
+            draft: 'Draft',
+            validating: 'Validating',
+            needs_changes: 'Needs Changes',
+            pending_approval: 'Pending Approval',
+            approved: 'Approved',
+            published: 'Published',
+            rejected: 'Rejected',
+            closed: 'Closed',
+            recruiter: 'Recruiter',
+            manager: 'Hiring Manager',
+            hr_admin: 'HR Admin',
+          }[status] || status;
         },
 
         navCtaLabel() {

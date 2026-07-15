@@ -13,7 +13,7 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 | 4 | Approvals + Job Listings + Audit Log | ✅ Done |
 | 5 | Homepage repositioning + three.js hero + demo narrative + reset | ✅ Done |
 | 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ✅ Done |
-| 7 | README/docs + AI provenance + final tests + deploy check | 🔨 In progress |
+| 7 | README/docs + AI provenance + final tests + deploy check | ✅ Done (manual browser QA pending) |
 
 ## Day 1 — Engine (done)
 
@@ -57,6 +57,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - University benchmark: "Verified roles only" toggle with real skill-demand aggregation + delta callout; disabled hint under 2 verified jobs.
 - Bugs fixed: roadmap poll stuck on pending forever on failure; Competitive Intelligence card vanished on fetch failure (no loading flag); generateOutreach TypeError on undeclared state. All async flows now reset flags + honest empty states. demo-api endpoint coverage confirmed complete.
 - A11y: aria-labels on requirement-builder inputs + audit filter. Tables already overflow-safe.
+
+## Day 7 — Docs + final gate (done)
+
+- README rewritten for judges: pitch, ghost-jobs problem evidence, 9-step demo script, JIS formula + thresholds, status machine + governance rules, architecture + production path, test coverage, AI provenance (no runtime AI calls, RM0).
+- Title/meta updated; leftover "Enterprise" copy replaced; long-standing div imbalance in seeker results wrapper fixed (627/627).
+- Final gate: 16/16 tests PASS, node --check clean on all 5 JS files.
+- Remaining: manual browser QA of 9-step demo + seeker tab render after div fix.
 
 ## Decisions log
 

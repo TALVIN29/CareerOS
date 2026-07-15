@@ -961,7 +961,7 @@
             </span>
           </div>
           <template x-for="job in jobs" :key="job.url + job.title">
-            <div class="job-card" :class="selectedJob?.url === job.url ? 'job-card-active' : ''" @click="selectJob(job)">
+            <div class="job-card" x-data="{ vExpand: false }" :class="selectedJob?.url === job.url ? 'job-card-active' : ''" @click="selectJob(job)">
               <div class="flex justify-between items-start gap-3 mb-2">
                 <div class="min-w-0 flex-1">
                   <p class="font-bold text-sm text-white leading-snug" x-text="job.title"></p>
@@ -984,7 +984,11 @@
                 </template>
               </div>
               <div class="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <button x-show="job.verified" type="button" class="badge badge-green" style="font-size:.6rem;"
+                    @click.stop="vExpand = !vExpand" :aria-expanded="vExpand" aria-label="Toggle verified vacancy details">
+                    <i class="fa-solid fa-shield-halved"></i> Verified vacancy
+                  </button>
                   <span x-show="job.is_verified !== false" class="badge badge-green" style="font-size:.6rem;">
                     <i class="fa-solid fa-shield-check"></i> Verified
                   </span>
@@ -998,6 +1002,10 @@
                     Apply <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                   </a>
                 </div>
+              </div>
+              <div x-show="job.verified && vExpand" @click.stop class="mt-2 pt-2 border-t border-emerald-500/15 text-xs text-emerald-300/90 leading-relaxed">
+                Authorised ✓ · Funded ✓ · Manager-attested ✓ · Target hire date <span x-text="fmtDate(job.targetStartDate)"></span>
+                <br><span class="text-slate-500">Backed by audit trail.</span>
               </div>
             </div>
           </template>
@@ -1251,26 +1259,59 @@
 
             <!-- VERIFICATION TAB -->
             <div x-show="analysisTab === 'verify'" class="flex flex-col gap-3">
-              <p class="text-xs text-slate-500 leading-relaxed">Signal Path runs every job through 5 verification layers before showing it.</p>
-              <div class="flex flex-col gap-2">
-                <template x-for="(check, i) in [
-                  {label: 'Description length ≥ 200 characters', ok: true},
-                  {label: 'Company name present and non-empty', ok: true},
-                  {label: 'Scam keyword scan — no WhatsApp/Telegram, MLM, guaranteed income', ok: selectedJob?.is_verified !== false},
-                  {label: 'Salary anomaly check — consistent with role seniority', ok: selectedJob?.is_verified !== false},
-                  {label: 'Cross-source deduplication', ok: true}
-                ]" :key="i">
-                  <div class="flex items-start gap-2.5 p-2.5 rounded-lg" :class="check.ok ? 'bg-emerald-500/5 border border-emerald-500/15' : 'bg-red-500/5 border border-red-500/15'">
-                    <i class="text-sm mt-0.5 shrink-0" :class="check.ok ? 'fa-solid fa-check-circle text-emerald-400' : 'fa-solid fa-times-circle text-red-400'"></i>
-                    <span class="text-xs text-slate-400" x-text="check.label"></span>
+
+              <!-- Sourced from a real Signal Path Verify record -->
+              <template x-if="verifiedChecklist()">
+                <div class="flex flex-col gap-3">
+                  <p class="text-xs text-emerald-400 font-medium leading-relaxed flex items-center gap-1.5">
+                    <i class="fa-solid fa-shield-check"></i>
+                    Verified through Signal Path Verify — hiring-manager attestation on record.
+                  </p>
+                  <div class="flex flex-col gap-2">
+                    <template x-for="p in verifiedChecklist().validation.passed" :key="p.id">
+                      <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
+                        <i class="fa-solid fa-check-circle text-emerald-400 text-sm mt-0.5 shrink-0"></i>
+                        <span class="text-xs text-slate-400" x-text="p.message"></span>
+                      </div>
+                    </template>
+                    <template x-for="w in verifiedChecklist().validation.warnings.filter(w => w.acknowledged)" :key="w.id">
+                      <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-yellow-500/5 border border-yellow-500/15">
+                        <i class="fa-solid fa-check text-yellow-400 text-sm mt-0.5 shrink-0"></i>
+                        <span class="text-xs text-slate-400" x-text="w.message + ' — acknowledged by recruiter'"></span>
+                      </div>
+                    </template>
                   </div>
-                </template>
-              </div>
-              <div x-show="selectedJob?.source" class="pt-2 border-t border-red-600/10 text-xs text-slate-500 flex items-center gap-2">
-                <i class="fa-solid fa-database text-slate-600"></i>
-                Source: <span class="text-slate-300" x-text="selectedJob?.source"></span>
-                <span x-show="selectedJob?.date_posted">· <span class="text-accent" x-text="fmtDate(selectedJob?.date_posted)"></span></span>
-              </div>
+                  <div class="pt-2 border-t border-red-600/10 text-xs text-slate-500">
+                    Job Integrity Score: <span class="text-emerald-400 font-semibold" x-text="verifiedChecklist().validation.score"></span>/100 · Backed by audit trail.
+                  </div>
+                </div>
+              </template>
+
+              <!-- Mocked job — existing 5-layer demo checklist -->
+              <template x-if="!verifiedChecklist()">
+                <div class="flex flex-col gap-3">
+                  <p class="text-xs text-slate-500 leading-relaxed">Signal Path runs every job through 5 verification layers before showing it.</p>
+                  <div class="flex flex-col gap-2">
+                    <template x-for="(check, i) in [
+                      {label: 'Description length ≥ 200 characters', ok: true},
+                      {label: 'Company name present and non-empty', ok: true},
+                      {label: 'Scam keyword scan — no WhatsApp/Telegram, MLM, guaranteed income', ok: selectedJob?.is_verified !== false},
+                      {label: 'Salary anomaly check — consistent with role seniority', ok: selectedJob?.is_verified !== false},
+                      {label: 'Cross-source deduplication', ok: true}
+                    ]" :key="i">
+                      <div class="flex items-start gap-2.5 p-2.5 rounded-lg" :class="check.ok ? 'bg-emerald-500/5 border border-emerald-500/15' : 'bg-red-500/5 border border-red-500/15'">
+                        <i class="text-sm mt-0.5 shrink-0" :class="check.ok ? 'fa-solid fa-check-circle text-emerald-400' : 'fa-solid fa-times-circle text-red-400'"></i>
+                        <span class="text-xs text-slate-400" x-text="check.label"></span>
+                      </div>
+                    </template>
+                  </div>
+                  <div x-show="selectedJob?.source" class="pt-2 border-t border-red-600/10 text-xs text-slate-500 flex items-center gap-2">
+                    <i class="fa-solid fa-database text-slate-600"></i>
+                    Source: <span class="text-slate-300" x-text="selectedJob?.source"></span>
+                    <span x-show="selectedJob?.date_posted">· <span class="text-accent" x-text="fmtDate(selectedJob?.date_posted)"></span></span>
+                  </div>
+                </div>
+              </template>
             </div>
 
             <!-- INTERVIEW TAB -->
@@ -1508,6 +1549,9 @@
                 <span x-show="roadmaps[gap.skill]?.status === 'ready'" class="badge badge-green text-xs">
                   <i class="fa-solid fa-check text-xs"></i> Ready
                 </span>
+                <span x-show="roadmaps[gap.skill]?.status === 'error'" class="badge badge-red text-xs">
+                  <i class="fa-solid fa-triangle-exclamation text-xs"></i> Unavailable
+                </span>
                 <i class="fa-solid fa-chevron-down text-slate-500 text-xs transition-transform"
                   :class="openRoadmap === gap.skill ? 'rotate-180' : ''"></i>
               </div>
@@ -1515,6 +1559,9 @@
             <div x-show="openRoadmap === gap.skill" class="px-4 pb-4">
               <div x-show="roadmaps[gap.skill]?.status === 'pending'" class="text-slate-500 text-sm text-center py-4">
                 <i class="fa-solid fa-cog fa-spin mr-2"></i>Generating roadmap…
+              </div>
+              <div x-show="roadmaps[gap.skill]?.status === 'error'" class="text-slate-500 text-sm text-center py-4">
+                <i class="fa-solid fa-circle-info mr-2"></i>Demo data unavailable — could not generate this roadmap.
               </div>
               <div x-show="roadmaps[gap.skill]?.status === 'ready'" class="text-sm">
                 <p x-show="roadmaps[gap.skill]?.why_it_matters"
@@ -1987,21 +2034,21 @@
       <div x-show="wizardStep === 3" class="flex flex-col gap-3">
         <template x-for="(req, i) in verifyDraft.requirements" :key="i">
           <div class="grid sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border border-red-600/10 bg-black/20">
-            <input class="input-field sm:col-span-3" placeholder="Requirement name" x-model="req.name">
-            <select class="input-field sm:col-span-2" x-model="req.type">
+            <input class="input-field sm:col-span-3" aria-label="Requirement name" placeholder="Requirement name" x-model="req.name">
+            <select class="input-field sm:col-span-2" aria-label="Requirement type" x-model="req.type">
               <option value="skill">Skill</option>
               <option value="experience">Experience</option>
               <option value="education">Education</option>
               <option value="certification">Certification</option>
               <option value="language">Language</option>
             </select>
-            <select class="input-field sm:col-span-2" x-model="req.required">
+            <select class="input-field sm:col-span-2" aria-label="Required or preferred" x-model="req.required">
               <option :value="true">Required</option>
               <option :value="false">Preferred</option>
             </select>
-            <input x-show="req.type === 'experience'" type="number" min="0" class="input-field sm:col-span-1" placeholder="Yrs" x-model.number="req.yearsExperience">
-            <input class="input-field" :class="req.type === 'experience' ? 'sm:col-span-3' : 'sm:col-span-4'" placeholder="Justification" x-model="req.justification">
-            <button class="btn-ghost text-xs sm:col-span-1 justify-center" @click="removeRequirementRow(i)"><i class="fa-solid fa-trash"></i></button>
+            <input x-show="req.type === 'experience'" type="number" min="0" class="input-field sm:col-span-1" aria-label="Years of experience" placeholder="Yrs" x-model.number="req.yearsExperience">
+            <input class="input-field" :class="req.type === 'experience' ? 'sm:col-span-3' : 'sm:col-span-4'" aria-label="Justification" placeholder="Justification" x-model="req.justification">
+            <button class="btn-ghost text-xs sm:col-span-1 justify-center" aria-label="Remove requirement" @click="removeRequirementRow(i)"><i class="fa-solid fa-trash"></i></button>
           </div>
         </template>
         <p class="text-xs text-slate-600" x-show="!verifyDraft.requirements.length">No requirements added yet.</p>
@@ -2342,7 +2389,7 @@
             <i class="fa-solid fa-timeline text-accent text-sm"></i>
             <span class="section-label">Audit Log</span>
           </div>
-          <input type="text" class="input-field !w-56" x-model="auditFilter" placeholder="Filter by job, actor, or action…">
+          <input type="text" class="input-field !w-56" aria-label="Filter audit log" x-model="auditFilter" placeholder="Filter by job, actor, or action…">
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-xs">
@@ -2552,7 +2599,7 @@
       </div>
 
       <!-- Section 2: Competitive Intelligence — bullets, scannable for managers -->
-      <div class="card" x-show="hrIntelSummary || hrLoadingRec">
+      <div class="card" x-show="hrIntelSummary || hrLoadingRec || hrLoadingIntel">
         <div class="flex items-center justify-between mb-4">
           <div>
             <h2 class="font-semibold text-slate-200 flex items-center gap-2 text-base">
@@ -2571,8 +2618,11 @@
             <i class="fa-solid fa-satellite-dish text-xs"></i> + market news
           </span>
         </div>
-        <div x-show="hrLoadingRec && !hrIntelSummary" class="flex items-center gap-2 text-slate-500 text-xs py-2">
+        <div x-show="(hrLoadingRec || hrLoadingIntel) && !hrIntelSummary" class="flex items-center gap-2 text-slate-500 text-xs py-2">
           <i class="fa-solid fa-spinner animate-spin"></i> Analysing competitive signals…
+        </div>
+        <div x-show="!hrLoadingRec && !hrLoadingIntel && !hrIntelSummary" class="text-slate-600 text-xs text-center py-4">
+          <i class="fa-solid fa-circle-info mr-1"></i> Demo data unavailable — competitive intelligence could not be generated for this scan.
         </div>
         <div x-show="hrIntelSummary" class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div class="rounded-xl bg-yellow-500/5 border border-yellow-500/20 p-4">
@@ -2996,6 +3046,28 @@
         </div>
       </div>
 
+      <div class="card">
+        <div class="flex items-center justify-between gap-3">
+          <div>
+            <label for="uni-verified-toggle" class="text-sm font-semibold text-slate-200 cursor-pointer">Benchmark against verified roles only</label>
+            <p class="text-xs text-slate-500 mt-0.5" x-show="!canBenchmarkVerifiedOnly()">Publish verified roles in the Employer workspace to enable.</p>
+            <p class="text-xs text-slate-500 mt-0.5" x-show="canBenchmarkVerifiedOnly()">Recompute the skill-demand list from published/approved Signal Path Verify jobs only.</p>
+          </div>
+          <button id="uni-verified-toggle" type="button" role="switch" :aria-checked="uniVerifiedOnly && canBenchmarkVerifiedOnly()"
+            :disabled="!canBenchmarkVerifiedOnly()"
+            @click="canBenchmarkVerifiedOnly() && (uniVerifiedOnly = !uniVerifiedOnly)"
+            class="relative w-10 h-6 rounded-full transition-colors shrink-0 disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="uniVerifiedOnly && canBenchmarkVerifiedOnly() ? 'bg-emerald-500' : 'bg-slate-700'">
+            <span class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform"
+              :class="uniVerifiedOnly && canBenchmarkVerifiedOnly() ? 'translate-x-4' : ''"></span>
+          </button>
+        </div>
+        <p class="text-xs text-emerald-300 mt-3 flex items-start gap-1.5" x-show="uniVerifiedOnly && canBenchmarkVerifiedOnly()">
+          <i class="fa-solid fa-circle-info mt-0.5"></i>
+          <span>Excluding unverified demand changed your top gaps — <span x-text="verifiedDeltaCallout()"></span></span>
+        </p>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="card">
           <h2 class="font-semibold text-slate-200 flex items-center gap-2 mb-4">
@@ -3003,7 +3075,7 @@
             Market Skill Coverage
           </h2>
           <div class="flex flex-col gap-3">
-            <template x-for="skill in uniReport?.skills" :key="skill.name">
+            <template x-for="skill in displayedUniSkills()" :key="skill.name">
               <div class="rounded-xl border border-red-600/10 bg-black/20 p-3">
                 <div class="flex items-center justify-between gap-3 mb-2">
                   <span class="text-sm font-semibold text-slate-200" x-text="skill.name"></span>

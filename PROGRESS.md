@@ -12,8 +12,8 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 | 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | ✅ Done |
 | 4 | Approvals + Job Listings + Audit Log | ✅ Done |
 | 5 | Homepage repositioning + three.js hero + demo narrative + reset | ✅ Done |
-| 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | 🔨 In progress |
-| 7 | README/docs + AI provenance + final tests + deploy check | ⬜ |
+| 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ✅ Done |
+| 7 | README/docs + AI provenance + final tests + deploy check | 🔨 In progress |
 
 ## Day 1 — Engine (done)
 
@@ -50,6 +50,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - three.js signal-field hero background (60 drifting nodes, red pulses along edges; reduced-motion static, skipped <768px, pixel ratio capped, RAF pauses on hidden tab). particles.js scoped to seeker only.
 - Validate → Approve → Publish workflow strip + human-accountability line; employer/seeker/uni path cards reworded around verified roles.
 - GSAP hero load sequence (once, reduced-motion safe). Footer Reset demo data link.
+
+## Day 6 — Cross-audience integration + debug (done)
+
+- Seeker results show published Verify jobs with "Verified vacancy" badge + integrity panel (authorised/funded/attested/target date, audit-backed); seeker verify checklist re-sourced from real validation for those jobs.
+- University benchmark: "Verified roles only" toggle with real skill-demand aggregation + delta callout; disabled hint under 2 verified jobs.
+- Bugs fixed: roadmap poll stuck on pending forever on failure; Competitive Intelligence card vanished on fetch failure (no loading flag); generateOutreach TypeError on undeclared state. All async flows now reset flags + honest empty states. demo-api endpoint coverage confirmed complete.
+- A11y: aria-labels on requirement-builder inputs + audit filter. Tables already overflow-safe.
 
 ## Decisions log
 

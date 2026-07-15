@@ -164,6 +164,12 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         uniCurriculum: 'Excel, statistics, SQL basics, dashboard design, business communication',
         uniScanning: false,
         uniReport: null,
+        uniVerifiedOnly: false,
+
+        hrCandidateProfile: '',
+        hrGeneratingMsg: false,
+        hrOutreachMsg: '',
+        hrLoadingIntel: false,
 
         // Signal Path Verify (employer workspace)
         hrTab: 'overview',
@@ -833,6 +839,40 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           };
         },
 
+        // ── Verified-vacancy moat: publish-through from Signal Path Verify ──
+        publishedJobsForSeeker() {
+          return (window.VerifyStore.listJobs() || [])
+            .filter(j => j.status === 'published')
+            .map(j => ({
+              title: j.title,
+              company: j.department ? `Signal Path Demo Employer · ${j.department}` : 'Signal Path Demo Employer',
+              location: j.location || (j.workplace === 'remote' ? 'Remote' : ''),
+              is_remote: j.workplace === 'remote',
+              seniority: j.seniority,
+              salary: (j.salaryVisible && j.salaryMin && j.salaryMax)
+                ? `MYR ${j.salaryMin.toLocaleString()}-${j.salaryMax.toLocaleString()}/mo`
+                : 'Not disclosed',
+              skills_match: (j.requirements || []).map(r => r.name).filter(Boolean).slice(0, 6),
+              relevance_pct: 90,
+              date_posted: j.updatedAt,
+              source: 'Signal Path Verify',
+              url: '',
+              targetStartDate: j.targetStartDate,
+              verified: true,
+              verifyJobId: j.id,
+            }));
+        },
+
+        // Sources the seeker "Verify" checklist tab from the real validation
+        // record when the selected job came from our own published listings;
+        // returns null for mocked jobs so the template falls back to the
+        // existing 5-layer mock checklist.
+        verifiedChecklist() {
+          if (!this.selectedJob?.verifyJobId) return null;
+          const job = window.VerifyStore.getJob(this.selectedJob.verifyJobId);
+          return (job && job.validation) ? job : null;
+        },
+
         async runCurriculumScan() {
           if (this.uniScanning) return;
           const startedAt = Date.now();
@@ -937,6 +977,52 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           }
         },
 
+        // ── University "verified roles only" toggle ─────────────────────
+        verifiedJobsForBenchmark() {
+          return (window.VerifyStore.listJobs() || []).filter(j => j.status === 'published' || j.status === 'approved');
+        },
+
+        canBenchmarkVerifiedOnly() {
+          return this.verifiedJobsForBenchmark().length >= 2;
+        },
+
+        // Frequency count of requirement names across verified jobs — the
+        // client-side aggregation the toggle recomputes demand from.
+        verifiedSkillDemand() {
+          const jobs = this.verifiedJobsForBenchmark();
+          const freq = {};
+          jobs.forEach(j => (j.requirements || []).forEach(r => {
+            const name = (r.name || '').trim();
+            if (name) freq[name] = (freq[name] || 0) + 1;
+          }));
+          const total = jobs.length || 1;
+          return Object.entries(freq)
+            .map(([skill, frequency]) => ({ skill, frequency, demand: Math.round((frequency / total) * 100) }))
+            .sort((a, b) => b.frequency - a.frequency);
+        },
+
+        displayedUniSkills() {
+          if (!this.uniReport) return [];
+          if (!this.uniVerifiedOnly || !this.canBenchmarkVerifiedOnly()) return this.uniReport.skills;
+          const curriculum = (this.uniCurriculum || '').toLowerCase();
+          return this.verifiedSkillDemand().slice(0, 8).map(s => ({
+            name: s.skill, demand: s.demand, frequency: s.frequency,
+            covered: curriculum.includes(s.skill.toLowerCase()),
+          }));
+        },
+
+        verifiedDeltaCallout() {
+          if (!this.uniReport || !this.uniVerifiedOnly || !this.canBenchmarkVerifiedOnly()) return '';
+          const mockTop = (this.uniReport.skills || []).map(s => s.name);
+          const verifiedTop = this.verifiedSkillDemand().slice(0, 8).map(s => s.skill);
+          const dropped = mockTop.find(s => !verifiedTop.includes(s));
+          const risen = verifiedTop.find(s => !mockTop.includes(s));
+          if (dropped && risen) return `${dropped} drops out of the top gaps; ${risen} rises using verified employer demand only.`;
+          if (risen) return `${risen} enters the top gaps using verified employer demand only.`;
+          if (dropped) return `${dropped} drops out of the top gaps once only verified employer demand is counted.`;
+          return 'Verified demand mirrors your current top gaps — no material change.';
+        },
+
         async doSearch() {
           if (this.searching) return;
 
@@ -1001,7 +1087,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               return;
             }
 
-            this.jobs = data.jobs || [];
+            this.jobs = [...this.publishedJobsForSeeker(), ...(data.jobs || [])];
             this.gaps = data.gaps || [];
             this.sessionId = data.session_id;
             this.totalPostings = data.total_postings || 0;
@@ -1223,8 +1309,16 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
               const data = await res.json();
               if (data.status === 'ready') {
                 this.roadmaps[g.skill] = { status: 'ready', steps: data.roadmap?.steps || data.steps || [], why_it_matters: data.roadmap?.why_it_matters || '', estimated_total: data.roadmap?.estimated_total || '' };
+              } else if (data.status !== 'pending') {
+                // Unknown/error status from the endpoint — stop showing an
+                // infinite "pending" spinner for this skill.
+                this.roadmaps[g.skill] = { status: 'error', steps: [] };
               }
-            } catch { /* silent */ }
+            } catch {
+              // Network/parse failure — fail honestly instead of leaving the
+              // spinner spinning forever (gap.skill stays "pending" without this).
+              this.roadmaps[g.skill] = { status: 'error', steps: [] };
+            }
           }));
         },
 
@@ -1316,13 +1410,15 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
           // Fire all 3 independently — each renders as soon as it resolves.
           // Intelligence (~15s) appears first, roadmap/hunt (~30-45s) follow.
+          this.hrLoadingIntel = true;
           fetch(`${API}/api/hr/intelligence`, {
             method: 'POST', headers: h,
             body: JSON.stringify({ company: this.hrCompany, role: this.hrRole,
               top_skills: topSkills, your_skills: this.hrYourSkills, news_context: this.hrNewsSignals }),
           }).then(r => r.ok ? r.json() : null)
             .then(d => { if (d?.building) this.hrIntelSummary = d; })
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => { this.hrLoadingIntel = false; });
 
           fetch(`${API}/api/hr/recommendations`, {
             method: 'POST', headers: h,
@@ -1344,7 +1440,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         },
 
         async generateOutreach() {
-          if (!this.hrSkills.length || !this.hrCandidateProfile.trim()) return;
+          if (!this.hrSkills.length || !(this.hrCandidateProfile || '').trim()) return;
           this.hrGeneratingMsg = true;
           this.hrOutreachMsg = '';
           const topSkills = this.hrSkills.slice(0, 5).map(s => s.skill).join(', ');

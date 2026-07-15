@@ -212,7 +212,11 @@
     listAudit(jobId) {
       const audit = loadAudit();
       const filtered = jobId ? audit.filter(a => a.jobId === jobId) : audit;
-      return filtered.slice().sort((a, b) => new Date(b.ts) - new Date(a.ts));
+      // Stable ordering for same-millisecond events: insertion index breaks ties.
+      return filtered
+        .map((a, i) => ({ a, i }))
+        .sort((x, y) => (new Date(y.a.ts) - new Date(x.a.ts)) || (y.i - x.i))
+        .map(x => x.a);
     },
 
     getRole() {

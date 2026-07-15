@@ -12,13 +12,14 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.6/dist/sweetalert2.all.min.js"></script>
 
   <!-- New packages -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/typed.js/2.0.16/typed.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 
   <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -30,7 +31,7 @@
 <body x-data="app()" x-init="init()" x-cloak>
 
   <!-- Particles background (only when idle) -->
-  <div id="particles-js" x-show="!searching && (activeTab === 'home' || (activeTab === 'seeker' && !jobs.length))"></div>
+  <div id="particles-js" x-show="!searching && activeTab === 'seeker' && !jobs.length"></div>
 
   <!-- ══════════════════════════════════════════
        HEADER
@@ -125,55 +126,55 @@
        PRODUCT HOMEPAGE
   ══════════════════════════════════════════ -->
   <main x-show="activeTab === 'home'" x-ref="homeView" class="view-panel">
-    <section class="hero-shell px-4 sm:px-6 py-14 sm:py-18">
-      <div class="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
+    <section class="hero-shell relative overflow-hidden px-4 sm:px-6 py-14 sm:py-18">
+      <div id="heroSignalField" class="absolute inset-0 pointer-events-none"></div>
+      <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-black/35 via-black/10 to-black/55"></div>
+      <div class="relative max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 items-center">
         <div>
-          <h1 class="hero-headline text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-white">
-            Turn Real-Time Job Market Data Into <span class="text-accent">Career, Hiring, and Curriculum Decisions.</span>
+          <h1 x-ref="heroHeadline" class="display-font hero-headline text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight text-white">
+            Publish roles people can trust.
           </h1>
-          <p class="mt-5 text-lg text-slate-400 leading-relaxed max-w-2xl">
-            Signal Path helps job seekers, companies, and universities understand skill gaps, market demand, salary trends, and career pathways using AI-powered labor market intelligence.
+          <p x-ref="heroSub" class="mt-5 text-lg text-slate-400 leading-relaxed max-w-2xl">
+            Validate every job advertisement, resolve unrealistic requirements, and obtain hiring-manager approval before the opportunity reaches candidates.
           </p>
-          <div class="mt-8 flex flex-col sm:flex-row gap-3">
-            <button class="btn-primary px-6 py-3 gap-2" @click="setActiveTab('seeker')">
-              <i class="fa-solid fa-file-arrow-up"></i>
-              Start Career Analysis
+          <div x-ref="heroCtas" class="mt-8 flex flex-col sm:flex-row gap-3">
+            <button class="btn-primary px-6 py-3 gap-2" @click="setActiveTab('hr'); openCreateTab()">
+              <i class="fa-solid fa-file-circle-plus"></i>
+              Create a Job Draft
             </button>
-            <button class="btn-ghost px-6 py-3 gap-2" @click="document.getElementById('paths')?.scrollIntoView({ behavior: 'smooth' })">
-              <i class="fa-solid fa-compass"></i>
-              Explore Platform
+            <button class="btn-ghost px-6 py-3 gap-2" @click="setActiveTab('hr'); hrTab = 'overview'">
+              <i class="fa-solid fa-diagram-project"></i>
+              View Approval Workflow
             </button>
           </div>
+          <p id="typed-hero-wrap" class="mt-6 text-sm text-red-300/90 font-medium">
+            <span id="typed-hero"></span>
+          </p>
         </div>
 
-        <div class="card card-glow p-0 overflow-hidden">
+        <div x-ref="heroPreview" class="card card-glow p-0 overflow-hidden">
           <div class="p-5 border-b border-red-600/15 flex items-center justify-between">
             <div>
-              <p class="section-label">Platform Preview</p>
-            <h2 class="text-xl font-semibold text-white mt-1">A focused preview before the full dashboard</h2>
+              <p class="section-label">Integrity Snapshot</p>
+              <h2 class="text-xl font-semibold text-white mt-1">Job Integrity Score</h2>
             </div>
-            <span class="badge badge-accent">Live Intelligence</span>
+            <span class="badge badge-yellow">Pending Approval</span>
           </div>
-          <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <i class="fa-solid fa-magnifying-glass-chart text-red-400"></i>
-              <p class="text-sm font-semibold text-white mt-3">Search a role</p>
-              <p class="text-xs text-slate-500 mt-1">Find active demand for the role and market you care about.</p>
-            </div>
-            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <i class="fa-solid fa-route text-red-400"></i>
-              <p class="text-sm font-semibold text-white mt-3">Map the path</p>
-              <p class="text-xs text-slate-500 mt-1">Turn gaps into milestones and next learning moves.</p>
-            </div>
-            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <i class="fa-solid fa-building-user text-red-400"></i>
-              <p class="text-sm font-semibold text-white mt-3">Read hiring demand</p>
-              <p class="text-xs text-slate-500 mt-1">Spot hiring patterns and workforce priorities without clutter.</p>
-            </div>
-            <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <i class="fa-solid fa-graduation-cap text-red-400"></i>
-              <p class="text-sm font-semibold text-white mt-3">Improve programs</p>
-              <p class="text-xs text-slate-500 mt-1">Compare course coverage against active market gaps.</p>
+          <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+            <div id="heroGauge" class="flex items-center justify-center"></div>
+            <div class="space-y-3">
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-3">
+                <p class="text-xs text-slate-500">Score</p>
+                <p class="text-2xl font-bold text-emerald-400">86<span class="text-sm text-slate-500">/100</span></p>
+              </div>
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-3 flex items-center gap-2">
+                <i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i>
+                <p class="text-xs text-slate-400">Wide salary range resolved before submission.</p>
+              </div>
+              <div class="rounded-xl border border-red-600/15 bg-black/25 p-3 flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-red-400 text-xs"></i>
+                <p class="text-xs text-slate-400">4 audit events logged for this vacancy.</p>
+              </div>
             </div>
           </div>
         </div>
@@ -184,7 +185,7 @@
       <div class="max-w-screen-xl mx-auto">
         <div class="max-w-2xl mb-7">
           <p class="section-label">Choose Your Path</p>
-          <h2 class="text-3xl font-bold text-white mt-2">Three focused journeys, one intelligence engine.</h2>
+          <h2 class="display-font text-3xl font-bold text-white mt-2">Three focused journeys, one intelligence engine.</h2>
             <p class="text-slate-400 mt-3">Pick the path that matches your goal. Each journey opens its own focused workspace.</p>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -193,7 +194,7 @@
               <i class="fa-solid fa-user-tie text-red-300"></i>
             </div>
             <h3 class="text-xl font-semibold text-white">For Job Seekers</h3>
-            <p class="text-sm text-slate-400 leading-relaxed mt-3">Plan your next career move with market-backed guidance.</p>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Apply to verified vacancies, backed by market guidance.</p>
             <ul class="mt-4 space-y-2 text-xs text-slate-400">
               <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Upload your CV and infer a target role</li>
               <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Find skill gaps and salary signals</li>
@@ -205,21 +206,21 @@
             <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center mb-5">
               <i class="fa-solid fa-building text-red-300"></i>
             </div>
-            <h3 class="text-xl font-semibold text-white">For Companies</h3>
-            <p class="text-sm text-slate-400 leading-relaxed mt-3">Understand the hiring market before making workforce decisions.</p>
+            <h3 class="text-xl font-semibold text-white">For Employers</h3>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Publish verified, approved roles — every vacancy authorised before candidates see it.</p>
             <ul class="mt-4 space-y-2 text-xs text-slate-400">
-              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Track competitor hiring signals</li>
-              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Identify emerging workforce skill gaps</li>
-              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Prioritize hiring and internal training moves</li>
+              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Validate postings against realism and scam checks</li>
+              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Route drafts through hiring-manager approval</li>
+              <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Keep a full audit trail of every decision</li>
             </ul>
-            <span class="mt-5 inline-flex items-center text-sm font-semibold text-red-300 group-hover:text-red-100">Run Enterprise Scan <i class="fa-solid fa-arrow-right ml-2"></i></span>
+            <span class="mt-5 inline-flex items-center text-sm font-semibold text-red-300 group-hover:text-red-100">Open Employer Workspace <i class="fa-solid fa-arrow-right ml-2"></i></span>
           </button>
           <button class="card text-left group hover:border-red-400/45 transition-all" @click="setActiveTab('university')">
             <div class="w-11 h-11 rounded-xl bg-red-600/15 border border-red-500/25 flex items-center justify-center mb-5">
               <i class="fa-solid fa-school text-red-300"></i>
             </div>
             <h3 class="text-xl font-semibold text-white">For Universities</h3>
-            <p class="text-sm text-slate-400 leading-relaxed mt-3">Keep academic programs aligned with real employer demand.</p>
+            <p class="text-sm text-slate-400 leading-relaxed mt-3">Benchmark curriculum against verified demand.</p>
             <ul class="mt-4 space-y-2 text-xs text-slate-400">
               <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Benchmark curriculum readiness</li>
               <li><i class="fa-solid fa-check text-red-400 mr-2"></i>Map missing skills to course updates</li>
@@ -235,7 +236,7 @@
       <div class="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[0.8fr_1.2fr] gap-8 items-start">
         <div>
           <p class="section-label">Key Features</p>
-          <h2 class="text-3xl font-bold text-white mt-2">Everything users need, revealed at the right moment.</h2>
+          <h2 class="display-font text-3xl font-bold text-white mt-2">Everything users need, revealed at the right moment.</h2>
           <p class="text-slate-400 mt-3 leading-relaxed">The homepage explains the platform clearly. Deeper analysis appears after a user chooses a journey and provides context.</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -263,32 +264,35 @@
       <div class="max-w-screen-xl mx-auto card">
         <div class="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr] gap-8 items-center">
           <div>
-            <p class="section-label">How It Works</p>
-            <h2 class="text-3xl font-bold text-white mt-2">Start simple. Reveal depth only when needed.</h2>
-            <p class="text-slate-400 mt-3 leading-relaxed">Choose a user path, provide a small amount of context, then Signal Path turns market intelligence into gaps, recommendations, and next actions.</p>
-            <button class="btn-primary mt-6 px-6 py-3 gap-2" @click="setActiveTab('seeker')">
-              Start Career Analysis
+            <p class="section-label">The Workflow</p>
+            <h2 class="display-font text-3xl font-bold text-white mt-2">Validate, approve, publish — in that order.</h2>
+            <p class="text-slate-400 mt-3 leading-relaxed">Every vacancy moves through the same checkpoints before a candidate ever sees it.</p>
+            <button class="btn-primary mt-6 px-6 py-3 gap-2" @click="setActiveTab('hr'); openCreateTab()">
+              Create a Job Draft
               <i class="fa-solid fa-arrow-right"></i>
             </button>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <span class="badge badge-accent">01</span>
-              <h3 class="font-semibold text-white mt-4">Choose a path</h3>
-              <p class="text-xs text-slate-500 mt-2">Job seeker, company, or university.</p>
+              <span class="badge badge-accent"><i class="fa-solid fa-shield-halved mr-1"></i>01</span>
+              <h3 class="font-semibold text-white mt-4">Validate</h3>
+              <p class="text-xs text-slate-500 mt-2">AI checks the posting for missing approvals, unrealistic requirements, and scam patterns.</p>
             </div>
             <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <span class="badge badge-accent">02</span>
-              <h3 class="font-semibold text-white mt-4">Add context</h3>
-              <p class="text-xs text-slate-500 mt-2">Role, CV, competitor, or curriculum.</p>
+              <span class="badge badge-accent"><i class="fa-solid fa-user-check mr-1"></i>02</span>
+              <h3 class="font-semibold text-white mt-4">Approve</h3>
+              <p class="text-xs text-slate-500 mt-2">The named hiring manager reviews and signs off before anything goes live.</p>
             </div>
             <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
-              <span class="badge badge-accent">03</span>
-              <h3 class="font-semibold text-white mt-4">Act with clarity</h3>
-              <p class="text-xs text-slate-500 mt-2">Get gaps, roadmaps, and recommendations.</p>
+              <span class="badge badge-accent"><i class="fa-solid fa-bullhorn mr-1"></i>03</span>
+              <h3 class="font-semibold text-white mt-4">Publish</h3>
+              <p class="text-xs text-slate-500 mt-2">Only authorised, approved vacancies reach candidates.</p>
             </div>
           </div>
         </div>
+        <p class="mt-6 pt-5 border-t border-white/5 text-sm text-slate-400 text-center">
+          AI checks the posting. Managers confirm the vacancy. Candidates see opportunities they can trust.
+        </p>
       </div>
     </section>
 
@@ -296,7 +300,7 @@
       <div class="max-w-screen-xl mx-auto grid grid-cols-1 lg:grid-cols-[0.85fr_1.15fr] gap-8 items-center">
         <div>
           <p class="section-label">Product Preview</p>
-          <h2 class="text-3xl font-bold text-white mt-2">A dashboard when users need one, not before.</h2>
+          <h2 class="display-font text-3xl font-bold text-white mt-2">A dashboard when users need one, not before.</h2>
           <p class="text-slate-400 mt-3 leading-relaxed">Signal Path keeps the first experience simple, then reveals job analysis, enterprise intelligence, or curriculum benchmarking only after the user chooses a goal.</p>
           <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="rounded-xl border border-red-600/15 bg-black/25 p-4">
@@ -357,7 +361,7 @@
       <div class="max-w-screen-xl mx-auto">
         <div class="max-w-2xl mb-7">
           <p class="section-label">Trust & Credibility</p>
-          <h2 class="text-3xl font-bold text-white mt-2">Built for confident, data-driven decisions.</h2>
+          <h2 class="display-font text-3xl font-bold text-white mt-2">Built for confident, data-driven decisions.</h2>
           <p class="text-slate-400 mt-3">Signal Path explains recommendations in plain language, uses market-backed signals, and keeps every audience on a focused path.</p>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -388,7 +392,7 @@
     <section id="contact" class="px-4 sm:px-6 py-14">
       <div class="max-w-screen-xl mx-auto text-center card">
         <p class="section-label">Ready When You Are</p>
-        <h2 class="text-3xl font-bold text-white mt-2">Start your market-backed career analysis today.</h2>
+        <h2 class="display-font text-3xl font-bold text-white mt-2">Start your market-backed career analysis today.</h2>
         <p class="text-slate-400 mt-3 max-w-2xl mx-auto">No setup wall. No crowded first screen. Choose your journey and let the platform reveal the right tools as you go.</p>
         <div class="mt-7 flex flex-col sm:flex-row gap-3 justify-center">
           <button class="btn-primary px-6 py-3 gap-2" @click="setActiveTab('seeker')">Start Career Analysis <i class="fa-solid fa-arrow-right"></i></button>
@@ -3119,7 +3123,10 @@
       </div>
       <div class="mt-8 pt-5 border-t border-white/5 flex flex-col sm:flex-row justify-between gap-3 text-xs text-slate-600">
         <span>© 2026 Signal Path. All rights reserved.</span>
-        <span>Built for live labor-market intelligence.</span>
+        <div class="flex items-center gap-4">
+          <span>Built for live labor-market intelligence.</span>
+          <button class="text-slate-500 hover:text-red-300 transition-colors underline underline-offset-2" @click="resetVerifyData()">Reset demo data</button>
+        </div>
       </div>
     </div>
   </footer>

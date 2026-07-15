@@ -277,6 +277,11 @@
       text-shadow: 0 18px 55px rgba(0,0,0,0.58);
     }
 
+    .display-font { font-family: 'Space Grotesk', 'Inter', sans-serif; }
+
+    #heroSignalField { z-index: 0; }
+    #heroSignalField canvas { display: block; }
+
     .hero-headline .text-accent { color: #ef4444; }
 
     .nav-shell {

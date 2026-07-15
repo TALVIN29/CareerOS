@@ -11,8 +11,8 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 | 2 | verify-store.js + employer workspace shell (sub-tabs, Overview) | ✅ Done |
 | 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | ✅ Done |
 | 4 | Approvals + Job Listings + Audit Log | ✅ Done |
-| 5 | Homepage repositioning + three.js hero + demo narrative + reset | 🔨 In progress |
-| 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ⬜ |
+| 5 | Homepage repositioning + three.js hero + demo narrative + reset | ✅ Done |
+| 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | 🔨 In progress |
 | 7 | README/docs + AI provenance + final tests + deploy check | ⬜ |
 
 ## Day 1 — Engine (done)
@@ -43,6 +43,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - Job Listings: status-appropriate actions (Edit/Submit/Review/Publish/Close/Revise), empty state CTA.
 - Audit Log: filterable reverse-chron table, actor + role badge, from→to status.
 - All mutations via store.transition → engine guard → audit event. Tests 16 PASS.
+
+## Day 5 — Homepage repositioning (done)
+
+- Hero: "Publish roles people can trust." + Space Grotesk display font, integrity-themed Typed.js lines, CTAs Create a Job Draft / View Approval Workflow, integrity-snapshot preview card with mini D3 gauge.
+- three.js signal-field hero background (60 drifting nodes, red pulses along edges; reduced-motion static, skipped <768px, pixel ratio capped, RAF pauses on hidden tab). particles.js scoped to seeker only.
+- Validate → Approve → Publish workflow strip + human-accountability line; employer/seeker/uni path cards reworded around verified roles.
+- GSAP hero load sequence (once, reduced-motion safe). Footer Reset demo data link.
 
 ## Decisions log
 

@@ -208,11 +208,10 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           if (typeof Typed !== 'undefined' && document.querySelector('#typed-hero')) {
             new Typed('#typed-hero', {
               strings: [
-                'Know exactly which skills the market demands.',
-                'See what competitors are hiring for.',
-                'Get interview-ready in minutes.',
-                'Tailor your CV to every job automatically.',
-                'Turn live web data into career intelligence.',
+                'Every vacancy authorised.',
+                'Every requirement realistic.',
+                'Every approval on record.',
+                'No ghost listings.',
               ],
               typeSpeed: 40,
               backSpeed: 20,
@@ -222,7 +221,11 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
             });
           }
 
-          this.$nextTick(() => this.animateActiveView());
+          this.$nextTick(() => {
+            this.animateActiveView();
+            this.renderHeroSnapshot();
+            this.heroLoadSequence();
+          });
         },
 
         setActiveTab(tab) {
@@ -230,7 +233,35 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
           if (this.activeTab === tab) return;
           this.activeTab = tab;
           if (tab === 'hr') this.maybeInitRadar();
-          this.$nextTick(() => this.animateActiveView());
+          this.$nextTick(() => {
+            this.animateActiveView();
+            this.renderHeroSnapshot();
+          });
+        },
+
+        // Hero integrity-snapshot gauge + three.js signal field. Both are
+        // cheap to re-run (renderGauge clears its own container; the signal
+        // field is a no-op once already running).
+        renderHeroSnapshot() {
+          if (this.activeTab !== 'home' || !window.VerifyViz) return;
+          window.VerifyViz.renderGauge('heroGauge', 86);
+          window.VerifyViz.initSignalField('heroSignalField');
+        },
+
+        // GSAP hero load sequence — runs once, only on the initial home
+        // render. Skipped under prefers-reduced-motion: elements are already
+        // in their final (visible) state with no JS needed.
+        heroLoadSequence() {
+          if (this._heroAnimated || !window.gsap) return;
+          if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+          const { heroHeadline, heroSub, heroCtas, heroPreview } = this.$refs;
+          if (!heroHeadline) return;
+          this._heroAnimated = true;
+          gsap.timeline({ defaults: { ease: 'power2.out' } })
+            .from(heroHeadline, { opacity: 0, y: 24, duration: 0.6 })
+            .from(heroSub, { opacity: 0, y: 16, duration: 0.5 }, '-=0.3')
+            .from(heroCtas, { opacity: 0, y: 12, duration: 0.45 }, '-=0.25')
+            .from(heroPreview, { opacity: 0, y: 20, scale: 0.98, duration: 0.5 }, '-=0.3');
         },
 
         // ── Signal Path Verify ──────────────────────────────────────────

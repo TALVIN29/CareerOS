@@ -1,5 +1,47 @@
 const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
+    // Field -> wizard step map, for "Edit Relevant Field" jumps from the
+    // validation results panel back to the wizard step that owns the field.
+    const VERIFY_FIELD_STEP = {
+      requisitionId: 1, department: 1, vacancies: 1, hiringManagerId: 1,
+      targetStartDate: 1, headcountApproved: 1, budgetApproved: 1,
+      justification: 1, recruiterId: 1, employerVerified: 1,
+      title: 2, location: 2, workplace: 2, employmentType: 2, seniority: 2,
+      salaryMin: 2, salaryMax: 2, salaryVisible: 2, reportingLine: 2,
+      summary: 2, responsibilities: 2,
+      requirements: 3,
+    };
+
+    // Plain-language "why it matters" line per blocker/warning id (spec
+    // ids from verify-engine.js findBlockers/findWarnings).
+    const VERIFY_WHY_IT_MATTERS = {
+      'missing-hiring-manager': 'Without a named hiring manager, there is no one accountable for approving this vacancy.',
+      'missing-requisition': 'A requisition ID links this vacancy to an approved headcount and budget line.',
+      'headcount-not-approved': 'Publishing before headcount is approved risks hiring for a role that was never funded.',
+      'budget-not-approved': 'Unbudgeted roles are commonly pulled after candidates have already applied.',
+      'unverified-employer': 'Unverified employer accounts are the top source of fraudulent job postings.',
+      'salary-min-above-max': 'An inverted salary range confuses candidates and signals a data entry error.',
+      'missing-employment-type': 'Candidates filter by employment type — without it, this listing won\'t surface in searches.',
+      'missing-location': 'Candidates need to know where the work happens, even for remote roles.',
+      'no-responsibilities': 'Without responsibilities, candidates can\'t judge fit and support tickets go up after hire.',
+      'no-approval-route': 'No recruiter means no one to route this job through approval — it will stall indefinitely.',
+      'candidate-payment-requested': 'Legitimate employers never ask candidates to pay to apply — this is a scam pattern.',
+      'sensitive-id-requested': 'Requesting banking or ID details pre-hire is a common identity-theft scam pattern.',
+      'discriminatory-requirement': 'Discriminatory requirements are unlawful in most jurisdictions and expose the employer to legal risk.',
+      'entry-overexperience': 'Entry-level candidates by definition don\'t have this much experience — this will filter out the whole pool.',
+      'intern-overexperience': 'Internship candidates are typically students — this experience bar is unreachable for them.',
+      'senior-low-salary': 'A below-market salary for a senior role will fail to attract qualified senior candidates.',
+      'wide-salary-range': 'An excessively wide range reads as a placeholder and undermines candidate trust.',
+      'too-many-skills': 'Long skill lists suppress applications — candidates self-select out if they don\'t match everything.',
+      'title-responsibility-mismatch': 'When responsibilities don\'t match the title, candidates apply for the wrong role.',
+      'education-without-justification': 'An unjustified education requirement can look like a proxy for discrimination.',
+      'short-description': 'A short description gives candidates too little to judge fit, hurting application quality.',
+      'duplicate-requirements': 'Duplicate or contradictory requirements suggest the listing wasn\'t reviewed before posting.',
+      'salary-hidden': 'Hidden salary ranges reduce candidate trust and application rates versus transparent listings.',
+      'limited-market-evidence': 'Without comparable market data, the manager should justify the proposed terms directly.',
+      'benchmark-deviation': 'A salary far outside the market band may indicate a budgeting error or an uncompetitive offer.',
+    };
+
     let _gapsChart = null;
     function renderGapsChart(gaps) {
       const el = document.getElementById('gaps-chart');
@@ -131,6 +173,7 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
         selectedVerifyJobId: null,
         wizardStep: 1,
         verifyDraft: null,
+        wizardValidating: false,
 
         init() {
           this.initVerify();
@@ -228,6 +271,165 @@ const { API, headers: _headers, token: _tok } = window.SignalPathAPI;
 
         verifyCurrentUser() {
           return window.VerifyStore.currentUser();
+        },
+
+        // ── Create Job wizard ───────────────────────────────────────────
+        openCreateTab() {
+          this.hrTab = 'create';
+          if (this.selectedVerifyJobId) {
+            const job = window.VerifyStore.getJob(this.selectedVerifyJobId);
+            if (job) {
+              this.verifyDraft = JSON.parse(JSON.stringify(job));
+              this.wizardStep = 1;
+              return;
+            }
+          }
+          if (!this.verifyDraft) this.newVerifyDraft();
+        },
+
+        newVerifyDraft() {
+          const recruiter = window.VerifySeeds.PERSONAS.find(p => p.role === 'recruiter');
+          this.verifyDraft = {
+            id: null, status: 'draft', employerVerified: true,
+            requisitionId: '', department: '', vacancies: 1,
+            hiringManagerId: null, recruiterId: recruiter ? recruiter.id : null,
+            targetStartDate: '', headcountApproved: false, budgetApproved: false, justification: '',
+            title: '', location: '', workplace: 'onsite', employmentType: 'full-time', seniority: 'entry',
+            salaryMin: null, salaryMax: null, salaryVisible: true, reportingLine: '', summary: '',
+            responsibilities: [], requirements: [], validation: null, approval: null,
+          };
+          this.selectedVerifyJobId = null;
+          this.wizardStep = 1;
+        },
+
+        loadDemoDraft() {
+          this.verifyDraft = JSON.parse(JSON.stringify(window.VerifySeeds.DEMO_DRAFT));
+          this.verifyDraft.id = null; // treat as a fresh draft, not the seed record
+          this.verifyDraft.status = 'draft';
+          this.selectedVerifyJobId = null;
+          this.wizardStep = 1;
+        },
+
+        // Create-or-update the current draft in the store. Shared by the
+        // explicit "Save Draft" button and the pre-validation save beat.
+        persistVerifyDraft() {
+          if (!this.verifyDraft) return null;
+          const fields = { ...this.verifyDraft };
+          delete fields.id; delete fields.createdAt; delete fields.updatedAt;
+          delete fields.status; delete fields.validation; delete fields.approval;
+
+          const existing = this.verifyDraft.id && window.VerifyStore.getJob(this.verifyDraft.id);
+          const saved = existing
+            ? window.VerifyStore.updateJob(this.verifyDraft.id, fields)
+            : window.VerifyStore.createJob(fields);
+
+          this.verifyDraft = saved;
+          this.selectedVerifyJobId = saved.id;
+          this.refreshVerify();
+          return saved;
+        },
+
+        saveVerifyDraft() {
+          this.persistVerifyDraft();
+          Swal.fire({ icon: 'success', title: 'Draft Saved', timer: 1400, showConfirmButton: false,
+            background: '#151515', color: '#e2e8f0' });
+        },
+
+        wizardNext() { if (this.wizardStep < 4) this.wizardStep += 1; },
+        wizardBack() { if (this.wizardStep > 1) this.wizardStep -= 1; },
+
+        editFieldJump(field) {
+          this.wizardStep = VERIFY_FIELD_STEP[field] || 4;
+        },
+
+        whyItMatters(id) {
+          return VERIFY_WHY_IT_MATTERS[id] || 'This affects how candidates and reviewers trust this listing.';
+        },
+
+        scoreColorClass(score) {
+          if (typeof score !== 'number') return 'text-slate-400';
+          if (score < 60) return 'text-red-400';
+          if (score < 80) return 'text-yellow-400';
+          return 'text-emerald-400';
+        },
+
+        animateVerifyScore(score) {
+          const el = this.$refs.jisScoreNum;
+          if (!el) return;
+          if (!window.gsap) { el.textContent = Math.round(score); return; }
+          const obj = { val: 0 };
+          gsap.to(obj, {
+            val: score, duration: 0.9, ease: 'power2.out',
+            onUpdate: () => { el.textContent = Math.round(obj.val); },
+          });
+        },
+
+        async runValidation() {
+          if (!this.verifyDraft || this.wizardValidating) return;
+          const startedAt = Date.now();
+          this.wizardValidating = true;
+          this.persistVerifyDraft();
+          await this.minimumLoadingDelay(startedAt, 800);
+          const updated = window.VerifyStore.validate(this.verifyDraft.id);
+          this.verifyDraft = updated;
+          this.refreshVerify();
+          this.wizardValidating = false;
+          this.$nextTick(() => {
+            if (!updated || !updated.validation) return;
+            window.VerifyViz.renderGauge('jisGauge', updated.validation.score);
+            window.VerifyViz.renderComponentBars('jisBars', updated.validation.components);
+            this.animateVerifyScore(updated.validation.score);
+          });
+        },
+
+        acknowledgeVerifyWarning(warningId) {
+          if (!this.verifyDraft?.id) return;
+          const updated = window.VerifyStore.acknowledgeWarning(this.verifyDraft.id, warningId);
+          if (updated) { this.verifyDraft = updated; this.refreshVerify(); }
+        },
+
+        canSubmitCurrent() {
+          if (!this.verifyDraft) return false;
+          return window.VerifyEngine.canSubmit(this.verifyDraft);
+        },
+
+        submitBlockReason() {
+          if (!this.verifyDraft) return '';
+          const fresh = window.VerifyEngine.validateJob(this.verifyDraft);
+          if (fresh.blockers.length > 0) {
+            return `Resolve ${fresh.blockers.length} blocker${fresh.blockers.length > 1 ? 's' : ''} to submit`;
+          }
+          if (fresh.score < 60) return 'Score below 60 — changes required';
+          const stored = (this.verifyDraft.validation && this.verifyDraft.validation.rulesVersion === window.VerifyEngine.RULES_VERSION)
+            ? this.verifyDraft.validation
+            : fresh;
+          if (fresh.score < 80 && !stored.warnings.every(w => w.acknowledged)) {
+            return 'Acknowledge remaining warnings to submit';
+          }
+          return '';
+        },
+
+        submitForApproval() {
+          if (!this.verifyDraft?.id) return;
+          try {
+            const updated = window.VerifyStore.transition(this.verifyDraft.id, 'submit');
+            this.verifyDraft = updated;
+            this.refreshVerify();
+            Swal.fire({ icon: 'success', title: 'Submitted for Approval',
+              text: 'A hiring manager must approve this job before it can be published.',
+              timer: 2400, showConfirmButton: false, background: '#151515', color: '#e2e8f0' });
+          } catch (err) {
+            Swal.fire({ icon: 'error', title: 'Cannot Submit', text: err.message,
+              background: '#151515', color: '#e2e8f0', confirmButtonColor: '#dc2626' });
+          }
+        },
+
+        addRequirementRow() {
+          this.verifyDraft.requirements.push({ name: '', type: 'skill', required: true, yearsExperience: null, justification: '' });
+        },
+
+        removeRequirementRow(i) {
+          this.verifyDraft.requirements.splice(i, 1);
         },
 
         statusBadgeClass(status) {

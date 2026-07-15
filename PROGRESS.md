@@ -9,8 +9,8 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 |---|---|---|
 | 1 | verify-engine.js + verify-seeds.js + tests (16/16 green) | ✅ Done |
 | 2 | verify-store.js + employer workspace shell (sub-tabs, Overview) | ✅ Done |
-| 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | 🔨 In progress |
-| 4 | Approvals + Job Listings + Audit Log | ⬜ |
+| 3 | Create-job wizard + validation results UI (D3 gauge, GSAP) | ✅ Done |
+| 4 | Approvals + Job Listings + Audit Log | 🔨 In progress |
 | 5 | Homepage repositioning + three.js hero + demo narrative + reset | ⬜ |
 | 6 | Cross-audience integration (seeker badge, uni toggle) + debug pass | ⬜ |
 | 7 | README/docs + AI provenance + final tests + deploy check | ⬜ |
@@ -29,6 +29,13 @@ Full plan: see `signal-path-verify-product-spec.md` + approved implementation pl
 - `index.html`: engine/seeds/store script tags; nav "Enterprise"→"Employers"; employer workspace — role switcher (Recruiter/Hiring Manager/HR Admin), Reset Demo Data, 6 sub-tabs (Overview·Create Job·Approvals·Job Listings·Audit Log·Market Intel), Overview with status tiles + Action Required + recent-jobs table. Legacy competitor-scan UI wrapped untouched under Market Intel.
 - `app.js`: verify state + actions (initVerify, setVerifyRole, resetVerifyData, status helpers).
 - Roles are `recruiter|manager|hr_admin` (match persona data). Store resolves deps via globals only (package.json type:module makes require() in UMD a trap).
+
+## Day 3 — Wizard + validation UI (done)
+
+- 4-step Create Job wizard (Vacancy Approval → Role Details → Requirements builder → Review & Validate) replacing create stub; Load Demo Draft / Save Draft; edit flow reuses wizard.
+- Validation results panel: D3 radial gauge (`viz.js`, animated, color by threshold) + component weight bars + GSAP score count-up; Blockers/Warnings(acknowledge)/Passed sections with why-it-matters + Edit Relevant Field jump; AI-assisted + demo-benchmark + human-accountability footer.
+- Submit gate: disabled button always carries reason (blockers / score / unacknowledged warnings). Business rules stay in engine/store.
+- `viz.js` new (D3 v7 CDN). Demo draft loads with id reset so each load creates fresh job.
 
 ## Decisions log
 

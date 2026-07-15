@@ -1721,7 +1721,7 @@
         <i class="fa-solid fa-gauge text-xs"></i> Overview
       </button>
       <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
-        :class="hrTab === 'create' ? 'tab-active' : 'tab-inactive'" @click="hrTab = 'create'">
+        :class="hrTab === 'create' ? 'tab-active' : 'tab-inactive'" @click="openCreateTab()">
         <i class="fa-solid fa-file-circle-plus text-xs"></i> Create Job
       </button>
       <button class="px-3 py-2.5 transition-all whitespace-nowrap flex items-center gap-1.5"
@@ -1778,7 +1778,7 @@
           <i class="fa-solid fa-file-circle-plus text-red-400/60 text-2xl"></i>
         </div>
         <p class="text-slate-400 text-sm font-medium">No jobs yet — create your first draft</p>
-        <button class="btn-primary gap-2 py-2.5 px-5 mt-1" @click="hrTab = 'create'">
+        <button class="btn-primary gap-2 py-2.5 px-5 mt-1" @click="openCreateTab()">
           <i class="fa-solid fa-plus"></i> Create a Job Draft
         </button>
       </div>
@@ -1839,10 +1839,301 @@
       </div>
     </div>
 
-    <!-- ══ CREATE JOB (stub — Day 3) ══ -->
-    <div x-show="hrTab === 'create'" class="card text-sm text-slate-400">
-      <i class="fa-solid fa-file-circle-plus text-accent text-sm mr-2"></i>
-      Job creation wizard coming next.
+    <!-- ══ CREATE JOB WIZARD ══ -->
+    <div x-show="hrTab === 'create'" x-init="if (!verifyDraft) openCreateTab()">
+    <div class="card" x-show="verifyDraft">
+
+      <!-- Step indicator -->
+      <div class="flex items-center gap-2 mb-6 overflow-x-auto pb-1">
+        <template x-for="(label, idx) in ['Vacancy Approval', 'Role Details', 'Requirements', 'Review & Validate']" :key="idx">
+          <div class="flex items-center gap-2 shrink-0">
+            <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0"
+              :class="wizardStep === idx + 1 ? 'bg-red-600 text-white' : (wizardStep > idx + 1 ? 'bg-red-600/20 text-red-300 border border-red-600/40' : 'bg-black/30 text-slate-500 border border-red-600/10')"
+              x-text="idx + 1"></div>
+            <span class="text-xs whitespace-nowrap" :class="wizardStep === idx + 1 ? 'text-white font-medium' : 'text-slate-500'" x-text="label"></span>
+            <div class="w-6 h-px bg-red-600/15" x-show="idx < 3"></div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Header actions -->
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-5 pb-4 border-b border-red-600/10">
+        <button class="btn-ghost text-xs gap-2 inline-flex items-center" @click="loadDemoDraft()">
+          <i class="fa-solid fa-flask"></i> Load Demo Draft
+        </button>
+        <button class="btn-ghost text-xs gap-2 inline-flex items-center" @click="saveVerifyDraft()">
+          <i class="fa-solid fa-floppy-disk"></i> Save Draft
+        </button>
+      </div>
+
+      <!-- STEP 1 — Vacancy Approval -->
+      <div x-show="wizardStep === 1" class="flex flex-col gap-4">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Requisition ID</label>
+            <input type="text" class="input-field" x-model="verifyDraft.requisitionId" placeholder="REQ-2301">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Department</label>
+            <input type="text" class="input-field" x-model="verifyDraft.department" placeholder="Engineering">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Vacancies</label>
+            <input type="number" min="1" class="input-field" x-model.number="verifyDraft.vacancies">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Hiring Manager</label>
+            <select class="input-field" x-model="verifyDraft.hiringManagerId">
+              <option :value="null">Select a hiring manager…</option>
+              <template x-for="p in VerifySeeds.PERSONAS.filter(p => p.role === 'manager')" :key="p.id">
+                <option :value="p.id" x-text="p.name"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Target Start Date</label>
+            <input type="date" class="input-field" x-model="verifyDraft.targetStartDate">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-5">
+          <label class="flex items-center gap-2 text-xs text-slate-300">
+            <input type="checkbox" class="accent-red-600" x-model="verifyDraft.headcountApproved">
+            Headcount for this role has been approved
+          </label>
+          <label class="flex items-center gap-2 text-xs text-slate-300">
+            <input type="checkbox" class="accent-red-600" x-model="verifyDraft.budgetApproved">
+            Budget for this role has been approved
+          </label>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Justification</label>
+          <textarea rows="3" class="input-field" x-model="verifyDraft.justification" placeholder="Why is this vacancy needed?"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 2 — Role Details -->
+      <div x-show="wizardStep === 2" class="flex flex-col gap-4">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Title</label>
+            <input type="text" class="input-field" x-model="verifyDraft.title" placeholder="Backend Engineer">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Location</label>
+            <input type="text" class="input-field" x-model="verifyDraft.location" placeholder="Kuala Lumpur">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Workplace</label>
+            <select class="input-field" x-model="verifyDraft.workplace">
+              <option value="onsite">Onsite</option>
+              <option value="hybrid">Hybrid</option>
+              <option value="remote">Remote</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Employment Type</label>
+            <select class="input-field" x-model="verifyDraft.employmentType">
+              <option value="full-time">Full-time</option>
+              <option value="part-time">Part-time</option>
+              <option value="contract">Contract</option>
+              <option value="internship">Internship</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Seniority</label>
+            <select class="input-field" x-model="verifyDraft.seniority">
+              <option value="intern">Intern</option>
+              <option value="entry">Entry</option>
+              <option value="mid">Mid</option>
+              <option value="senior">Senior</option>
+              <option value="lead">Lead</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Reporting Line</label>
+            <input type="text" class="input-field" x-model="verifyDraft.reportingLine" placeholder="Engineering Lead">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Salary Min (MYR)</label>
+            <input type="number" min="0" class="input-field" x-model.number="verifyDraft.salaryMin">
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 mb-1 block">Salary Max (MYR)</label>
+            <input type="number" min="0" class="input-field" x-model.number="verifyDraft.salaryMax">
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-300">
+          <input type="checkbox" class="accent-red-600" x-model="verifyDraft.salaryVisible">
+          Show salary range to candidates
+        </label>
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Summary</label>
+          <textarea rows="3" class="input-field" x-model="verifyDraft.summary" placeholder="What will this person do?"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-slate-500 mb-1 block">Responsibilities (one per line)</label>
+          <textarea rows="4" class="input-field"
+            :value="(verifyDraft.responsibilities || []).join('\n')"
+            @input="verifyDraft.responsibilities = $event.target.value.split('\n').map(s => s.trim()).filter(Boolean)"
+            placeholder="Design and build backend services&#10;Maintain APIs and databases"></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 3 — Requirements -->
+      <div x-show="wizardStep === 3" class="flex flex-col gap-3">
+        <template x-for="(req, i) in verifyDraft.requirements" :key="i">
+          <div class="grid sm:grid-cols-12 gap-2 items-center p-3 rounded-lg border border-red-600/10 bg-black/20">
+            <input class="input-field sm:col-span-3" placeholder="Requirement name" x-model="req.name">
+            <select class="input-field sm:col-span-2" x-model="req.type">
+              <option value="skill">Skill</option>
+              <option value="experience">Experience</option>
+              <option value="education">Education</option>
+              <option value="certification">Certification</option>
+              <option value="language">Language</option>
+            </select>
+            <select class="input-field sm:col-span-2" x-model="req.required">
+              <option :value="true">Required</option>
+              <option :value="false">Preferred</option>
+            </select>
+            <input x-show="req.type === 'experience'" type="number" min="0" class="input-field sm:col-span-1" placeholder="Yrs" x-model.number="req.yearsExperience">
+            <input class="input-field" :class="req.type === 'experience' ? 'sm:col-span-3' : 'sm:col-span-4'" placeholder="Justification" x-model="req.justification">
+            <button class="btn-ghost text-xs sm:col-span-1 justify-center" @click="removeRequirementRow(i)"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </template>
+        <p class="text-xs text-slate-600" x-show="!verifyDraft.requirements.length">No requirements added yet.</p>
+        <button class="btn-ghost text-xs w-fit gap-2 inline-flex items-center" @click="addRequirementRow()">
+          <i class="fa-solid fa-plus"></i> Add Requirement
+        </button>
+      </div>
+
+      <!-- STEP 4 — Review & Validate -->
+      <div x-show="wizardStep === 4" class="flex flex-col gap-5">
+        <div>
+          <p class="section-label mb-2">Review</p>
+          <div class="grid sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+            <p class="text-slate-500">Requisition <span class="text-slate-200" x-text="verifyDraft.requisitionId || '—'"></span></p>
+            <p class="text-slate-500">Department <span class="text-slate-200" x-text="verifyDraft.department || '—'"></span></p>
+            <p class="text-slate-500">Vacancies <span class="text-slate-200" x-text="verifyDraft.vacancies || '—'"></span></p>
+            <p class="text-slate-500">Hiring Manager <span class="text-slate-200" x-text="(VerifySeeds.PERSONAS.find(p => p.id === verifyDraft.hiringManagerId) || {}).name || '—'"></span></p>
+            <p class="text-slate-500">Target Start <span class="text-slate-200" x-text="verifyDraft.targetStartDate || '—'"></span></p>
+            <p class="text-slate-500">Headcount / Budget Approved <span class="text-slate-200" x-text="(verifyDraft.headcountApproved ? 'Yes' : 'No') + ' / ' + (verifyDraft.budgetApproved ? 'Yes' : 'No')"></span></p>
+            <p class="text-slate-500 sm:col-span-2">Title <span class="text-slate-200" x-text="verifyDraft.title || '—'"></span></p>
+            <p class="text-slate-500">Location <span class="text-slate-200" x-text="(verifyDraft.location || '—') + ' · ' + verifyDraft.workplace"></span></p>
+            <p class="text-slate-500">Employment / Seniority <span class="text-slate-200" x-text="verifyDraft.employmentType + ' · ' + verifyDraft.seniority"></span></p>
+            <p class="text-slate-500">Salary (MYR) <span class="text-slate-200" x-text="(verifyDraft.salaryMin || '—') + ' – ' + (verifyDraft.salaryMax || '—') + (verifyDraft.salaryVisible ? '' : ' (hidden)')"></span></p>
+            <p class="text-slate-500">Reporting Line <span class="text-slate-200" x-text="verifyDraft.reportingLine || '—'"></span></p>
+            <p class="text-slate-500 sm:col-span-2">Responsibilities <span class="text-slate-200" x-text="(verifyDraft.responsibilities || []).length + ' listed'"></span></p>
+            <p class="text-slate-500 sm:col-span-2">Requirements <span class="text-slate-200" x-text="(verifyDraft.requirements || []).length + ' listed'"></span></p>
+          </div>
+        </div>
+
+        <div>
+          <button class="btn-primary text-xs px-5 py-2.5 inline-flex items-center gap-2" :disabled="wizardValidating" @click="runValidation()">
+            <i class="fa-solid fa-circle-notch fa-spin" x-show="wizardValidating"></i>
+            Validate and Continue
+          </button>
+        </div>
+
+        <!-- Loading beat -->
+        <div class="loading-panel" x-show="wizardValidating">
+          <div class="flex items-start gap-3">
+            <span class="loading-orb shrink-0"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-slate-200">Running validation checks</p>
+              <p class="text-xs text-slate-500 mt-1">Scoring authorisation, market fit, and content risk.</p>
+              <div class="flex flex-col gap-2 mt-3">
+                <div class="skeleton-line w-11/12"></div>
+                <div class="skeleton-line w-8/12"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Validation results panel -->
+        <div x-show="!wizardValidating && verifyDraft.validation" class="flex flex-col gap-5">
+
+          <!-- Score header -->
+          <div class="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl border border-red-600/10 bg-black/20">
+            <div id="jisGauge" class="w-[180px] h-[180px] shrink-0"></div>
+            <div class="flex-1 w-full min-w-0">
+              <span class="text-xs text-slate-500 block mb-1">Job Integrity Score</span>
+              <span class="text-4xl font-bold" :class="scoreColorClass(verifyDraft.validation.score)">
+                <span x-ref="jisScoreNum">0</span>
+              </span>
+              <div id="jisBars" class="flex flex-col gap-2.5 mt-4"></div>
+            </div>
+          </div>
+
+          <!-- Critical Blockers -->
+          <div x-show="verifyDraft.validation.blockers.length" class="flex flex-col gap-2">
+            <span class="badge badge-red w-fit">Critical Blockers</span>
+            <template x-for="b in verifyDraft.validation.blockers" :key="b.id">
+              <div class="p-3 rounded-lg border border-red-500/20 bg-red-500/5 flex flex-col gap-1.5">
+                <p class="text-xs text-red-300 font-medium" x-text="b.message"></p>
+                <p class="text-xs text-slate-500" x-text="whyItMatters(b.id)"></p>
+                <button class="btn-ghost text-xs w-fit mt-1" @click="editFieldJump(b.field)">Edit Relevant Field</button>
+              </div>
+            </template>
+          </div>
+
+          <!-- Warnings -->
+          <div x-show="verifyDraft.validation.warnings.length" class="flex flex-col gap-2">
+            <span class="badge badge-yellow w-fit">Warnings</span>
+            <template x-for="w in verifyDraft.validation.warnings" :key="w.id">
+              <div class="p-3 rounded-lg border border-yellow-500/20 bg-yellow-500/5 flex flex-col gap-1.5">
+                <div class="flex items-center justify-between gap-2">
+                  <p class="text-xs text-yellow-300 font-medium flex-1" x-text="w.message"></p>
+                  <span class="badge badge-green shrink-0" x-show="w.acknowledged">Acknowledged</span>
+                </div>
+                <p class="text-xs text-slate-500" x-text="whyItMatters(w.id)"></p>
+                <div class="flex items-center gap-4 mt-1">
+                  <label class="flex items-center gap-1.5 text-xs text-slate-400">
+                    <input type="checkbox" class="accent-red-600" :checked="w.acknowledged" :disabled="w.acknowledged" @change="acknowledgeVerifyWarning(w.id)">
+                    Acknowledge
+                  </label>
+                  <button class="btn-ghost text-xs" @click="editFieldJump(w.field)">Edit Relevant Field</button>
+                </div>
+              </div>
+            </template>
+          </div>
+
+          <!-- Passed Checks -->
+          <div x-show="verifyDraft.validation.passed.length" class="flex flex-col gap-2">
+            <span class="badge badge-green w-fit">Passed Checks</span>
+            <template x-for="p in verifyDraft.validation.passed" :key="p.id">
+              <div class="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-500/5 border border-emerald-500/15">
+                <i class="fa-solid fa-check-circle text-emerald-400 text-sm mt-0.5 shrink-0"></i>
+                <span class="text-xs text-slate-400" x-text="p.message"></span>
+              </div>
+            </template>
+          </div>
+
+          <!-- Footer -->
+          <div class="pt-3 border-t border-red-600/10 flex flex-col gap-1">
+            <p class="text-xs text-slate-600">AI-assisted analysis · Demonstration market benchmark · Last validated <span x-text="new Date(verifyDraft.validation.validatedAt).toLocaleString()"></span></p>
+            <p class="text-xs text-slate-500">A hiring manager must approve this job before it can be published.</p>
+          </div>
+
+          <!-- Submit -->
+          <div class="flex flex-col gap-1.5">
+            <button class="btn-primary text-xs px-5 py-2.5 w-fit" x-show="canSubmitCurrent()" @click="submitForApproval()">
+              Submit for Approval
+            </button>
+            <div x-show="!canSubmitCurrent()">
+              <button class="btn-ghost text-xs px-5 py-2.5 w-fit opacity-50 cursor-not-allowed" disabled>Submit for Approval</button>
+              <p class="text-xs text-slate-500 mt-1.5" x-text="submitBlockReason()"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Back / Next -->
+      <div class="flex items-center justify-between gap-3 mt-6 pt-4 border-t border-red-600/10">
+        <button class="btn-ghost text-xs" x-show="wizardStep > 1" @click="wizardBack()">Back</button>
+        <span x-show="wizardStep === 1"></span>
+        <button class="btn-primary text-xs px-5 py-2" x-show="wizardStep < 4" @click="wizardNext()">Next</button>
+      </div>
+    </div>
     </div>
 
     <!-- ══ APPROVALS (stub — Day 4) ══ -->
@@ -2627,6 +2918,8 @@
   <script src="./verify-engine.js"></script>
   <script src="./verify-seeds.js"></script>
   <script src="./verify-store.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <script src="./viz.js"></script>
   <script src="./app.js"></script>
 </body>
 </html>

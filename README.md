@@ -53,30 +53,26 @@ product copy.
 
 ## Live demo script
 
-Open <https://careerosdemo.netlify.app>, go to **Employers**, and follow:
+Open <https://careerosdemo.netlify.app>, choose **Log In**, and follow:
 
-1. **Create Job → Load Demo Draft** — loads a seeded draft with realistic
-   but flawed requirements.
-2. **Validate and Continue** — runs the deterministic engine.
-3. Validation surfaces **3 issues** (an unrealistic experience requirement
-   plus warnings) with a Job Integrity Score below the approval threshold.
-4. **Edit Relevant Field** jumps straight to the offending requirement;
-   fix the experience requirement.
-5. **Revalidate** — score improves, moving into the approval-ready band.
-6. Acknowledge the remaining warnings, then **Submit for Approval**.
-7. Switch role to **Hiring Manager** (role switcher, top of the workspace).
-8. **Approvals → Review** the job, confirm the attestation sentence, and
-   **Approve Job** — separation of duties prevents the same user who
-   submitted it from approving it.
-9. **Job Listings → Publish Job**.
-10. **Audit Log** shows the complete trail: create → validate → edit →
-    revalidate → submit → approve → publish, each with actor, role, and
-    from→to status.
+1. Choose **Use Recruiter Demo** and log in as Alicia Tan. Review her role-only
+   dashboard, edit a draft, run **Automated Validation**, and submit it to
+   Daniel Lee for **Manager Approval**.
+2. Sign out, choose **Use Hiring Manager Demo**, and log in as Daniel Lee.
+   Open **Approval Queue**, review the Product Designer evidence, check the
+   required attestation, and approve it. Daniel cannot edit recruiter-authored
+   content, create jobs, or publish vacancies.
+3. Sign out and return as Alicia. The approved job now says who approved it
+   and is ready for the assigned Recruiter to publish.
+4. Sign out, choose **Use HR Administrator Demo**, and log in as Mei Wong.
+   Review organisation-wide governance metrics, stale-vacancy risks, the full
+   audit log, policy thresholds, and fixed role assignments.
+5. Try opening a restricted `#/workspace/...` route for any account. CareerOS
+   redirects to that role's Overview and explains that access is not permitted.
 
-**Bonus:** switch to the **Job Seeker** tab — published Verify jobs show a
-"Verified vacancy" badge with an integrity panel. Switch to **University**
-and toggle "Verified roles only" to see the skill-demand benchmark restrict
-to audited postings.
+All three accounts use the password `demo123`. Sessions persist in
+`localStorage`, while Sign Out clears only the active identity so judges can
+move between responsibilities without an unrestricted in-workspace role switch.
 
 ---
 
@@ -162,8 +158,9 @@ draft ──validate──> validating ──> needs_changes ──validate─�
 | `verify-seeds.js` | 5 seed jobs pinned to exact scores/statuses (Backend Engineer 86, Graduate Data Analyst 58, Product Designer 93, Marketing Intern blocked, Cybersecurity Specialist 76) + 3 demo personas + demo draft. |
 | `verify-store.js` | localStorage persistence layer (`spv.jobs`, `spv.audit`, `spv.role`, `spv.seedVersion`). Seeds/validates on load, self-heals corrupt JSON, delegates all mutation to `engine.applyTransition`, exposes `reset()`. |
 | `viz.js` | D3 radial score gauge + component weight bars (animated, colour-coded by threshold). |
-| `app.js` | Alpine state/actions bridging the store to the UI: `initVerify`, `setVerifyRole`, `resetVerifyData`, status helpers, wizard/approval/listing/audit view logic. |
-| `index.html` | Employer workspace (`hr` tab): role switcher, Overview, Create Job wizard, Approvals, Job Listings, Audit Log, plus the pre-existing Market Intel view. Seeker and University tabs read published Verify jobs for the "Verified vacancy" badge and the verified-only benchmark toggle. |
+| `permissions.js` | Central demo identities, permission matrix, role navigation, route guards, record-level access, and separation-of-duties checks. |
+| `app.js` | Alpine session, shared job and audit data, role-scoped selectors, guarded workflow actions, validation, approval, publication, reconfirmation, and governance controls. |
+| `index.html` | Shared employer shell with three fixed demo-account entry points and role-specific dashboards, navigation, approval, listings, evidence, audit, and settings views. |
 | `tests/verify-engine.test.js` | 16 `node:assert` groups exercising the engine in isolation. |
 
 ### Why client-side

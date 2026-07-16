@@ -6,9 +6,9 @@
 
 (function (root) {
   const PERSONAS = [
-    { id: 'u_aisyah', name: 'Aisyah Rahman', role: 'recruiter' },
-    { id: 'u_daniel', name: 'Daniel Lim', role: 'manager' },
-    { id: 'u_priya', name: 'Priya Nair', role: 'hr_admin' }
+    { id: 'user-recruiter-alicia', name: 'Alicia Tan', role: 'recruiter' },
+    { id: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' },
+    { id: 'user-admin-mei', name: 'Mei Wong', role: 'hr_admin' }
   ];
 
   const JOBS = [
@@ -23,8 +23,8 @@
       employerVerified: true, requisitionId: 'REQ-2201',
       department: 'Engineering',
       vacancies: 1,
-      hiringManagerId: 'u_daniel',
-      recruiterId: 'u_aisyah',
+      hiringManagerId: 'user-manager-daniel',
+      recruiterId: 'user-recruiter-alicia',
       targetStartDate: '2026-09-01',
       headcountApproved: true,
       budgetApproved: true,
@@ -72,7 +72,7 @@
       department: 'Analytics',
       vacancies: 1,
       hiringManagerId: null,
-      recruiterId: 'u_aisyah',
+      recruiterId: 'user-recruiter-alicia',
       targetStartDate: '2026-08-15',
       headcountApproved: false,
       budgetApproved: false,
@@ -119,8 +119,8 @@
       employerVerified: true, requisitionId: 'REQ-2210',
       department: 'Design',
       vacancies: 1,
-      hiringManagerId: 'u_daniel',
-      recruiterId: 'u_aisyah',
+      hiringManagerId: 'user-manager-daniel',
+      recruiterId: 'user-recruiter-alicia',
       targetStartDate: '2026-08-01',
       headcountApproved: true,
       budgetApproved: true,
@@ -151,7 +151,7 @@
       validation: null,
       approval: {
         decision: 'approved',
-        approverId: 'u_daniel',
+        approverId: 'user-manager-daniel',
         attestation: true,
         reasonCategory: null,
         comments: 'Confirmed funded and needed — approved.',
@@ -169,8 +169,8 @@
       employerVerified: true, requisitionId: 'REQ-2215',
       department: 'Marketing',
       vacancies: 2,
-      hiringManagerId: 'u_daniel',
-      recruiterId: 'u_aisyah',
+      hiringManagerId: 'user-manager-daniel',
+      recruiterId: 'user-recruiter-alicia',
       targetStartDate: '2026-08-10',
       headcountApproved: false,
       budgetApproved: true,
@@ -210,8 +210,8 @@
       employerVerified: true, requisitionId: 'REQ-2220',
       department: 'IT Security',
       vacancies: 1,
-      hiringManagerId: 'u_daniel',
-      recruiterId: 'u_aisyah',
+      hiringManagerId: 'user-manager-daniel',
+      recruiterId: 'user-recruiter-alicia',
       targetStartDate: '2026-09-15',
       headcountApproved: true,
       budgetApproved: true,
@@ -245,6 +245,64 @@
       ],
       validation: null,
       approval: null
+    },
+
+    // Connected lifecycle histories used by freshness governance and EIR.
+    {
+      id: 'job_platform_engineer_active', createdAt: '2026-05-20T08:00:00.000Z', updatedAt: '2026-07-12T08:00:00.000Z', status: 'published',
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2225', department: 'Engineering', departmentId: 'technology', vacancies: 1,
+      hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-08-01', headcountApproved: true, budgetApproved: true,
+      title: 'Software Engineer', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 6500, salaryMax: 8500, salaryVisible: true,
+      reportingLine: 'Engineering Lead', summary: 'Build reliable platform services for employer and candidate products across the Talentbank network.',
+      responsibilities: ['Build software services and APIs', 'Improve automated test coverage', 'Partner with product and platform teams'],
+      requirements: [{ name: 'Git', type: 'skill', required: true }, { name: 'SQL', type: 'skill', required: true }, { name: 'Testing', type: 'skill', required: true }],
+      submittedAt: '2026-05-21T08:00:00.000Z', publishedAt: '2026-05-23T08:00:00.000Z', lastConfirmedAt: '2026-07-12T08:00:00.000Z', confirmationDueAt: '2026-08-11T08:00:00.000Z',
+      confirmations: [{ confirmedAt: '2026-06-12T08:00:00.000Z', dueAt: '2026-06-22T08:00:00.000Z' }, { confirmedAt: '2026-07-12T08:00:00.000Z', dueAt: '2026-07-12T08:00:00.000Z' }],
+      validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Funded platform role.', ts: '2026-05-22T08:00:00.000Z' }
+    },
+    {
+      id: 'job_operations_confirmation', createdAt: '2026-05-10T08:00:00.000Z', updatedAt: '2026-07-16T08:00:00.000Z', status: 'confirmation_due',
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2226', department: 'Technology Operations', departmentId: 'technology', vacancies: 1,
+      hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-07-15', headcountApproved: true, budgetApproved: true,
+      title: 'Operations Analyst', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 5000, salaryMax: 7000, salaryVisible: true,
+      reportingLine: 'Operations Director', summary: 'Improve technology operations reporting and service reliability across employer-facing products.',
+      responsibilities: ['Analyse operational performance', 'Maintain service dashboards', 'Coordinate improvement actions'],
+      requirements: [{ name: 'Excel', type: 'skill', required: true }, { name: 'SQL', type: 'skill', required: true }, { name: 'Data Visualization', type: 'skill', required: true }],
+      submittedAt: '2026-05-11T08:00:00.000Z', publishedAt: '2026-05-13T08:00:00.000Z', lastConfirmedAt: '2026-06-13T08:00:00.000Z', confirmationDueAt: '2026-07-13T08:00:00.000Z', confirmations: [{ confirmedAt: '2026-06-13T08:00:00.000Z', dueAt: '2026-06-12T08:00:00.000Z' }],
+      validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Approved operations vacancy.', ts: '2026-05-12T08:00:00.000Z' }
+    },
+    {
+      id: 'job_ai_product_stale', createdAt: '2026-04-01T08:00:00.000Z', updatedAt: '2026-07-10T08:00:00.000Z', status: 'paused_stale',
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2227', department: 'Product', departmentId: 'technology', vacancies: 1,
+      hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-06-01', headcountApproved: true, budgetApproved: true,
+      title: 'AI Product Manager', location: 'Kuala Lumpur', workplace: 'remote', employmentType: 'full-time', seniority: 'senior', salaryMin: 11000, salaryMax: 15000, salaryVisible: true,
+      reportingLine: 'VP Product', summary: 'Lead responsible AI product strategy and measurable employer outcomes across the CareerOS platform.',
+      responsibilities: ['Set AI product strategy', 'Define outcome metrics', 'Coordinate data and engineering delivery'],
+      requirements: [{ name: 'Product Strategy', type: 'skill', required: true }, { name: 'Data Analysis', type: 'skill', required: true }, { name: 'AI Governance', type: 'skill', required: true }],
+      submittedAt: '2026-04-02T08:00:00.000Z', publishedAt: '2026-04-05T08:00:00.000Z', lastConfirmedAt: '2026-05-05T08:00:00.000Z', confirmationDueAt: '2026-06-04T08:00:00.000Z', pausedAt: '2026-06-11T08:00:00.000Z', confirmations: [],
+      validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Approved strategic hire.', ts: '2026-04-04T08:00:00.000Z' }
+    },
+    {
+      id: 'job_support_filled', createdAt: '2026-03-01T08:00:00.000Z', updatedAt: '2026-06-15T08:00:00.000Z', status: 'filled',
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2228', department: 'Technology', departmentId: 'technology', vacancies: 1,
+      hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-06-15', headcountApproved: true, budgetApproved: true,
+      title: 'Technical Support Specialist', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'entry', salaryMin: 3500, salaryMax: 4800, salaryVisible: true,
+      reportingLine: 'Support Manager', summary: 'Support employer customers and improve resolution quality across the CareerOS platform.',
+      responsibilities: ['Resolve technical support cases', 'Document recurring issues', 'Partner with engineering on fixes'],
+      requirements: [{ name: 'Communication', type: 'skill', required: true }, { name: 'Troubleshooting', type: 'skill', required: true }, { name: 'SQL', type: 'skill', required: false }],
+      submittedAt: '2026-03-02T08:00:00.000Z', publishedAt: '2026-03-05T08:00:00.000Z', lastConfirmedAt: '2026-05-05T08:00:00.000Z', confirmationDueAt: '2026-06-04T08:00:00.000Z', filledAt: '2026-06-15T08:00:00.000Z', confirmations: [{ confirmedAt: '2026-05-05T08:00:00.000Z', dueAt: '2026-05-05T08:00:00.000Z' }],
+      validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Approved support hire.', ts: '2026-03-04T08:00:00.000Z' }
+    },
+    {
+      id: 'job_legacy_closed', createdAt: '2026-02-01T08:00:00.000Z', updatedAt: '2026-05-10T08:00:00.000Z', status: 'closed',
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2229', department: 'Technology', departmentId: 'technology', vacancies: 1,
+      hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-05-01', headcountApproved: true, budgetApproved: true,
+      title: 'Data Analyst', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 4500, salaryMax: 6000, salaryVisible: true,
+      reportingLine: 'Analytics Lead', summary: 'Analyse employer performance and build trusted labour-demand reporting for Talentbank partners.',
+      responsibilities: ['Analyse labour-demand data', 'Build verified reporting', 'Present findings to stakeholders'],
+      requirements: [{ name: 'SQL', type: 'skill', required: true }, { name: 'Python', type: 'skill', required: true }, { name: 'Statistics', type: 'skill', required: true }],
+      submittedAt: '2026-02-02T08:00:00.000Z', publishedAt: '2026-02-06T08:00:00.000Z', lastConfirmedAt: '2026-03-06T08:00:00.000Z', confirmationDueAt: '2026-04-05T08:00:00.000Z', closedAt: '2026-05-10T08:00:00.000Z', confirmations: [],
+      validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Approved analytics role.', ts: '2026-02-05T08:00:00.000Z' }
     }
   ];
 
@@ -261,8 +319,8 @@
     employerVerified: true, requisitionId: 'REQ-2299',
     department: 'Engineering',
     vacancies: 1,
-    hiringManagerId: 'u_daniel',
-    recruiterId: 'u_aisyah',
+    hiringManagerId: 'user-manager-daniel',
+    recruiterId: 'user-recruiter-alicia',
     targetStartDate: '2026-09-20',
     headcountApproved: true,
     budgetApproved: true,
@@ -298,7 +356,37 @@
     approval: null
   };
 
-  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT };
+  const PEER_ORGS = [
+    { id: 'vertex-digital', name: 'Vertex Digital', jobs: JOBS },
+    { id: 'meridian-labs', name: 'Meridian Labs', jobs: [
+      { id: 'ml-1', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-27', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-28' }, requirements: [{ name: 'SQL', type: 'skill', required: true }, { name: 'Python', type: 'skill', required: true }] },
+      { id: 'ml-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-25', filledAt: '2026-06-01', approval: { ts: '2026-02-27' }, requirements: [{ name: 'Data Visualization', type: 'skill', required: true }] },
+      { id: 'ml-3', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-28', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-29' }, requirements: [{ name: 'AI Governance', type: 'skill', required: true }] },
+      { id: 'ml-4', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-27', closedAt: '2026-05-01', approval: { ts: '2026-01-30' }, requirements: [{ name: 'Python', type: 'skill', required: true }] }
+    ] },
+    { id: 'northstar-tech', name: 'Northstar Tech', jobs: [
+      { id: 'nt-1', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-20', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-26' }, requirements: [{ name: 'Node.js', type: 'skill', required: true }, { name: 'SQL', type: 'skill', required: true }] },
+      { id: 'nt-2', status: 'paused_stale', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-20', confirmationDueAt: '2026-05-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'React', type: 'skill', required: true }] },
+      { id: 'nt-3', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-20', closedAt: '2026-04-01', approval: { ts: '2026-01-30' }, requirements: [{ name: 'Cloud Security', type: 'skill', required: true }] }
+    ] },
+    { id: 'apex-commerce', name: 'Apex Commerce', jobs: [
+      { id: 'ac-1', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-30', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-31' }, requirements: [{ name: 'Product Strategy', type: 'skill', required: true }] },
+      { id: 'ac-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-26', filledAt: '2026-06-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Figma', type: 'skill', required: true }] },
+      { id: 'ac-3', status: 'published', employerVerified: true, publishedAt: '2026-05-15', submittedAt: '2026-05-10', confirmationDueAt: '2026-08-15', lastConfirmedAt: '2026-07-15', approval: { ts: '2026-05-12' }, requirements: [{ name: 'SQL', type: 'skill', required: true }] }
+    ] },
+    { id: 'cobalt-systems', name: 'Cobalt Systems', jobs: [
+      { id: 'cs-1', status: 'paused_stale', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-20', confirmationDueAt: '2026-04-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Node.js', type: 'skill', required: true }] },
+      { id: 'cs-2', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-20', closedAt: '2026-04-01', approval: { ts: '2026-01-31' }, requirements: [{ name: 'Python', type: 'skill', required: true }] },
+      { id: 'cs-3', status: 'published', employerVerified: false, publishedAt: '2026-06-01', submittedAt: '2026-05-20', confirmationDueAt: '2026-07-01', approval: { ts: '2026-05-30' }, requirements: [{ name: 'AI Governance', type: 'skill', required: true }] }
+    ] },
+    { id: 'harbour-analytics', name: 'Harbour Analytics', jobs: [
+      { id: 'ha-1', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-29', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-30' }, requirements: [{ name: 'SQL', type: 'skill', required: true }, { name: 'Statistics', type: 'skill', required: true }] },
+      { id: 'ha-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-27', filledAt: '2026-06-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Data Visualization', type: 'skill', required: true }] },
+      { id: 'ha-3', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-28', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-29' }, requirements: [{ name: 'Python', type: 'skill', required: true }] }
+    ] }
+  ];
+
+  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT, PEER_ORGS };
 
   if (typeof window !== 'undefined') window.VerifySeeds = VerifySeeds;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifySeeds;

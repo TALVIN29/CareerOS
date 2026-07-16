@@ -71,29 +71,48 @@
       .data(keys)
       .enter()
       .append('div')
-      .attr('class', 'jis-bar-row flex items-center gap-2 text-xs');
+      .attr('class', 'jis-bar-row');
 
     rows.append('div')
-      .attr('class', 'w-32 shrink-0 text-slate-400')
-      .html(k => `<span class="text-slate-200 font-semibold">${k}</span> ${LABELS[k]} <span class="text-slate-600">· ${WEIGHTS[k]}%</span>`);
+      .attr('class', 'jis-bar-label')
+      .html(k => `<strong>${k}</strong> ${LABELS[k]} <small>· ${WEIGHTS[k]}%</small>`);
 
     const track = rows.append('div')
-      .attr('class', 'flex-1 h-2 rounded-full bg-black/40 overflow-hidden');
+      .attr('class', 'jis-bar-track');
 
     track.append('div')
-      .attr('class', 'h-full rounded-full')
+      .attr('class', 'jis-bar-fill')
       .style('width', '0%')
       .style('background', k => scoreColor(components[k] || 0))
       .transition().duration(800).ease(d3.easeCubicOut)
       .style('width', k => `${Math.max(0, Math.min(100, components[k] || 0))}%`);
 
     rows.append('div')
-      .attr('class', 'w-10 shrink-0 text-right text-slate-300 font-medium')
+      .attr('class', 'jis-bar-value')
       .text(k => Math.round(components[k] || 0));
 
     rows.append('div')
-      .attr('class', 'w-14 shrink-0 text-right text-slate-600')
+      .attr('class', 'jis-bar-points')
       .text(k => `${((components[k] || 0) * WEIGHTS[k] / 100).toFixed(1)}pt`);
+  }
+
+  function renderDemandDivergence(elId, divergence) {
+    const el = document.getElementById(elId);
+    if (!el || typeof d3 === 'undefined' || !divergence) return;
+    el.innerHTML = '';
+    const rows = divergence.rows.slice(0, 8);
+    const max = d3.max(rows, row => row.all) || 1;
+    const root = d3.select(el);
+    const legend = root.append('div').attr('class', 'divergence-legend');
+    legend.append('span').attr('class', 'legend-all').text('All advertised demand');
+    legend.append('span').attr('class', 'legend-verified').text('Verified active demand');
+
+    const row = root.selectAll('.divergence-row').data(rows).enter().append('div').attr('class', 'divergence-row');
+    row.append('div').attr('class', 'divergence-skill').html(item => `<strong>${item.skill}</strong><small>${item.unverifiedShare}% unsupported signal</small>`);
+    const bars = row.append('div').attr('class', 'divergence-bars');
+    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-all').style('width', '0%').transition().duration(700).style('width', item => `${item.all / max * 100}%`);
+    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-verified').style('width', '0%').transition().duration(700).style('width', item => `${item.verified / max * 100}%`);
+    row.append('div').attr('class', 'divergence-count').html(item => `<strong>${item.all}</strong><small>${item.verified} verified</small>`);
   }
 
   // ── Hero signal field (three.js) ──────────────────────────────────────
@@ -244,7 +263,7 @@
     _signalField = null;
   }
 
-  const VerifyViz = { renderGauge, renderComponentBars, destroy, initSignalField, destroySignalField };
+  const VerifyViz = { renderGauge, renderComponentBars, renderDemandDivergence, destroy, initSignalField, destroySignalField };
 
   if (typeof window !== 'undefined') window.VerifyViz = VerifyViz;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifyViz;

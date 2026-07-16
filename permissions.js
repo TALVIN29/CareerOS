@@ -1,8 +1,8 @@
 (function (root) {
   const DEMO_USERS = Object.freeze([
-    Object.freeze({ userId: 'user-recruiter-alicia', name: 'Alicia Tan', email: 'recruiter@careeros.demo', password: 'demo123', role: 'recruiter', roleLabel: 'Recruiter', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentId: 'technology', department: 'Technology' }),
-    Object.freeze({ userId: 'user-manager-daniel', name: 'Daniel Lee', email: 'manager@careeros.demo', password: 'demo123', role: 'hiring_manager', roleLabel: 'Hiring Manager', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentId: 'technology', department: 'Technology' }),
-    Object.freeze({ userId: 'user-admin-mei', name: 'Mei Wong', email: 'admin@careeros.demo', password: 'demo123', role: 'hr_admin', roleLabel: 'HR Administrator', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentScope: 'Entire organisation' }),
+    Object.freeze({ id: 'user-recruiter-alicia', userId: 'user-recruiter-alicia', name: 'Alicia Tan', email: 'recruiter@careeros.demo', password: 'demo123', role: 'recruiter', roleLabel: 'Recruiter', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentId: 'technology', department: 'Technology' }),
+    Object.freeze({ id: 'user-manager-daniel', userId: 'user-manager-daniel', name: 'Daniel Lee', email: 'manager@careeros.demo', password: 'demo123', role: 'hiring_manager', roleLabel: 'Hiring Manager', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentId: 'technology', department: 'Technology' }),
+    Object.freeze({ id: 'user-admin-mei', userId: 'user-admin-mei', name: 'Mei Wong', email: 'admin@careeros.demo', password: 'demo123', role: 'hr_admin', roleLabel: 'HR Administrator', organisationId: 'vertex-digital', organisation: 'Vertex Digital', departmentScope: 'Entire organisation' }),
   ]);
 
   const ROLE_PERMISSIONS = Object.freeze({
@@ -50,7 +50,7 @@
     if (!user || !job) return false;
     if (user.role === 'hr_admin') return true;
     if (user.role === 'recruiter') return job.recruiterId === user.userId || job.createdByUserId === user.userId;
-    return job.assignedManagerId === user.userId || job.departmentId === user.departmentId;
+    return job.hiringManagerId === user.userId || job.departmentId === user.departmentId;
   };
 
   // UI checks improve the prototype experience. Production must enforce the
@@ -58,13 +58,13 @@
   const canUser = (user, action, job) => {
     if (!hasPermission(user, action)) return false;
     if (!job) return true;
-    if (action === 'edit_own_job') return canAccessJob(user, job) && ['Draft', 'Needs Changes', 'Rejected'].includes(job.status);
-    if (action === 'publish_approved_job') return job.recruiterId === user.userId && job.status === 'Approved';
+    if (action === 'edit_own_job') return canAccessJob(user, job) && ['draft', 'needs_changes', 'rejected', 'approved'].includes(job.status);
+    if (action === 'publish_approved_job') return job.recruiterId === user.userId && job.status === 'approved';
     if (['approve_assigned_job', 'request_changes', 'reject_assigned_job'].includes(action)) {
-      return job.assignedManagerId === user.userId && job.status === 'Pending Approval' && job.createdByUserId !== user.userId;
+      return job.hiringManagerId === user.userId && job.status === 'pending_approval' && job.recruiterId !== user.userId;
     }
-    if (['reconfirm_active_vacancy', 'mark_team_job_filled'].includes(action)) return job.assignedManagerId === user.userId && ['Published', 'Confirmation Due', 'Paused as Stale'].includes(job.status);
-    if (action === 'pause_suspicious_job') return ['Published', 'Confirmation Due'].includes(job.status);
+    if (['reconfirm_active_vacancy', 'mark_team_job_filled'].includes(action)) return job.hiringManagerId === user.userId && ['published', 'confirmation_due', 'paused_stale'].includes(job.status);
+    if (action === 'pause_suspicious_job') return ['published', 'confirmation_due'].includes(job.status);
     return canAccessJob(user, job);
   };
 

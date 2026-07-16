@@ -9,7 +9,8 @@
   // Statuses table — spec lines 83-94.
   const STATUSES = [
     'draft', 'validating', 'needs_changes', 'pending_approval',
-    'approved', 'published', 'rejected', 'closed'
+    'approved', 'published', 'confirmation_due', 'paused_stale',
+    'filled', 'rejected', 'closed'
   ];
 
   // Legal (status -> allowed actions) map. 'validating' is a transient
@@ -17,12 +18,15 @@
   // 'validate' action resolves straight through it to draft/needs_changes,
   // so it never appears as a from-state here.
   const TRANSITIONS = {
-    draft: ['validate', 'submit', 'edit'],
+    draft: ['validate', 'submit', 'edit', 'acknowledge_warning'],
     validating: [],
-    needs_changes: ['validate', 'submit', 'edit'],
-    pending_approval: ['approve', 'request_changes', 'reject'],
+    needs_changes: ['validate', 'submit', 'edit', 'acknowledge_warning'],
+    pending_approval: ['approve', 'request_changes', 'reject', 'withdraw'],
     approved: ['publish', 'edit', 'close'],
-    published: ['close'],
+    published: ['reconfirm', 'mark_confirmation_due', 'pause_stale', 'mark_filled', 'close'],
+    confirmation_due: ['reconfirm', 'pause_stale', 'mark_filled', 'close'],
+    paused_stale: ['reconfirm', 'mark_filled', 'close'],
+    filled: [],
     rejected: ['edit'],
     closed: []
   };
@@ -328,6 +332,76 @@
     return true;
   }
 
+  function median(values) {
+    if (!values.length) return null;
+    const ordered = values.slice().sort((a, b) => a - b);
+    const middle = Math.floor(ordered.length / 2);
+    return ordered.length % 2 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2;
+  }
+
+  // Employer Integrity Rating (EIR): a deterministic behaviour score over
+  // vacancy history. Prototype weights require calibration before production.
+  function computeEmployerRating(jobs, nowValue) {
+    const nowMs = new Date(nowValue || Date.now()).getTime();
+    const published = (jobs || []).filter(job => job.publishedAt || ['published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status));
+    const sampleSize = published.length;
+    if (sampleSize < 3) {
+      return { rating: null, band: 'Insufficient evidence', sampleSize, components: null };
+    }
+
+    const dueChecks = [];
+    published.forEach(job => {
+      (job.confirmations || []).forEach(item => {
+        if (item.dueAt) dueChecks.push(new Date(item.confirmedAt).getTime() <= new Date(item.dueAt).getTime());
+      });
+      if (!(job.confirmations || []).length && job.confirmationDueAt && new Date(job.confirmationDueAt).getTime() <= nowMs) {
+        dueChecks.push(Boolean(job.lastConfirmedAt) && new Date(job.lastConfirmedAt).getTime() <= new Date(job.confirmationDueAt).getTime());
+      }
+    });
+    const reconfirmOnTime = dueChecks.length ? Math.round(100 * dueChecks.filter(Boolean).length / dueChecks.length) : 100;
+
+    const completed = published.filter(job => ['closed', 'filled'].includes(job.status));
+    const ghosts = completed.filter(job => job.status === 'closed' && !job.filledAt).length;
+    const ghostAvoidance = completed.length ? Math.round(100 * (1 - ghosts / completed.length)) : 100;
+
+    const latencies = published
+      .filter(job => job.submittedAt && job.approval && job.approval.ts)
+      .map(job => (new Date(job.approval.ts) - new Date(job.submittedAt)) / 86400000)
+      .filter(value => Number.isFinite(value) && value >= 0);
+    const medianDecisionDays = median(latencies);
+    const decisionSpeed = medianDecisionDays == null ? 70 : Math.round(Math.max(0, Math.min(100, 120 - medianDecisionDays * 20)));
+
+    const staleCount = published.filter(job => job.status === 'paused_stale').length;
+    const staleAvoidance = Math.round(100 * (1 - staleCount / sampleSize));
+    const components = { reconfirmOnTime, ghostAvoidance, decisionSpeed, staleAvoidance, medianDecisionDays };
+    const rating = Math.round(0.35 * reconfirmOnTime + 0.30 * ghostAvoidance + 0.20 * decisionSpeed + 0.15 * staleAvoidance);
+    const band = rating >= 85 ? 'Leading' : rating >= 70 ? 'Trusted' : rating >= 55 ? 'Developing' : 'At risk';
+    return { rating, band, sampleSize, components };
+  }
+
+  function computeDemandDivergence(jobs, nowValue) {
+    const nowMs = new Date(nowValue || Date.now()).getTime();
+    const countSkills = source => {
+      const totals = {};
+      source.forEach(job => (job.requirements || [])
+        .filter(req => req.type === 'skill' && req.required)
+        .forEach(req => { if (req.name) totals[req.name] = (totals[req.name] || 0) + 1; }));
+      return totals;
+    };
+    const source = jobs || [];
+    const verifiedJobs = source.filter(job => job.status === 'published'
+      && job.employerVerified === true
+      && job.lastConfirmedAt
+      && (!job.confirmationDueAt || new Date(job.confirmationDueAt).getTime() >= nowMs));
+    const all = countSkills(source);
+    const verified = countSkills(verifiedJobs);
+    const rows = Object.keys(all).map(skill => {
+      const unverifiedCount = all[skill] - (verified[skill] || 0);
+      return { skill, all: all[skill], verified: verified[skill] || 0, unverifiedCount, unverifiedShare: Math.round(100 * unverifiedCount / all[skill]) };
+    }).sort((a, b) => b.unverifiedCount - a.unverifiedCount || b.all - a.all);
+    return { all, verified, rows, totalJobs: source.length, verifiedJobs: verifiedJobs.length };
+  }
+
   // ---------------------------------------------------------------------
   // Transitions + audit trail.
   // ---------------------------------------------------------------------
@@ -366,6 +440,7 @@
     } else if (action === 'submit') {
       if (!canSubmit(job)) throw new Error('Job is not eligible for submission (blockers, score, or unacknowledged warnings).');
       toStatus = 'pending_approval';
+      extra.submittedAt = new Date().toISOString();
     } else if (action === 'approve') {
       if (opts.attestation !== true) throw new Error('Approval requires manager attestation.');
       const check = canApprove(job, actor && actor.id);
@@ -381,12 +456,46 @@
     } else if (action === 'publish') {
       if (!canPublish(job)) throw new Error('Job cannot be published (must be approved with no blockers).');
       toStatus = 'published';
+      const publishedAt = new Date().toISOString();
+      const confirmationDays = Number(opts.confirmationDays) || 30;
+      extra.publishedAt = publishedAt;
+      extra.lastConfirmedAt = publishedAt;
+      extra.confirmationDueAt = new Date(new Date(publishedAt).getTime() + confirmationDays * 86400000).toISOString();
+      extra.confirmations = [...(job.confirmations || []), { confirmedAt: publishedAt, dueAt: null, actorId: actor && actor.id, action: 'published' }];
+    } else if (action === 'withdraw') {
+      toStatus = 'draft';
+      extra.submittedAt = null;
+    } else if (action === 'reconfirm') {
+      toStatus = 'published';
+      const confirmedAt = new Date().toISOString();
+      const confirmationDays = Number(opts.confirmationDays) || 30;
+      extra.lastConfirmedAt = confirmedAt;
+      extra.confirmationDueAt = new Date(new Date(confirmedAt).getTime() + confirmationDays * 86400000).toISOString();
+      extra.pausedAt = null;
+      extra.confirmations = [...(job.confirmations || []), { confirmedAt, dueAt: job.confirmationDueAt || null, actorId: actor && actor.id, action: 'reconfirmed' }];
+    } else if (action === 'mark_confirmation_due') {
+      toStatus = 'confirmation_due';
+    } else if (action === 'pause_stale') {
+      toStatus = 'paused_stale';
+      extra.pausedAt = new Date().toISOString();
+    } else if (action === 'mark_filled') {
+      toStatus = 'filled';
+      extra.filledAt = new Date().toISOString();
     } else if (action === 'close') {
       toStatus = 'closed';
+      extra.closedAt = new Date().toISOString();
     } else if (action === 'edit') {
       // Material edit from approved (or rejected) reverts to draft and clears approval.
       toStatus = (fromStatus === 'approved' || fromStatus === 'rejected') ? 'draft' : fromStatus;
+      extra.validation = null;
       if (fromStatus === 'approved') extra.approval = null;
+    } else if (action === 'acknowledge_warning') {
+      if (!job.validation) throw new Error('Run validation before acknowledging warnings.');
+      toStatus = fromStatus;
+      extra.validation = {
+        ...job.validation,
+        warnings: job.validation.warnings.map(warning => warning.id === opts.warningId ? { ...warning, acknowledged: true } : warning)
+      };
     }
 
     const newJob = { ...job, ...extra, status: toStatus };
@@ -408,6 +517,8 @@
     canSubmit,
     canApprove,
     canPublish,
+    computeEmployerRating,
+    computeDemandDivergence,
     applyTransition
   };
 

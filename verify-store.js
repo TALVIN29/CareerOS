@@ -4,11 +4,13 @@
 // Keys: spv.jobs, spv.audit, spv.role, spv.seedVersion.
 
 (function (root) {
-  const SEED_VERSION = 'v1'; // bump to force reseed on next load
+  const SEED_VERSION = 'v2'; // bump to force reseed on next load
   const JOBS_KEY = 'spv.jobs';
   const AUDIT_KEY = 'spv.audit';
   const ROLE_KEY = 'spv.role';
   const SEED_VERSION_KEY = 'spv.seedVersion';
+  const POLICY_KEY = 'spv.policy';
+  let activeUser = null;
 
   // Depends on VerifyEngine + VerifySeeds already loaded on window (browser)
   // or globalThis (Node/vm — e.g. a shared-context test harness).
@@ -49,16 +51,20 @@
     events.push(makeAuditEvent(job.id, recruiter, 'validate', 'draft',
       job.status === 'needs_changes' ? 'needs_changes' : 'draft', job.updatedAt));
 
-    if (['pending_approval', 'approved', 'published'].includes(job.status)) {
+    if (['pending_approval', 'approved', 'published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status)) {
       events.push(makeAuditEvent(job.id, recruiter, 'submit', 'draft', 'pending_approval', job.updatedAt));
     }
-    if (['approved', 'published'].includes(job.status) && job.approval) {
+    if (['approved', 'published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status) && job.approval) {
       events.push(makeAuditEvent(job.id, manager, 'approve', 'pending_approval', 'approved',
         job.approval.ts, job.approval.comments));
     }
-    if (job.status === 'published') {
+    if (['published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status)) {
       events.push(makeAuditEvent(job.id, manager, 'publish', 'approved', 'published', job.updatedAt));
     }
+    if (job.status === 'confirmation_due') events.push(makeAuditEvent(job.id, { name: 'CareerOS Policy Engine', role: 'system' }, 'mark_confirmation_due', 'published', 'confirmation_due', job.confirmationDueAt));
+    if (job.status === 'paused_stale') events.push(makeAuditEvent(job.id, { name: 'CareerOS Policy Engine', role: 'system' }, 'pause_stale', 'confirmation_due', 'paused_stale', job.pausedAt));
+    if (job.status === 'filled') events.push(makeAuditEvent(job.id, manager, 'mark_filled', 'published', 'filled', job.filledAt));
+    if (job.status === 'closed') events.push(makeAuditEvent(job.id, manager, 'close', 'published', 'closed', job.closedAt));
     return events;
   }
 
@@ -152,10 +158,13 @@
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1) return null;
       const before = jobs[idx];
-      const updated = Object.assign({}, before, fields, { updatedAt: new Date().toISOString() });
+      const result = Engine.applyTransition(before, 'edit', this.currentUser(), { comment: 'Material fields updated.' });
+      const updated = Object.assign({}, result.job, fields, { updatedAt: new Date().toISOString() });
       jobs[idx] = updated;
       saveJobs(jobs);
-      addAudit(id, 'edit', before.status, updated.status, null, this.currentUser());
+      const audit = loadAudit();
+      audit.push(result.auditEvent);
+      saveAudit(audit);
       return updated;
     },
 
@@ -171,14 +180,14 @@
       const jobs = loadJobs();
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1) return null;
-      const job = jobs[idx];
-      const validation = Engine.validateJob(job);
-      const toStatus = (validation.blockers.length > 0 || validation.score < 60) ? 'needs_changes' : job.status;
-      const updated = Object.assign({}, job, { validation, status: toStatus, updatedAt: new Date().toISOString() });
-      jobs[idx] = updated;
+      const result = Engine.applyTransition(jobs[idx], 'validate', this.currentUser(), {});
+      result.job.updatedAt = new Date().toISOString();
+      jobs[idx] = result.job;
       saveJobs(jobs);
-      addAudit(id, 'validate', job.status, toStatus, null, this.currentUser());
-      return updated;
+      const audit = loadAudit();
+      audit.push(result.auditEvent);
+      saveAudit(audit);
+      return result.job;
     },
 
     transition(id, action, opts) {
@@ -199,14 +208,14 @@
       const jobs = loadJobs();
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1 || !jobs[idx].validation) return null;
-      const job = jobs[idx];
-      const validation = Object.assign({}, job.validation, {
-        warnings: job.validation.warnings.map(w => w.id === warningId ? Object.assign({}, w, { acknowledged: true }) : w)
-      });
-      const updated = Object.assign({}, job, { validation, updatedAt: new Date().toISOString() });
-      jobs[idx] = updated;
+      const result = Engine.applyTransition(jobs[idx], 'acknowledge_warning', this.currentUser(), { warningId, comment: `Warning acknowledged: ${warningId}` });
+      result.job.updatedAt = new Date().toISOString();
+      jobs[idx] = result.job;
       saveJobs(jobs);
-      return updated;
+      const audit = loadAudit();
+      audit.push(result.auditEvent);
+      saveAudit(audit);
+      return result.job;
     },
 
     listAudit(jobId) {
@@ -229,9 +238,30 @@
     },
 
     currentUser() {
+      if (activeUser) return activeUser;
       const role = this.getRole();
       return Seeds.PERSONAS.find(p => p.role === role) || Seeds.PERSONAS[0];
     },
+
+    setCurrentUser(user) {
+      activeUser = user ? { id: user.id || user.userId, userId: user.userId || user.id, name: user.name, role: user.role } : null;
+      return activeUser;
+    },
+
+    loadPolicy() {
+      try {
+        return JSON.parse(localStorage.getItem(POLICY_KEY)) || { confirmationDays: 30, graceDays: 7, approvalSlaDays: 3, minimumValidationScore: 60 };
+      } catch (e) {
+        return { confirmationDays: 30, graceDays: 7, approvalSlaDays: 3, minimumValidationScore: 60 };
+      }
+    },
+
+    savePolicy(policy) {
+      localStorage.setItem(POLICY_KEY, JSON.stringify(policy));
+      return policy;
+    },
+
+    addAudit,
 
     reset() {
       Object.keys(localStorage)

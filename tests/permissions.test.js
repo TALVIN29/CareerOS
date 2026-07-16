@@ -3,9 +3,9 @@ import '../permissions.js';
 
 const { DEMO_USERS, hasPermission, canAccessRoute, canUser } = globalThis.CareerOSAuth;
 const [recruiter, manager, admin] = DEMO_USERS;
-const pending = { id: 'pending', status: 'Pending Approval', createdByUserId: recruiter.userId, recruiterId: recruiter.userId, assignedManagerId: manager.userId, departmentId: 'technology' };
-const approved = { ...pending, status: 'Approved' };
-const selfAuthored = { ...pending, createdByUserId: manager.userId };
+const pending = { id: 'pending', status: 'pending_approval', recruiterId: recruiter.userId, hiringManagerId: manager.userId, departmentId: 'technology' };
+const approved = { ...pending, status: 'approved' };
+const selfAuthored = { ...pending, recruiterId: manager.userId };
 
 assert.equal(DEMO_USERS.length, 3);
 assert.equal(hasPermission(recruiter, 'create_job'), true);
@@ -19,6 +19,6 @@ assert.equal(canUser(manager, 'approve_assigned_job', pending), true);
 assert.equal(canUser(manager, 'approve_assigned_job', selfAuthored), false);
 assert.equal(canUser(recruiter, 'publish_approved_job', pending), false);
 assert.equal(canUser(recruiter, 'publish_approved_job', approved), true);
-assert.equal(canUser(admin, 'pause_suspicious_job', { ...pending, status: 'Published' }), true);
+assert.equal(canUser(admin, 'pause_suspicious_job', { ...pending, status: 'published' }), true);
 
 console.log('permissions.test.js: all assertions passed');

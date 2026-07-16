@@ -4,6 +4,29 @@
 
 ---
 
+## STOP — read `HANDOVER.md` first. Most of this file is stale.
+
+**Your first action every session: read [`HANDOVER.md`](HANDOVER.md).** It is the authority and it
+supersedes this file wherever the two disagree.
+
+This file and the docs it points at are dated 2026-06-02 and describe **a product that no longer
+exists** — a two-sided APAC marketplace on Next.js 14 + Supabase + Claude API, with three modules
+(Career Path Navigator / Smart Talent Matching / Fair Pay Engine). None of that is in this repo.
+
+What actually exists is **Signal Path Verify** — a job-posting integrity and approval engine for the
+employer module. Vanilla JS + Alpine, static, employer-only, **zero LLM calls by design**.
+
+Do not follow, unless Talvin says otherwise: `SKILL.md` (wrong stack), `PRD.md` (wrong product, still
+"Awaiting PRD Lock"), `progress_plan.md` (*"no code changes until Talvin says 'PRD locked'"* — six
+weeks stale, not a gate on the handover work), `decision_log.md`, `stakeholder_decision.md`, the File
+Map and Environment Variables below, and rule 10 (there is no Phase 2 and no API key).
+
+Reconciling or deleting the stale set is Talvin's call. Flag it; don't do it unasked.
+
+Everything below is kept for history. Read it as context, not instruction.
+
+---
+
 ## IMPORTANT: Read This First
 
 You are working on **CareerOS** — a hackathon project for the Talentbank Tech Hackathon 2026.

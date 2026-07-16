@@ -1,8 +1,6 @@
 // Signal Path Verify — demo seed data. Pure data, no dependencies.
-// Field values are hand-tuned so verify-engine.js computes EXACT scores:
-// Backend Engineer 86 · Graduate Data Analyst 58 · Product Designer 93 ·
-// Marketing Intern blocked · Cybersecurity Specialist 76.
-// See tests/verify-engine.test.js for the exact-score assertions.
+// Coherent scenarios exercise the automatic Green, Amber, and Red paths,
+// manager-confirmed publication, reconfirmation, and stale automation.
 
 (function (root) {
   const PERSONAS = [
@@ -12,15 +10,13 @@
   ];
 
   const JOBS = [
-    // Backend Engineer — JIS 86, pending_approval.
-    // A=100, R=40 (too-many-skills + duplicate-requirements + title-mismatch),
-    // M=100/C=100 (salary fully within benchmark band), Q=60, P=0.
+    // Green fast path: complete approved requisition, ready to publish directly.
     {
       id: 'job_backend_engineer',
       createdAt: '2026-07-01T09:00:00.000Z',
       updatedAt: '2026-07-02T10:00:00.000Z',
-      status: 'pending_approval',
-      employerVerified: true, requisitionId: 'REQ-2201',
+      status: 'draft',
+      employerVerified: true, requisitionId: 'REQ-2201', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-07-01',
       department: 'Engineering',
       vacancies: 1,
       hiringManagerId: 'user-manager-daniel',
@@ -28,6 +24,8 @@
       targetStartDate: '2026-09-01',
       headcountApproved: true,
       budgetApproved: true,
+      approvalEvidenceSource: 'Vertex ATS · approved requisition',
+      approvalEvidenceDate: '2026-07-01',
       justification: 'Backfill for departing engineer, approved in Q3 planning.',
       title: 'Backend Engineer',
       location: 'Kuala Lumpur',
@@ -37,12 +35,12 @@
       salaryMin: 6000,
       salaryMax: 9000,
       salaryVisible: true,
-      reportingLine: null,
-      summary: 'Build backend systems.',
+      reportingLine: 'Engineering Lead',
+      summary: 'Build reliable backend services and APIs that support employer verification, candidate trust, and scalable labour-demand products.',
       responsibilities: [
-        'Coordinate marketing campaigns across channels',
-        'Prepare monthly budget reports for leadership',
-        'Support customer onboarding calls'
+        'Design and build backend services for CareerOS products',
+        'Maintain secure APIs, data models, and automated tests',
+        'Partner with product and platform engineers on reliable delivery'
       ],
       requirements: [
         { name: 'Node.js', type: 'skill', required: true },
@@ -52,45 +50,43 @@
         { name: 'Docker', type: 'skill', required: true },
         { name: 'AWS', type: 'skill', required: true },
         { name: 'System Design', type: 'skill', required: true },
-        { name: 'Java', type: 'skill', required: true },
-        { name: 'SQL', type: 'skill', required: true }
+        { name: 'Backend Experience', type: 'experience', required: true, yearsExperience: 3, justification: 'Mid-level service ownership' }
       ],
       validation: null,
       approval: null
     },
 
-    // Graduate Data Analyst — JIS 58, needs_changes (missing hiring manager,
-    // headcount + budget not approved => blockers). A=40, R=20 (all four
-    // applicable plausibility warnings fire), M=75/C=70 (partial salary
-    // overlap), Q=80, P=0.
+    // Amber quick-fix path: approved role with a few recruiter-resolvable details.
     {
       id: 'job_graduate_data_analyst',
       createdAt: '2026-07-01T09:00:00.000Z',
       updatedAt: '2026-07-02T10:00:00.000Z',
       status: 'needs_changes',
-      employerVerified: true, requisitionId: 'REQ-2205',
+      employerVerified: true, requisitionId: 'REQ-2205', approvalEvidenceSource: 'Workforce plan', approvalEvidenceDate: '2026-07-01',
       department: 'Analytics',
       vacancies: 1,
-      hiringManagerId: null,
+      hiringManagerId: 'user-manager-daniel',
       recruiterId: 'user-recruiter-alicia',
-      targetStartDate: '2026-08-15',
-      headcountApproved: false,
-      budgetApproved: false,
-      justification: 'Pending finance sign-off.',
+      targetStartDate: '',
+      headcountApproved: true,
+      budgetApproved: true,
+      approvalEvidenceSource: 'Vertex ATS · graduate programme requisition',
+      approvalEvidenceDate: '2026-07-01',
+      justification: 'Approved graduate intake role.',
       title: 'Graduate Data Analyst',
       location: 'Penang',
       workplace: 'onsite',
       employmentType: 'full-time',
       seniority: 'entry',
-      salaryMin: 2000,
-      salaryMax: 3600,
+      salaryMin: 0,
+      salaryMax: 0,
       salaryVisible: true,
       reportingLine: 'Analytics Team Lead',
-      summary: 'Entry role.',
+      summary: 'Support the analytics team by preparing trusted reports, investigating employer trends, and communicating clear findings to internal stakeholders.',
       responsibilities: [
-        'Coordinate office supply orders',
-        'Organise team building events',
-        'Manage the front-desk visitor log'
+        'Analyse employer and vacancy performance data',
+        'Build recurring reports and data-quality checks',
+        'Present analysis clearly to product and operations teams'
       ],
       requirements: [
         { name: 'SQL', type: 'skill', required: true },
@@ -98,11 +94,7 @@
         { name: 'Python', type: 'skill', required: true },
         { name: 'Data Visualization', type: 'skill', required: true },
         { name: 'Statistics', type: 'skill', required: true },
-        { name: 'Power BI', type: 'skill', required: true },
-        { name: 'Tableau', type: 'skill', required: true },
-        { name: 'R', type: 'skill', required: true },
-        { name: 'SQL', type: 'skill', required: true },
-        { name: 'Relevant Experience', type: 'experience', required: true, yearsExperience: 5, justification: '' }
+        { name: 'Relevant Experience', type: 'experience', required: true, yearsExperience: 4, justification: '' }
       ],
       validation: null,
       approval: null
@@ -116,7 +108,7 @@
       createdAt: '2026-07-01T09:00:00.000Z',
       updatedAt: '2026-07-03T11:00:00.000Z',
       status: 'approved',
-      employerVerified: true, requisitionId: 'REQ-2210',
+      employerVerified: true, requisitionId: 'REQ-2210', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-07-01',
       department: 'Design',
       vacancies: 1,
       hiringManagerId: 'user-manager-daniel',
@@ -124,6 +116,8 @@
       targetStartDate: '2026-08-01',
       headcountApproved: true,
       budgetApproved: true,
+      approvalEvidenceSource: 'Vertex ATS · funded backfill',
+      approvalEvidenceDate: '2026-07-03',
       justification: 'Approved backfill, funded through FY26 design budget.',
       title: 'Product Designer',
       location: 'Kuala Lumpur',
@@ -159,14 +153,14 @@
       }
     },
 
-    // Marketing Intern — blocked. headcountApproved:false per spec (also
-    // demonstrates the intern-overexperience warning).
+    // Red accountability path: manager confirmation requested because approved
+    // headcount evidence is missing.
     {
       id: 'job_marketing_intern',
       createdAt: '2026-07-01T09:00:00.000Z',
       updatedAt: '2026-07-02T10:00:00.000Z',
-      status: 'needs_changes',
-      employerVerified: true, requisitionId: 'REQ-2215',
+      status: 'pending_approval',
+      employerVerified: true, requisitionId: 'REQ-2215', approvalEvidenceSource: 'ATS draft requisition', approvalEvidenceDate: '2026-07-01',
       department: 'Marketing',
       vacancies: 2,
       hiringManagerId: 'user-manager-daniel',
@@ -174,6 +168,9 @@
       targetStartDate: '2026-08-10',
       headcountApproved: false,
       budgetApproved: true,
+      approvalEvidenceSource: 'Vertex ATS · provisional internship request',
+      approvalEvidenceDate: '2026-07-01',
+      submittedAt: '2026-07-02T10:00:00.000Z',
       justification: 'Awaiting HR headcount sign-off.',
       title: 'Marketing Intern',
       location: 'Kuala Lumpur',
@@ -199,15 +196,13 @@
       approval: null
     },
 
-    // Cybersecurity Specialist — JIS 76, pending_approval. A=100, R=40
-    // (entry-overexperience + too-many-skills + duplicate-requirements),
-    // M=75/C=40 (salary well above benchmark band, no overlap), Q=60, P=0.
+    // Additional Amber quick-fix example with unrealistic entry requirements.
     {
       id: 'job_cybersecurity_specialist',
       createdAt: '2026-07-01T09:00:00.000Z',
       updatedAt: '2026-07-02T10:00:00.000Z',
-      status: 'pending_approval',
-      employerVerified: true, requisitionId: 'REQ-2220',
+      status: 'needs_changes',
+      employerVerified: true, requisitionId: 'REQ-2220', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-07-01',
       department: 'IT Security',
       vacancies: 1,
       hiringManagerId: 'user-manager-daniel',
@@ -215,6 +210,8 @@
       targetStartDate: '2026-09-15',
       headcountApproved: true,
       budgetApproved: true,
+      approvalEvidenceSource: 'Vertex ATS · security expansion',
+      approvalEvidenceDate: '2026-07-01',
       justification: 'Approved headcount for security team expansion.',
       title: 'Cybersecurity Specialist',
       location: 'Cyberjaya',
@@ -250,7 +247,7 @@
     // Connected lifecycle histories used by freshness governance and EIR.
     {
       id: 'job_platform_engineer_active', createdAt: '2026-05-20T08:00:00.000Z', updatedAt: '2026-07-12T08:00:00.000Z', status: 'published',
-      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2225', department: 'Engineering', departmentId: 'technology', vacancies: 1,
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2225', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-05-20', department: 'Engineering', departmentId: 'technology', vacancies: 1,
       hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-08-01', headcountApproved: true, budgetApproved: true,
       title: 'Software Engineer', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 6500, salaryMax: 8500, salaryVisible: true,
       reportingLine: 'Engineering Lead', summary: 'Build reliable platform services for employer and candidate products across the Talentbank network.',
@@ -262,7 +259,7 @@
     },
     {
       id: 'job_operations_confirmation', createdAt: '2026-05-10T08:00:00.000Z', updatedAt: '2026-07-16T08:00:00.000Z', status: 'confirmation_due',
-      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2226', department: 'Technology Operations', departmentId: 'technology', vacancies: 1,
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2226', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-05-10', department: 'Technology Operations', departmentId: 'technology', vacancies: 1,
       hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-07-15', headcountApproved: true, budgetApproved: true,
       title: 'Operations Analyst', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 5000, salaryMax: 7000, salaryVisible: true,
       reportingLine: 'Operations Director', summary: 'Improve technology operations reporting and service reliability across employer-facing products.',
@@ -273,18 +270,18 @@
     },
     {
       id: 'job_ai_product_stale', createdAt: '2026-04-01T08:00:00.000Z', updatedAt: '2026-07-10T08:00:00.000Z', status: 'paused_stale',
-      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2227', department: 'Product', departmentId: 'technology', vacancies: 1,
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2227', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-04-01', department: 'Product', departmentId: 'technology', vacancies: 1,
       hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-06-01', headcountApproved: true, budgetApproved: true,
       title: 'AI Product Manager', location: 'Kuala Lumpur', workplace: 'remote', employmentType: 'full-time', seniority: 'senior', salaryMin: 11000, salaryMax: 15000, salaryVisible: true,
       reportingLine: 'VP Product', summary: 'Lead responsible AI product strategy and measurable employer outcomes across the CareerOS platform.',
       responsibilities: ['Set AI product strategy', 'Define outcome metrics', 'Coordinate data and engineering delivery'],
       requirements: [{ name: 'Product Strategy', type: 'skill', required: true }, { name: 'Data Analysis', type: 'skill', required: true }, { name: 'AI Governance', type: 'skill', required: true }],
-      submittedAt: '2026-04-02T08:00:00.000Z', publishedAt: '2026-04-05T08:00:00.000Z', lastConfirmedAt: '2026-05-05T08:00:00.000Z', confirmationDueAt: '2026-06-04T08:00:00.000Z', pausedAt: '2026-06-11T08:00:00.000Z', confirmations: [],
+      submittedAt: '2026-04-02T08:00:00.000Z', publishedAt: '2026-04-05T08:00:00.000Z', lastConfirmedAt: '2026-05-05T08:00:00.000Z', confirmationDueAt: '2026-06-04T08:00:00.000Z', pausedAt: '2026-06-11T08:00:00.000Z', pausedAutomatically: true, confirmations: [],
       validation: null, approval: { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, comments: 'Approved strategic hire.', ts: '2026-04-04T08:00:00.000Z' }
     },
     {
       id: 'job_support_filled', createdAt: '2026-03-01T08:00:00.000Z', updatedAt: '2026-06-15T08:00:00.000Z', status: 'filled',
-      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2228', department: 'Technology', departmentId: 'technology', vacancies: 1,
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2228', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-03-01', department: 'Technology', departmentId: 'technology', vacancies: 1,
       hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-06-15', headcountApproved: true, budgetApproved: true,
       title: 'Technical Support Specialist', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'entry', salaryMin: 3500, salaryMax: 4800, salaryVisible: true,
       reportingLine: 'Support Manager', summary: 'Support employer customers and improve resolution quality across the CareerOS platform.',
@@ -295,7 +292,7 @@
     },
     {
       id: 'job_legacy_closed', createdAt: '2026-02-01T08:00:00.000Z', updatedAt: '2026-05-10T08:00:00.000Z', status: 'closed',
-      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2229', department: 'Technology', departmentId: 'technology', vacancies: 1,
+      organisationId: 'vertex-digital', employerVerified: true, requisitionId: 'REQ-2229', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-02-01', department: 'Technology', departmentId: 'technology', vacancies: 1,
       hiringManagerId: 'user-manager-daniel', recruiterId: 'user-recruiter-alicia', targetStartDate: '2026-05-01', headcountApproved: true, budgetApproved: true,
       title: 'Data Analyst', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'mid', salaryMin: 4500, salaryMax: 6000, salaryVisible: true,
       reportingLine: 'Analytics Lead', summary: 'Analyse employer performance and build trusted labour-demand reporting for Talentbank partners.',
@@ -316,7 +313,7 @@
     createdAt: '2026-07-15T09:00:00.000Z',
     updatedAt: '2026-07-15T09:00:00.000Z',
     status: 'draft',
-    employerVerified: true, requisitionId: 'REQ-2299',
+    employerVerified: true, requisitionId: 'REQ-2299', approvalEvidenceSource: 'ATS requisition record', approvalEvidenceDate: '2026-07-15',
     department: 'Engineering',
     vacancies: 1,
     hiringManagerId: 'user-manager-daniel',
@@ -356,6 +353,34 @@
     approval: null
   };
 
+  const DEMO_DRAFTS = {
+    green: {
+      ...DEMO_DRAFT, id: 'demo_green_backend', status: 'draft', validation: null, approval: null,
+      createdAt: '2026-07-17T08:00:00.000Z', updatedAt: '2026-07-17T08:00:00.000Z',
+      title: 'Backend Engineer', seniority: 'mid',
+      summary: 'Build reliable backend services and APIs for employer products, improving performance, observability, and delivery quality across the CareerOS platform.',
+      responsibilities: ['Build backend services and APIs', 'Improve service reliability and automated testing', 'Collaborate with product and platform engineers'],
+      requirements: [
+        { name: 'Node.js', type: 'skill', required: true },
+        { name: 'SQL', type: 'skill', required: true },
+        { name: 'REST APIs', type: 'skill', required: true },
+        { name: 'Git', type: 'skill', required: true },
+        { name: 'Backend Experience', type: 'experience', required: true, yearsExperience: 3, justification: 'Needed for independent service ownership' }
+      ]
+    },
+    amber: DEMO_DRAFT,
+    red: {
+      ...DEMO_DRAFT,
+      id: 'demo_red_marketing', status: 'draft', validation: null, approval: null,
+      title: 'Marketing Intern', department: 'Marketing', seniority: 'intern', employmentType: 'internship',
+      salaryMin: 1200, salaryMax: 1800, targetStartDate: '2026-09-01', headcountApproved: false,
+      approvalEvidenceSource: 'Vertex ATS · provisional request', approvalEvidenceDate: '2026-07-17',
+      summary: 'Support campaign delivery, content production, and performance reporting while learning from the regional marketing team.',
+      responsibilities: ['Support marketing campaign delivery', 'Prepare content and performance reports', 'Coordinate campaign assets with the marketing team'],
+      requirements: [{ name: 'Communication', type: 'skill', required: true }, { name: 'Canva', type: 'skill', required: true }]
+    }
+  };
+
   const PEER_ORGS = [
     { id: 'vertex-digital', name: 'Vertex Digital', jobs: JOBS },
     { id: 'meridian-labs', name: 'Meridian Labs', jobs: [
@@ -386,7 +411,7 @@
     ] }
   ];
 
-  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT, PEER_ORGS };
+  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT, DEMO_DRAFTS, PEER_ORGS };
 
   if (typeof window !== 'undefined') window.VerifySeeds = VerifySeeds;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifySeeds;

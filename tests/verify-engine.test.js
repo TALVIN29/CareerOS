@@ -1,327 +1,184 @@
-// Plain node:assert tests. Run: node tests/verify-engine.test.js
-// verify-engine.js / verify-seeds.js are classic UMD-style scripts (window.X
-// in the browser, module.exports in Node). The repo's package.json sets
-// "type": "module" for the Express server, so plain `require()` of a .js
-// sibling isn't available here — instead we run the scripts in a vm
-// sandbox that provides a `module` object, exactly like Node's own CJS
-// loader would, without touching package.json.
-import assert from 'node:assert';
-import vm from 'node:vm';
+import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const root = path.join(__dirname, '..');
+import vm from 'node:vm';
 
 function loadUmd(file) {
-  const code = fs.readFileSync(path.join(root, file), 'utf8');
-  const sandboxModule = { exports: {} };
-  const context = vm.createContext({ module: sandboxModule, console });
-  vm.runInContext(code, context, { filename: file });
-  return sandboxModule.exports;
+  const module = { exports: {} };
+  vm.runInNewContext(fs.readFileSync(new URL(`../${file}`, import.meta.url), 'utf8'), { module, console, globalThis: {} }, { filename: file });
+  return module.exports;
 }
 
 const Engine = loadUmd('verify-engine.js');
 const Seeds = loadUmd('verify-seeds.js');
+const clone = value => JSON.parse(JSON.stringify(value));
+const recruiter = { id: 'user-recruiter-alicia', userId: 'user-recruiter-alicia', name: 'Alicia Tan', role: 'recruiter' };
+const manager = { id: 'user-manager-daniel', userId: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' };
+let passed = 0;
+function test(name, fn) { fn(); passed += 1; console.log(`PASS: ${name}`); }
 
-let passCount = 0;
-function test(name, fn) {
-  fn();
-  passCount += 1;
-  console.log(`PASS: ${name}`);
-}
-
-function findJob(id) {
-  const job = Seeds.JOBS.find(j => j.id === id);
-  assert.ok(job, `seed job ${id} should exist`);
-  return job;
-}
-
-// --- Weighted score math on a hand-computed job ---------------------------
-test('computeScore applies the weighted JIS formula', () => {
-  const components = { A: 100, V: 100, R: 100, M: 100, C: 100, Q: 100, P: 0 };
-  assert.strictEqual(Engine.computeScore(components), 100);
-  const partial = { A: 100, V: 100, R: 40, M: 100, C: 100, Q: 60, P: 0 };
-  // 0.3*100+0.2*100+0.2*40+0.15*100+0.1*100+0.05*60 = 30+20+8+15+10+3 = 86
-  assert.strictEqual(Engine.computeScore(partial), 86);
+test('integrity score is the transparent sum of 35/20/20/15/10 factors', () => {
+  const result = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.green, { now: '2026-07-17' });
+  assert.deepEqual(JSON.parse(JSON.stringify(result.factors)), { approvalEvidence: 35, completeness: 20, requirementRealism: 20, internalConsistency: 15, marketComparison: 10 });
+  assert.equal(result.score, 100);
 });
 
-test('computeScore clamps to 0-100 and applies penalties', () => {
-  const heavyPenalty = { A: 100, V: 100, R: 100, M: 100, C: 100, Q: 100, P: 120 };
-  assert.strictEqual(Engine.computeScore(heavyPenalty), 0);
+test('calculation is deterministic apart from its timestamp', () => {
+  const first = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.amber, { now: '2026-07-17' });
+  const second = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.amber, { now: '2026-07-17' });
+  assert.deepEqual(first, second);
 });
 
-// --- Each blocker fires individually ---------------------------------------
-test('each critical blocker fires individually', () => {
-  const base = {
-    hiringManagerId: 'user-manager-daniel', requisitionId: 'REQ-1', headcountApproved: true,
-    budgetApproved: true, employerVerified: true, salaryMin: 3000, salaryMax: 5000,
-    employmentType: 'full-time', location: 'KL', recruiterId: 'user-recruiter-alicia',
-    responsibilities: ['Do the work'], title: 'Some Role', summary: 'A role.'
-  };
+test('Green route is ready for direct publication', () => {
+  const result = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.green, { now: '2026-07-17' });
+  assert.equal(result.riskLevel, 'green');
+  assert.equal(result.recommendedAction, 'publish');
+  assert.equal(result.hardBlockers.length, 0);
+});
+
+test('Amber route exposes only actionable quick fixes', () => {
+  const result = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.amber, { now: '2026-07-17' });
+  assert.equal(result.riskLevel, 'amber');
+  assert.equal(result.recommendedAction, 'resolve_issues');
+  assert.deepEqual(JSON.parse(JSON.stringify(result.topReasons.map(item => item.id))), ['short-description', 'entry-overexperience', 'too-many-skills']);
+  assert.ok(result.topReasons.length <= 3);
+});
+
+test('hard blockers keep the displayed score inside the Red band', () => {
+  const result = Engine.calculatePostingIntegrity(Seeds.DEMO_DRAFTS.red, { now: '2026-07-17' });
+  assert.ok(result.score < 60);
+  assert.equal(result.riskLevel, 'red');
+  assert.ok(result.hardBlockers.some(item => item.id === 'missing-approval-evidence'));
+});
+
+test('missing manager, title, description, contradictions and unsafe content are hard blockers', () => {
+  const base = clone(Seeds.DEMO_DRAFTS.green);
   const cases = [
-    [{ hiringManagerId: null }, 'missing-hiring-manager'],
-    [{ requisitionId: null }, 'missing-requisition'],
-    [{ headcountApproved: false }, 'headcount-not-approved'],
-    [{ budgetApproved: false }, 'budget-not-approved'],
-    [{ employerVerified: false }, 'unverified-employer'],
-    [{ salaryMin: 6000, salaryMax: 5000 }, 'salary-min-above-max'],
-    [{ employmentType: null }, 'missing-employment-type'],
-    [{ location: null, workplace: 'onsite' }, 'missing-location'],
-    [{ responsibilities: [] }, 'no-responsibilities'],
-    [{ recruiterId: null }, 'no-approval-route'],
-    [{ summary: 'Please pay a processing fee to proceed with your application.' }, 'candidate-payment-requested'],
-    [{ summary: 'Please provide your bank account number for verification.' }, 'sensitive-id-requested'],
-    [{ summary: 'Applicants must be male, single status only, age below 30 only.' }, 'discriminatory-requirement']
+    [{ hiringManagerId: '' }, 'missing-hiring-manager'],
+    [{ title: '' }, 'missing-title'],
+    [{ summary: '' }, 'missing-description'],
+    [{ salaryMin: 9000, salaryMax: 5000 }, 'salary-conflict'],
+    [{ summary: 'Candidates must pay a processing fee before interview.' }, 'candidate-payment-requested']
   ];
-  for (const [overrides, expectedId] of cases) {
-    const job = { ...base, ...overrides };
-    const blockers = Engine.findBlockers(job);
-    assert.ok(blockers.some(b => b.id === expectedId), `expected blocker ${expectedId} for ${JSON.stringify(overrides)}`);
-  }
+  cases.forEach(([change, id]) => assert.ok(Engine.calculatePostingIntegrity({ ...base, ...change }).hardBlockers.some(item => item.id === id), id));
 });
 
-// --- Entry/intern experience warnings ---------------------------------------
-test('entry-level and intern experience warnings fire correctly', () => {
-  const entryJob = {
-    title: 'Junior Analyst', seniority: 'entry', responsibilities: ['Analyse things'],
-    requirements: [{ name: 'Experience', type: 'experience', required: true, yearsExperience: 5 }]
-  };
-  assert.ok(Engine.findWarnings(entryJob, null).some(w => w.id === 'entry-overexperience'));
-
-  const internJob = {
-    title: 'Intern', seniority: 'intern', responsibilities: ['Assist team'],
-    requirements: [{ name: 'Experience', type: 'experience', required: true, yearsExperience: 3 }]
-  };
-  assert.ok(Engine.findWarnings(internJob, null).some(w => w.id === 'intern-overexperience'));
-
-  const fineJob = {
-    title: 'Junior Analyst', seniority: 'entry', responsibilities: ['Analyse things'],
-    requirements: [{ name: 'Experience', type: 'experience', required: true, yearsExperience: 2 }]
-  };
-  assert.ok(!Engine.findWarnings(fineJob, null).some(w => w.id === 'entry-overexperience'));
+test('limited market comparison never blocks an otherwise complete specialised role', () => {
+  const role = { ...clone(Seeds.DEMO_DRAFTS.green), title: 'Quantum Workforce Architect', responsibilities: ['Design quantum workforce architecture', 'Maintain architecture controls', 'Partner with research teams on delivery'] };
+  const result = Engine.calculatePostingIntegrity(role, { now: '2026-07-17' });
+  assert.equal(result.riskLevel, 'green');
+  assert.ok(result.warnings.some(item => item.id === 'limited-market-evidence' && item.severity === 'supporting'));
 });
 
-// --- min>max salary blocker ---------------------------------------------
-test('salary min above max is a blocker', () => {
-  const job = { salaryMin: 8000, salaryMax: 5000, responsibilities: ['x'] };
-  assert.ok(Engine.findBlockers(job).some(b => b.id === 'salary-min-above-max'));
+test('Green vacancy publishes without a separate validation or manager step', () => {
+  const job = { ...clone(Seeds.DEMO_DRAFTS.green), status: 'draft' };
+  assert.equal(Engine.canPublish(job), true);
+  const result = Engine.applyTransition(job, 'publish', recruiter, { now: '2026-07-17', confirmationDays: 30 });
+  assert.equal(result.job.status, 'published');
+  assert.equal(result.auditEvent.fromStatus, 'draft');
+  assert.match(result.job.confirmationDueAt, /^2026-08-16/);
 });
 
-// --- Threshold boundaries 59/60/79/80 ---------------------------------------
-test('canSubmit threshold boundaries (59/60/79/80)', () => {
-  // score 59 -> blocked regardless of warnings
-  assert.strictEqual(Engine.computeScore({ A: 0, V: 100, R: 100, M: 60, C: 100, Q: 0, P: 0 }), 59);
-  // score 60 -> allowed only if warnings acknowledged
-  assert.strictEqual(Engine.computeScore({ A: 0, V: 100, R: 60, M: 100, C: 100, Q: 60, P: 0 }), 60);
-  // score 79 -> still requires acknowledgement
-  assert.strictEqual(Engine.computeScore({ A: 40, V: 100, R: 100, M: 100, C: 70, Q: 100, P: 0 }), 79);
-  // score 80 -> always eligible regardless of unacknowledged warnings
-  assert.strictEqual(Engine.computeScore({ A: 40, V: 100, R: 100, M: 100, C: 100, Q: 60, P: 0 }), 80);
-
-  // canSubmit: below 60 always false
-  const below60 = { ...findJob('job_graduate_data_analyst') }; // score 58
-  assert.strictEqual(Engine.canSubmit(below60), false);
-
-  // 60-79 band job with unacknowledged warnings -> blocked; acknowledging
-  // every warning (as stored in job.validation, the way the UI would after
-  // the recruiter checks each box) flips it to submittable.
-  const midJob = { ...findJob('job_cybersecurity_specialist') }; // score 76
-  const freshValidation = Engine.validateJob(midJob);
-  assert.ok(freshValidation.score >= 60 && freshValidation.score < 80, `expected 60-79 score, got ${freshValidation.score}`);
-  assert.ok(freshValidation.warnings.length > 0, 'expected at least one warning in the 60-79 band');
-  assert.strictEqual(Engine.canSubmit({ ...midJob, validation: freshValidation }), false, 'unacknowledged warnings should block submit in 60-79 band');
-
-  const ackValidation = { ...freshValidation, warnings: freshValidation.warnings.map(w => ({ ...w, acknowledged: true })) };
-  assert.strictEqual(Engine.canSubmit({ ...midJob, validation: ackValidation }), true, 'acknowledging all warnings should allow submit in 60-79 band');
-
-  // score >= 80 bypasses acknowledgement entirely
-  const highJob = { ...findJob('job_product_designer') }; // score 93
-  const highValidation = Engine.validateJob(highJob);
-  assert.ok(highValidation.score >= 80);
-  assert.strictEqual(Engine.canSubmit({ ...highJob, validation: highValidation }), true);
+test('Amber vacancy cannot publish or enter manager confirmation', () => {
+  const job = { ...clone(Seeds.DEMO_DRAFTS.amber), status: 'needs_changes' };
+  assert.equal(Engine.canPublish(job), false);
+  assert.equal(Engine.canRequestConfirmation(job), false);
+  assert.throws(() => Engine.applyTransition(job, 'publish', recruiter), /not ready/i);
+  assert.throws(() => Engine.applyTransition(job, 'submit', recruiter), /not eligible/i);
 });
 
-// --- Blocker blocks submit regardless of score ---------------------------
-test('a blocker blocks submission even with a high score', () => {
-  const job = {
-    title: 'Product Designer', seniority: 'senior', requisitionId: 'REQ-X', hiringManagerId: null, // blocker
-    recruiterId: 'user-recruiter-alicia', headcountApproved: true, budgetApproved: true, employmentType: 'full-time',
-    location: 'KL', salaryMin: 5500, salaryMax: 8500, salaryVisible: true,
-    summary: 'A senior product design role partnering with research and engineering across the company.',
-    responsibilities: ['Lead product design work', 'Partner with research', 'Mentor designers'],
-    requirements: [{ name: 'Figma', type: 'skill', required: true }]
-  };
-  assert.ok(Engine.findBlockers(job).length > 0);
-  assert.strictEqual(Engine.canSubmit(job), false);
+test('Red vacancy with a valid route can be sent for Manager Confirmation', () => {
+  const job = { ...clone(Seeds.DEMO_DRAFTS.red), status: 'draft' };
+  assert.equal(Engine.canRequestConfirmation(job), true);
+  const result = Engine.applyTransition(job, 'submit', recruiter, { now: '2026-07-17' });
+  assert.equal(result.job.status, 'pending_approval');
+  assert.equal(result.auditEvent.toStatus, 'pending_approval');
 });
 
-// --- Legal / illegal transitions ---------------------------------------
-test('every legal transition succeeds and illegal transitions throw', () => {
-  const actor = { id: 'user-recruiter-alicia', name: 'Alicia Tan', role: 'recruiter' };
-  const manager = { id: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' };
-
-  for (const [status, actions] of Object.entries(Engine.TRANSITIONS)) {
-    for (const action of actions) {
-      const job = { ...findJob('job_backend_engineer'), status, recruiterId: 'user-recruiter-alicia', hiringManagerId: 'user-manager-daniel' };
-      if (status === 'approved') {
-        job.approval = { decision: 'approved', approverId: 'user-manager-daniel', attestation: true, reasonCategory: null, comments: null, ts: new Date().toISOString() };
-      }
-      if (action === 'acknowledge_warning') job.validation = Engine.validateJob(job);
-      const opts = action === 'approve' ? { attestation: true } : action === 'acknowledge_warning' ? { warningId: job.validation.warnings[0]?.id || 'none' } : {};
-      const approveActor = action === 'approve' || action === 'request_changes' || action === 'reject' ? manager : actor;
-      assert.doesNotThrow(() => Engine.applyTransition(job, action, approveActor, opts), `${status} -> ${action} should be legal`);
-    }
-  }
-
-  const draftJob = { ...findJob('job_backend_engineer'), status: 'draft' };
-  assert.throws(() => Engine.applyTransition(draftJob, 'publish', actor, {}), /Illegal transition/);
-  assert.throws(() => Engine.applyTransition(draftJob, 'approve', actor, { attestation: true }), /Illegal transition/);
+test('manager confirmation requires attestation and assignment', () => {
+  const pending = Engine.applyTransition({ ...clone(Seeds.DEMO_DRAFTS.red), status: 'draft' }, 'submit', recruiter).job;
+  assert.throws(() => Engine.applyTransition(pending, 'approve', manager, {}), /attestation/i);
+  assert.throws(() => Engine.applyTransition(pending, 'approve', { ...manager, id: 'other-manager' }, { attestation: true }), /assigned/i);
+  assert.doesNotThrow(() => Engine.applyTransition(pending, 'approve', manager, { attestation: true }));
 });
 
-// --- approve without attestation throws -------------------------------------
-test('approve without attestation throws', () => {
-  const job = { ...findJob('job_backend_engineer'), status: 'pending_approval', recruiterId: 'user-recruiter-alicia' };
-  const manager = { id: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' };
-  assert.throws(() => Engine.applyTransition(job, 'approve', manager, {}), /attestation/i);
+test('job creator cannot confirm their own job', () => {
+  const pending = { ...clone(Seeds.DEMO_DRAFTS.red), status: 'pending_approval', hiringManagerId: recruiter.id };
+  assert.equal(Engine.canApprove(pending, recruiter.id).ok, false);
+  assert.throws(() => Engine.applyTransition(pending, 'approve', recruiter, { attestation: true }), /cannot confirm/i);
 });
 
-// --- self-approval blocked -------------------------------------------------
-test('self-approval is blocked', () => {
-  const job = { ...findJob('job_backend_engineer'), status: 'pending_approval', recruiterId: 'user-recruiter-alicia' };
-  const check = Engine.canApprove(job, 'user-recruiter-alicia');
-  assert.strictEqual(check.ok, false);
-  assert.throws(() => Engine.applyTransition(job, 'approve', { id: 'user-recruiter-alicia', name: 'Alicia Tan', role: 'recruiter' }, { attestation: true }));
+test('manager-confirmed Red vacancy becomes publishable by its recruiter', () => {
+  const pending = Engine.applyTransition({ ...clone(Seeds.DEMO_DRAFTS.red), status: 'draft' }, 'submit', recruiter).job;
+  const approved = Engine.applyTransition(pending, 'approve', manager, { attestation: true }).job;
+  assert.equal(approved.status, 'approved');
+  assert.equal(Engine.canPublish(approved), true);
+  assert.equal(Engine.applyTransition(approved, 'publish', recruiter).job.status, 'published');
 });
 
-// --- audit event emitted per transition -------------------------------------
-test('audit event carries correct from/to status per transition', () => {
-  const job = { ...findJob('job_backend_engineer'), status: 'pending_approval', recruiterId: 'user-recruiter-alicia' };
-  const manager = { id: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' };
-  const { job: approvedJob, auditEvent } = Engine.applyTransition(job, 'approve', manager, { attestation: true });
-  assert.strictEqual(auditEvent.fromStatus, 'pending_approval');
-  assert.strictEqual(auditEvent.toStatus, 'approved');
-  assert.strictEqual(auditEvent.action, 'approve');
-  assert.strictEqual(auditEvent.jobId, job.id);
-  assert.strictEqual(approvedJob.status, 'approved');
+test('editing a manager-confirmed job clears its confirmation', () => {
+  const approved = { ...clone(Seeds.JOBS.find(job => job.id === 'job_product_designer')) };
+  const edited = Engine.applyTransition(approved, 'edit', recruiter).job;
+  assert.equal(edited.status, 'draft');
+  assert.equal(edited.approval, null);
 });
 
-// --- edit from approved reverts to draft + clears approval ------------------
-test('editing an approved job reverts to draft and clears approval', () => {
-  const job = { ...findJob('job_product_designer') }; // status approved, has approval
-  assert.strictEqual(job.status, 'approved');
-  assert.ok(job.approval);
-  const { job: editedJob, auditEvent } = Engine.applyTransition(job, 'edit', { id: 'user-recruiter-alicia', name: 'Alicia Tan', role: 'recruiter' }, {});
-  assert.strictEqual(editedJob.status, 'draft');
-  assert.strictEqual(editedJob.approval, null);
-  assert.strictEqual(auditEvent.fromStatus, 'approved');
-  assert.strictEqual(auditEvent.toStatus, 'draft');
+test('request changes and reject require the pending confirmation state', () => {
+  const pending = { ...clone(Seeds.DEMO_DRAFTS.red), status: 'pending_approval' };
+  assert.equal(Engine.applyTransition(pending, 'request_changes', manager, { comment: 'Clarify funding.' }).job.status, 'needs_changes');
+  assert.equal(Engine.applyTransition(pending, 'reject', manager, { comment: 'Role is no longer required.' }).job.status, 'rejected');
+  assert.throws(() => Engine.applyTransition({ ...pending, status: 'draft' }, 'reject', manager), /Illegal transition/);
 });
 
-// --- all 5 seed scores EXACT -------------------------------------------
-test('all 5 seed scores match exactly', () => {
-  const expected = {
-    job_backend_engineer: 86,
-    job_graduate_data_analyst: 58,
-    job_product_designer: 93,
-    job_cybersecurity_specialist: 76
-  };
-  for (const [id, score] of Object.entries(expected)) {
-    const job = findJob(id);
-    const validation = Engine.validateJob(job);
-    assert.strictEqual(validation.score, score, `${id} expected score ${score}, got ${validation.score}`);
-  }
-  // Marketing Intern: blocked, headcountApproved:false
-  const intern = findJob('job_marketing_intern');
-  assert.strictEqual(intern.headcountApproved, false);
-  assert.ok(Engine.findBlockers(intern).some(b => b.id === 'headcount-not-approved'));
-  assert.strictEqual(Engine.canSubmit(intern), false);
+test('reconfirmation is one transition and extends the deadline', () => {
+  const due = { ...clone(Seeds.JOBS.find(job => job.id === 'job_operations_confirmation')), status: 'confirmation_due' };
+  const result = Engine.applyTransition(due, 'reconfirm', manager, { now: '2026-07-17', confirmationDays: 30 });
+  assert.equal(result.job.status, 'published');
+  assert.match(result.job.confirmationDueAt, /^2026-08-16/);
+  assert.equal(result.auditEvent.action, 'reconfirm');
 });
 
-// --- Demo draft triggers exactly 3 issues -----------------------------------
-test('demo draft triggers exactly 3 issues and zero blockers', () => {
-  const draft = Seeds.DEMO_DRAFT;
-  const blockers = Engine.findBlockers(draft);
-  const warnings = Engine.findWarnings(draft, Engine.findBenchmark(draft.title));
-  assert.strictEqual(blockers.length, 0, `expected 0 blockers, got ${blockers.map(b => b.id).join(', ')}`);
-  assert.strictEqual(warnings.length, 3, `expected 3 warnings, got ${warnings.map(w => w.id).join(', ')}`);
-  // vm sandboxing means arrays produced by Engine/Seeds live in a different
-  // realm than this test file's array literals; JSON round-trip normalizes
-  // both sides so deepStrictEqual isn't tripped up by cross-realm prototypes.
-  const ids = JSON.parse(JSON.stringify(warnings.map(w => w.id).sort()));
-  assert.deepStrictEqual(ids, ['entry-overexperience', 'short-description', 'too-many-skills']);
+test('confirmation choices can fill or pause without repeating approval', () => {
+  const due = { ...clone(Seeds.JOBS.find(job => job.id === 'job_operations_confirmation')), status: 'confirmation_due' };
+  assert.equal(Engine.applyTransition(due, 'mark_filled', manager).job.status, 'filled');
+  assert.equal(Engine.applyTransition(due, 'pause_stale', manager).job.status, 'paused_stale');
 });
 
-// --- validateJob is deterministic (two calls equal ignoring timestamp) -----
-test('validateJob is deterministic', () => {
-  const job = findJob('job_backend_engineer');
-  const v1 = Engine.validateJob(job);
-  const v2 = Engine.validateJob(job);
-  const strip = v => { const { validatedAt, ...rest } = v; return rest; };
-  assert.deepStrictEqual(strip(v1), strip(v2));
+test('freshness policy marks due jobs and automatically pauses after grace', () => {
+  const base = { ...clone(Seeds.DEMO_DRAFTS.green), status: 'published', publishedAt: '2026-06-01', lastConfirmedAt: '2026-06-01' };
+  const due = Engine.applyFreshnessPolicy([{ ...base, id: 'due', confirmationDueAt: '2026-07-15' }], { graceDays: 7 }, '2026-07-17');
+  assert.equal(due.jobs[0].status, 'confirmation_due');
+  const stale = Engine.applyFreshnessPolicy([{ ...base, id: 'stale', status: 'confirmation_due', confirmationDueAt: '2026-07-01' }], { graceDays: 7 }, '2026-07-17');
+  assert.equal(stale.jobs[0].status, 'paused_stale');
+  assert.equal(stale.jobs[0].pausedAutomatically, true);
+  assert.equal(stale.auditEvents[0].action, 'auto_pause_stale');
 });
 
-// --- Stale stored validation cannot smuggle a blocker past canSubmit -------
-test('canSubmit recomputes blockers; stale validation cannot bypass', () => {
-  const job = JSON.parse(JSON.stringify(findJob('job_backend_engineer')));
-  job.validation = Engine.validateJob(job); // clean stored validation
-  assert.strictEqual(Engine.canSubmit(job), true);
-  job.hiringManagerId = null; // edit introduces a live blocker; stored validation is now stale
-  assert.strictEqual(Engine.canSubmit(job), false);
-});
-
-test('freshness lifecycle transitions are engine-owned and audited', () => {
-  const manager = { id: 'user-manager-daniel', name: 'Daniel Lee', role: 'hiring_manager' };
-  const published = { ...findJob('job_product_designer'), status: 'published', publishedAt: '2026-06-01', confirmationDueAt: '2026-07-01' };
-  const due = Engine.applyTransition(published, 'mark_confirmation_due', manager, {}).job;
-  assert.strictEqual(due.status, 'confirmation_due');
-  const paused = Engine.applyTransition(due, 'pause_stale', manager, {}).job;
-  assert.strictEqual(paused.status, 'paused_stale');
-  assert.ok(paused.pausedAt);
-  const restored = Engine.applyTransition(paused, 'reconfirm', manager, { confirmationDays: 30 }).job;
-  assert.strictEqual(restored.status, 'published');
-  assert.ok(restored.lastConfirmedAt);
-  assert.ok(restored.confirmationDueAt);
-  const filled = Engine.applyTransition(restored, 'mark_filled', manager, {}).job;
-  assert.strictEqual(filled.status, 'filled');
-  assert.ok(filled.filledAt);
-});
-
-test('Employer Integrity Rating guards small samples', () => {
-  const rating = Engine.computeEmployerRating([{ status: 'published', publishedAt: '2026-01-01' }], '2026-07-17');
-  assert.strictEqual(rating.rating, null);
-  assert.strictEqual(rating.band, 'Insufficient evidence');
-  assert.strictEqual(rating.sampleSize, 1);
-});
-
-test('Employer Integrity Rating components and weighting are deterministic', () => {
+test('paused, filled and unverified jobs are excluded from verified demand', () => {
+  const skill = [{ name: 'SQL', type: 'skill', required: true }];
   const jobs = [
-    { status: 'published', publishedAt: '2026-01-01', submittedAt: '2025-12-28', confirmationDueAt: '2026-07-01', lastConfirmedAt: '2026-06-30', approval: { ts: '2025-12-30' }, confirmations: [{ confirmedAt: '2026-06-30', dueAt: '2026-07-01' }] },
-    { status: 'filled', publishedAt: '2026-01-01', submittedAt: '2025-12-28', filledAt: '2026-04-01', approval: { ts: '2025-12-30' }, confirmations: [{ confirmedAt: '2026-03-01', dueAt: '2026-03-01' }] },
-    { status: 'paused_stale', publishedAt: '2026-01-01', submittedAt: '2025-12-20', confirmationDueAt: '2026-03-01', approval: { ts: '2025-12-27' }, confirmations: [{ confirmedAt: '2026-03-05', dueAt: '2026-03-01' }] },
-    { status: 'closed', publishedAt: '2026-01-01', submittedAt: '2025-12-20', closedAt: '2026-04-01', approval: { ts: '2025-12-27' }, confirmations: [] }
-  ];
-  const result = Engine.computeEmployerRating(jobs, '2026-07-17');
-  assert.strictEqual(result.sampleSize, 4);
-  assert.strictEqual(result.components.reconfirmOnTime, 67);
-  assert.strictEqual(result.components.ghostAvoidance, 50);
-  assert.strictEqual(result.components.staleAvoidance, 75);
-  const expected = Math.round(.35 * 67 + .30 * 50 + .20 * result.components.decisionSpeed + .15 * 75);
-  assert.strictEqual(result.rating, expected);
-});
-
-test('demand divergence excludes unverified and stale postings', () => {
-  const jobs = [
-    { status: 'published', employerVerified: true, lastConfirmedAt: '2026-07-01', confirmationDueAt: '2026-08-01', requirements: [{ name: 'SQL', type: 'skill', required: true }] },
-    { status: 'paused_stale', employerVerified: true, requirements: [{ name: 'SQL', type: 'skill', required: true }] },
-    { status: 'published', employerVerified: false, requirements: [{ name: 'Python', type: 'skill', required: true }] }
+    { status: 'published', employerVerified: true, lastConfirmedAt: '2026-07-01', confirmationDueAt: '2026-08-01', requirements: skill },
+    { status: 'paused_stale', employerVerified: true, requirements: skill },
+    { status: 'filled', employerVerified: true, requirements: skill }
   ];
   const result = Engine.computeDemandDivergence(jobs, '2026-07-17');
-  assert.strictEqual(result.all.SQL, 2);
-  assert.strictEqual(result.verified.SQL, 1);
-  assert.strictEqual(result.verified.Python || 0, 0);
-  assert.strictEqual(result.rows.find(row => row.skill === 'Python').unverifiedShare, 100);
+  assert.equal(result.verifiedJobs, 1);
+  assert.equal(result.verified.SQL, 1);
 });
 
-console.log(`\n${passCount} PASS`);
+test('Employer Integrity Rating retains a sample-size guard', () => {
+  const result = Engine.computeEmployerRating([{ status: 'published', publishedAt: '2026-01-01' }], '2026-07-17');
+  assert.equal(result.rating, null);
+  assert.equal(result.band, 'Insufficient evidence');
+});
+
+test('seed data coherently demonstrates Green, Amber, Red, approved, due and stale', () => {
+  const byId = id => Seeds.JOBS.find(job => job.id === id);
+  assert.equal(Engine.calculatePostingIntegrity(byId('job_backend_engineer'), { now: '2026-07-17' }).riskLevel, 'green');
+  assert.equal(Engine.calculatePostingIntegrity(byId('job_graduate_data_analyst'), { now: '2026-07-17' }).riskLevel, 'amber');
+  assert.equal(Engine.calculatePostingIntegrity(byId('job_marketing_intern'), { now: '2026-07-17' }).riskLevel, 'red');
+  assert.equal(byId('job_product_designer').status, 'approved');
+  assert.equal(byId('job_operations_confirmation').status, 'confirmation_due');
+  assert.equal(byId('job_ai_product_stale').status, 'paused_stale');
+});
+
+console.log(`\n${passed} PASS`);

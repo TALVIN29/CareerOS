@@ -14,10 +14,11 @@ function app() {
     const { password, ...safeUser } = user;
     return clone(safeUser);
   };
-  const blankValidation = () => ({ score: 0, components: { A: 0, V: 0, R: 0, M: 0, C: 0, Q: 0, P: 0 }, blockers: [], warnings: [], passed: [] });
+  const blankValidation = () => ({ score: 0, riskLevel: 'red', components: { approvalEvidence: 0, completeness: 0, requirementRealism: 0, internalConsistency: 0, marketComparison: 0 }, blockers: [], hardBlockers: [], warnings: [], passed: [], passedChecks: [], topReasons: [], recommendedAction: 'manager_confirmation' });
   const defaultDraft = () => ({
     id: '', status: 'draft', employerVerified: true, requisitionId: '', department: 'Technology', departmentId: 'technology', vacancies: 1,
     hiringManagerId: manager.userId, recruiterId: recruiter.userId, targetStartDate: '', headcountApproved: false, budgetApproved: false,
+    approvalEvidenceSource: '', approvalEvidenceDate: '',
     justification: '', title: '', location: 'Kuala Lumpur', workplace: 'hybrid', employmentType: 'full-time', seniority: 'entry',
     salaryMin: 0, salaryMax: 0, salaryVisible: true, reportingLine: '', summary: '', responsibilities: [],
     requirements: [{ name: '', type: 'skill', required: true, yearsExperience: 0, justification: '' }], validation: null, approval: null
@@ -33,11 +34,9 @@ function app() {
     policy: { confirmationDays: 30, graceDays: 7, approvalSlaDays: 3, minimumValidationScore: 60 },
     draft: defaultDraft(),
     draftResponsibilities: '',
-    wizardStep: 1,
     activeJobId: null,
     candidatePreviewJobId: null,
     freshnessJobId: null,
-    validationRan: false,
     managerAttests: false,
     decisionModal: null,
     toast: '',
@@ -152,7 +151,27 @@ function app() {
     personName(id) { return this.person(id)?.name || 'Unassigned'; },
     job(id) { return this.jobs.find(item => item.id === id); },
     validation(job) { return job?.validation || blankValidation(); },
-    statusLabel(status) { return ({ draft: 'Draft', validating: 'Validating', needs_changes: 'Needs Changes', pending_approval: 'Pending Approval', approved: 'Approved', published: 'Published', confirmation_due: 'Confirmation Due', paused_stale: 'Paused as Stale', filled: 'Position Filled', rejected: 'Rejected', closed: 'Closed' })[status] || status; },
+    integrity(job) { return job ? (job.validation?.rulesVersion === Engine.RULES_VERSION ? job.validation : Engine.calculatePostingIntegrity(job)) : blankValidation(); },
+    liveDraft() {
+      const job = clone(this.draft);
+      job.responsibilities = this.draftResponsibilities.split('\n').map(line => line.trim()).filter(Boolean);
+      job.salaryMin = Number(job.salaryMin) || 0;
+      job.salaryMax = Number(job.salaryMax) || 0;
+      job.requirements = (job.requirements || []).map(req => ({ ...req, yearsExperience: Number(req.yearsExperience) || 0 }));
+      return job;
+    },
+    draftIntegrity() { return Engine.calculatePostingIntegrity(this.liveDraft(), { minimumScore: this.policy.minimumValidationScore }); },
+    riskLabel(risk) { return ({ green: 'Green · Ready to publish', amber: 'Amber · Needs attention', red: 'Red · Manager confirmation required' })[risk] || 'Not checked'; },
+    riskClass(risk) { return `risk-${risk || 'red'}`; },
+    factorLabel(key) { return ({ approvalEvidence: 'Approval evidence', completeness: 'Posting completeness', requirementRealism: 'Requirement realism', internalConsistency: 'Internal consistency', marketComparison: 'Market comparison' })[key] || key; },
+    integrityMessage(result) {
+      if (result.riskLevel === 'green') return 'Ready to publish. The vacancy has sufficient approval evidence and no material issues.';
+      if (result.riskLevel === 'amber') return `${Math.min(3, result.topReasons.length)} detail${result.topReasons.length === 1 ? '' : 's'} need attention before this vacancy can be verified.`;
+      return 'Manager confirmation is required before this vacancy can be published.';
+    },
+    canRouteDraft() { return Engine.canRequestConfirmation(this.liveDraft(), { minimumScore: this.policy.minimumValidationScore }); },
+    postingCtaLabel() { return ({ green: 'Publish Verified Job', amber: 'Resolve Issues', red: 'Send for Manager Confirmation' })[this.draftIntegrity().riskLevel]; },
+    statusLabel(status) { return ({ draft: 'Draft', needs_changes: 'Needs Attention', pending_approval: 'Awaiting Manager Confirmation', approved: 'Approved — Ready to Publish', published: 'Published — Verified', confirmation_due: 'Confirmation Due', paused_stale: 'Paused as Stale', filled: 'Filled', rejected: 'Rejected', closed: 'Closed' })[status] || status; },
     statusClass(status) { return ({ draft: 'status-slate', needs_changes: 'status-amber', pending_approval: 'status-blue', approved: 'status-green', published: 'status-green', confirmation_due: 'status-amber', paused_stale: 'status-red', rejected: 'status-red', filled: 'status-slate', closed: 'status-slate' })[status] || 'status-slate'; },
     scoreClass(score) { return score >= 80 ? 'text-emerald-400' : score >= 60 ? 'text-amber-300' : 'text-red-400'; },
     formatDate(value) { return value ? new Date(value).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not recorded'; },
@@ -161,7 +180,7 @@ function app() {
     salary(job = {}) { return `${job.currency || 'MYR'} ${Number(job.salaryMin || 0).toLocaleString()}–${Number(job.salaryMax || 0).toLocaleString()} / month`; },
 
     visibleJobs() { return this.jobs.filter(job => canAccessJob(this.currentUser, job)); },
-    approvalJobs() { return this.visibleJobs().filter(job => ['pending_approval', 'needs_changes', 'approved', 'rejected'].includes(job.status)); },
+    approvalJobs() { return this.visibleJobs().filter(job => ['pending_approval', 'approved', 'rejected'].includes(job.status) || (job.status === 'needs_changes' && job.approval?.decision === 'changes_requested')); },
     scopedAudit() {
       if (this.currentUser?.role === 'hr_admin') return this.audit;
       const ids = new Set(this.visibleJobs().map(job => job.id));
@@ -180,22 +199,22 @@ function app() {
     overviewCards() {
       const counts = this.counts();
       if (this.currentUser?.role === 'recruiter') return [
-        ['My Drafts', counts.draft || 0], ['Needs Changes', counts.needs_changes || 0], ['Validation Warnings', this.visibleJobs().reduce((sum, job) => sum + this.validation(job).warnings.length, 0)], ['Awaiting Manager Approval', counts.pending_approval || 0], ['Approved — Ready to Publish', counts.approved || 0], ['Published Jobs', counts.published || 0]
+        ['Drafts', counts.draft || 0], ['Needs Attention', counts.needs_changes || 0], ['Awaiting Manager Confirmation', counts.pending_approval || 0], ['Ready to Publish', this.visibleJobs().filter(job => job.status === 'approved' || (['draft', 'needs_changes'].includes(job.status) && this.integrity(job).riskLevel === 'green')).length], ['Published — Verified', counts.published || 0], ['Confirmation Due', counts.confirmation_due || 0]
       ];
       if (this.currentUser?.role === 'hiring_manager') return [
-        ['Awaiting My Approval', counts.pending_approval || 0], ['Changes Requested', counts.needs_changes || 0], ['Confirmation Due', counts.confirmation_due || 0], ['Active Team Vacancies', counts.published || 0], ['Stale Vacancy Risk', counts.paused_stale || 0]
+        ['Awaiting My Confirmation', counts.pending_approval || 0], ['Changes Requested', this.visibleJobs().filter(job => job.status === 'needs_changes' && job.approval?.decision === 'changes_requested').length], ['Confirmation Due', counts.confirmation_due || 0], ['Active Team Vacancies', counts.published || 0]
       ];
-      const all = this.counts(this.jobs);
-      const rating = this.employerRating();
+      const risks = this.jobs.reduce((total, job) => { const risk = this.integrity(job).riskLevel; total[risk] = (total[risk] || 0) + 1; return total; }, {});
+      const confirmationDays = this.jobs.filter(job => job.submittedAt && job.approval?.ts).map(job => Math.max(0, (new Date(job.approval.ts) - new Date(job.submittedAt)) / 86400000));
       return [
-        ['Employer Integrity Rating', rating.rating ?? 'N/A'], ['Active Verified Vacancies', all.published || 0], ['Overdue Approvals', this.jobs.filter(job => job.status === 'pending_approval' && this.daysAgo(job.submittedAt) > this.policy.approvalSlaDays).length], ['Stale Vacancies', all.paused_stale || 0], ['Policy Warnings', this.jobs.reduce((sum, job) => sum + this.validation(job).warnings.length + this.validation(job).blockers.length, 0)], ['Evidence Sample', `${rating.sampleSize} jobs`]
+        ['Green / Amber / Red', `${risks.green || 0} / ${risks.amber || 0} / ${risks.red || 0}`], ['Overdue Manager Confirmations', this.jobs.filter(job => job.status === 'pending_approval' && this.daysAgo(job.submittedAt) > this.policy.approvalSlaDays).length], ['Stale Vacancies', this.jobs.filter(job => job.status === 'paused_stale').length], ['Jobs Paused Automatically', this.jobs.filter(job => job.pausedAutomatically).length], ['Recent Overrides', this.audit.filter(event => ['pause_stale', 'policy_update'].includes(event.action)).slice(0, 30).length], ['Avg. Manager Confirmation', confirmationDays.length ? `${(confirmationDays.reduce((sum, value) => sum + value, 0) / confirmationDays.length).toFixed(1)} days` : 'N/A']
       ];
     },
 
     dashboardCopy() {
-      if (this.currentUser?.role === 'recruiter') return { title: 'Prepare accurate vacancies and keep every submission moving.' };
-      if (this.currentUser?.role === 'hiring_manager') return { title: 'Review the vacancies that require your decision.' };
-      return { title: 'Protect the integrity of every labour-demand signal.' };
+      if (this.currentUser?.role === 'recruiter') return { title: 'Post with confidence. CareerOS handles the checks in the background.' };
+      if (this.currentUser?.role === 'hiring_manager') return { title: 'Only decisions that need your accountability.' };
+      return { title: 'Keep the organisation’s hiring signal trustworthy.' };
     },
 
     actionJobs() {
@@ -206,13 +225,14 @@ function app() {
 
     nextAction(job) {
       if (this.currentUser?.role === 'hr_admin') {
-        if (this.validation(job).blockers.length) return 'Review policy blockers';
-        if (this.validation(job).warnings.length) return 'Review validation warnings';
-        if (job.status === 'pending_approval') return 'Review approval delay';
+        if (this.integrity(job).hardBlockers.length) return 'Review material integrity risk';
+        if (this.integrity(job).warnings.length) return 'Review posting integrity signal';
+        if (job.status === 'pending_approval') return 'Review confirmation delay';
         if (job.status === 'confirmation_due') return 'Review confirmation risk';
         if (job.status === 'paused_stale') return 'Review stale-vacancy event';
       }
-      return ({ needs_changes: 'Resolve manager feedback', approved: 'Publish approved vacancy', draft: 'Run Automated Validation', pending_approval: 'Review submission', confirmation_due: 'Confirm active hiring', paused_stale: 'Review stale vacancy' })[job.status] || 'Review job';
+      if (['draft', 'needs_changes'].includes(job.status)) return this.integrity(job).riskLevel === 'green' ? 'Publish verified job' : 'Resolve posting integrity issues';
+      return ({ approved: 'Publish manager-confirmed vacancy', pending_approval: 'Review manager confirmation', confirmation_due: 'Confirm active hiring', paused_stale: 'Review stale vacancy' })[job.status] || 'Review job';
     },
 
     openAction(job) {
@@ -230,19 +250,15 @@ function app() {
       this.draft.recruiterId = this.currentUser.userId;
       this.draft.hiringManagerId ||= manager.userId;
       this.draftResponsibilities = (this.draft.responsibilities || []).join('\n');
-      this.wizardStep = 1;
-      this.validationRan = Boolean(this.draft.validation);
       this.setPage('create');
     },
 
-    loadDemoDraft() {
-      this.draft = clone(Seeds.DEMO_DRAFT);
+    loadDemoDraft(path = 'amber') {
+      this.draft = clone(Seeds.DEMO_DRAFTS?.[path] || Seeds.DEMO_DRAFT);
       this.draft.recruiterId = this.currentUser.userId;
       this.draft.hiringManagerId = manager.userId;
       this.draftResponsibilities = this.draft.responsibilities.join('\n');
-      this.validationRan = false;
-      this.wizardStep = 1;
-      this.notify('Demonstration draft loaded.');
+      this.notify(`${path[0].toUpperCase()}${path.slice(1)} demonstration scenario loaded.`);
     },
 
     syncDraftFields() {
@@ -263,6 +279,7 @@ function app() {
         delete fields.id;
         delete fields.createdAt;
         delete fields.updatedAt;
+        ['status', 'validation', 'approval', 'submittedAt', 'publishedAt', 'lastConfirmedAt', 'confirmationDueAt', 'pausedAt', 'filledAt', 'closedAt', 'confirmations'].forEach(field => delete fields[field]);
         if (this.draft.id && this.job(this.draft.id)) this.draft = Store.updateJob(this.draft.id, fields);
         else this.draft = Store.createJob(fields);
         this.draftResponsibilities = (this.draft.responsibilities || []).join('\n');
@@ -276,23 +293,21 @@ function app() {
     },
 
     validate(job = this.draft) {
-      if (!this.can('run_validation', job)) return this.notify('You do not have permission to run Automated Validation.');
+      if (!this.has('refresh_integrity_demo')) return this.notify('You do not have permission to refresh Posting Integrity.');
       let target = job;
       if (job === this.draft) {
         target = this.saveDraft(true);
         if (!target) return null;
       }
       try {
-        const updated = Store.validate(target.id);
+        const updated = Store.refreshIntegrity(target.id);
         if (!updated) throw new Error('The saved draft could not be found.');
         this.refresh();
         if (target.id === this.draft.id) {
           this.draft = clone(updated);
           this.draftResponsibilities = this.draft.responsibilities.join('\n');
         }
-        this.validationRan = true;
-        setTimeout(() => this.renderValidationCharts('wizard', updated), 0);
-        this.notify(`Automated Validation complete: ${updated.validation.score}/100.`);
+        this.notify(`Posting Integrity refreshed: ${updated.validation.score}/100 · ${updated.validation.riskLevel}.`);
         return updated.validation;
       } catch (error) {
         this.notify(error.message);
@@ -300,23 +315,29 @@ function app() {
       }
     },
 
-    acknowledgeWarning(job, warningId) {
-      if (!this.can('resolve_validation_warning', job)) return;
-      const updated = Store.acknowledgeWarning(job.id, warningId);
-      this.refresh();
-      if (this.draft.id === job.id) this.draft = clone(updated);
-    },
-
     submitForApproval() {
       if (!this.has('submit_for_approval')) return this.notify('You do not have permission to submit jobs.');
-      const saved = this.draft.id ? this.job(this.draft.id) : this.saveDraft(true);
+      const saved = this.saveDraft(true);
       if (!saved) return;
       try {
-        Store.transition(saved.id, 'submit', { comment: `Submitted to ${manager.name} for approval.` });
+        // Production boundary: dispatch this concise request through the ATS,
+        // email, Teams, or Slack after server-side authorisation.
+        Store.transition(saved.id, 'submit', { minimumScore: this.policy.minimumValidationScore, comment: `Manager Confirmation sent to ${manager.name}. Production delivery would use the ATS, email, Teams, or Slack.` });
         this.refresh();
-        this.notify(`Submitted to ${manager.name} for approval.`);
+        this.notify(`Sent to ${manager.name} for Manager Confirmation.`);
         this.setPage('approvals');
       } catch (error) { this.notify(error.message); }
+    },
+
+    handlePostingCta() {
+      const result = this.draftIntegrity();
+      if (result.riskLevel === 'amber') {
+        this.notify(result.topReasons[0]?.message || 'Resolve the highlighted details before publishing.');
+        return;
+      }
+      if (result.riskLevel === 'red') return this.submitForApproval();
+      const saved = this.saveDraft(true);
+      if (saved) this.publish(saved);
     },
 
     withdraw(job) {
@@ -339,16 +360,16 @@ function app() {
     approve(job) {
       if (!this.can('approve_assigned_job', job)) return this.notify('You cannot approve this submission.');
       try {
-        Store.transition(job.id, 'approve', { attestation: this.managerAttests, comment: 'Approved for publication.' });
+        Store.transition(job.id, 'approve', { attestation: this.managerAttests, comment: 'Manager confirmed funding, intent, and departmental accuracy.' });
         this.managerAttests = false;
         this.refresh();
         this.openSubmission(this.job(job.id));
-        this.notify('Vacancy approved. Alicia Tan can now publish it.');
+        this.notify('Vacancy confirmed. Alicia Tan can now publish it.');
       } catch (error) { this.notify(error.message); }
     },
 
     openDecision(job, action) {
-      const labels = { request_changes: 'Request Changes', reject: 'Reject Submission', pause_stale: 'Pause Vacancy' };
+      const labels = { request_changes: 'Request Changes', reject: 'Reject Vacancy', pause_stale: 'Pause Vacancy' };
       this.decisionModal = { jobId: job.id, action, title: labels[action], comment: '', reasonCategory: action === 'pause_stale' ? 'governance_risk' : 'requirements' };
     },
 
@@ -368,11 +389,13 @@ function app() {
     },
 
     publish(job) {
-      if (!this.can('publish_approved_job', job)) return this.notify('Only the assigned recruiter can publish an approved job.');
+      if (!this.can('publish_verified_job', job)) return this.notify('Only the assigned recruiter can publish a Green or manager-confirmed vacancy.');
       try {
-        Store.transition(job.id, 'publish', { confirmationDays: this.policy.confirmationDays, comment: 'Approved vacancy published to candidates.' });
+        const direct = job.status !== 'approved';
+        Store.transition(job.id, 'publish', { minimumScore: this.policy.minimumValidationScore, confirmationDays: this.policy.confirmationDays, comment: direct ? 'Published through the Green fast path after automatic integrity checks.' : 'Manager-confirmed vacancy published to candidates.' });
         this.refresh();
-        this.notify('CareerOS Verified Vacancy is now available.');
+        this.setPage('listings');
+        this.notify('Published — Verified. CareerOS will monitor freshness in the background.');
       } catch (error) { this.notify(error.message); }
     },
 

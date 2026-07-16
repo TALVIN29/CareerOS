@@ -3,8 +3,8 @@
 // window.VerifyViz.{renderGauge, renderComponentBars, destroy}
 
 (function (root) {
-  const WEIGHTS = { A: 30, V: 20, R: 20, M: 15, C: 10, Q: 5 };
-  const LABELS = { A: 'Authorisation', V: 'Verification', R: 'Realism', M: 'Market Fit', C: 'Compensation Fit', Q: 'Quality' };
+  const WEIGHTS = { approvalEvidence: 35, completeness: 20, requirementRealism: 20, internalConsistency: 15, marketComparison: 10 };
+  const LABELS = { approvalEvidence: 'Approval evidence', completeness: 'Posting completeness', requirementRealism: 'Requirement realism', internalConsistency: 'Internal consistency', marketComparison: 'Market comparison' };
 
   function scoreColor(score) {
     if (score < 60) return '#ef4444';
@@ -58,15 +58,13 @@
       });
   }
 
-  // Horizontal component breakdown bars, A/V/R/M/C/Q with weight labels and
-  // weighted-contribution shown. `components` is engine's scoreComponents()
-  // output ({A,V,R,M,C,Q,P}) — P (penalty) is excluded, it isn't weighted.
+  // Horizontal factor bars for the five transparent integrity factors.
   function renderComponentBars(elId, components) {
     const el = document.getElementById(elId);
     if (!el || typeof d3 === 'undefined') return;
     el.innerHTML = '';
 
-    const keys = ['A', 'V', 'R', 'M', 'C', 'Q'];
+    const keys = Object.keys(WEIGHTS);
     const rows = d3.select(el).selectAll('.jis-bar-row')
       .data(keys)
       .enter()
@@ -75,7 +73,7 @@
 
     rows.append('div')
       .attr('class', 'jis-bar-label')
-      .html(k => `<strong>${k}</strong> ${LABELS[k]} <small>· ${WEIGHTS[k]}%</small>`);
+      .html(k => `<strong>${LABELS[k]}</strong> <small>· ${WEIGHTS[k]} points</small>`);
 
     const track = rows.append('div')
       .attr('class', 'jis-bar-track');

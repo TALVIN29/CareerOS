@@ -6,7 +6,7 @@
   ]);
 
   const ROLE_PERMISSIONS = Object.freeze({
-    recruiter: Object.freeze(['create_job', 'edit_own_job', 'run_validation', 'resolve_validation_warning', 'submit_for_approval', 'withdraw_submission', 'publish_approved_job', 'view_market_evidence', 'view_own_audit_history']),
+    recruiter: Object.freeze(['create_job', 'edit_own_job', 'refresh_integrity_demo', 'resolve_integrity_issue', 'submit_for_approval', 'withdraw_submission', 'publish_verified_job', 'publish_approved_job', 'view_market_evidence', 'view_own_audit_history']),
     hiring_manager: Object.freeze(['view_assigned_jobs', 'review_validation_evidence', 'approve_assigned_job', 'request_changes', 'reject_assigned_job', 'reconfirm_active_vacancy', 'mark_team_job_filled', 'view_market_evidence', 'view_team_audit_history']),
     hr_admin: Object.freeze(['view_all_jobs', 'view_all_approvals', 'view_full_audit_log', 'view_governance_metrics', 'view_market_evidence', 'view_network_impact', 'pause_suspicious_job', 'manage_policy_settings', 'manage_users_and_roles', 'handle_escalations']),
   });
@@ -16,13 +16,13 @@
       { id: 'overview', label: 'Overview', icon: 'fa-chart-line' },
       { id: 'create', label: 'Create Job', icon: 'fa-plus-square' },
       { id: 'listings', label: 'My Job Listings', icon: 'fa-briefcase' },
-      { id: 'approvals', label: 'Submitted for Approval', icon: 'fa-paper-plane' },
+      { id: 'approvals', label: 'Manager Confirmations', icon: 'fa-paper-plane' },
       { id: 'evidence', label: 'Market Evidence', icon: 'fa-chart-column' },
       { id: 'audit', label: 'My Audit History', icon: 'fa-file-lines' },
     ]),
     hiring_manager: Object.freeze([
       { id: 'overview', label: 'Overview', icon: 'fa-chart-line' },
-      { id: 'approvals', label: 'Approval Queue', icon: 'fa-clipboard-check' },
+      { id: 'approvals', label: 'Confirmation Queue', icon: 'fa-clipboard-check' },
       { id: 'listings', label: 'Team Vacancies', icon: 'fa-briefcase' },
       { id: 'evidence', label: 'Market Evidence', icon: 'fa-chart-column' },
       { id: 'audit', label: 'Team Audit History', icon: 'fa-file-lines' },
@@ -30,7 +30,7 @@
     hr_admin: Object.freeze([
       { id: 'overview', label: 'Governance Overview', icon: 'fa-shield-halved' },
       { id: 'listings', label: 'All Job Listings', icon: 'fa-briefcase' },
-      { id: 'approvals', label: 'Approval Oversight', icon: 'fa-clipboard-check' },
+      { id: 'approvals', label: 'Confirmation Oversight', icon: 'fa-clipboard-check' },
       { id: 'evidence', label: 'Market Evidence', icon: 'fa-chart-column' },
       { id: 'impact', label: 'Network Impact', icon: 'fa-network-wired' },
       { id: 'audit', label: 'Audit Log', icon: 'fa-file-lines' },
@@ -59,7 +59,13 @@
     if (!hasPermission(user, action)) return false;
     if (!job) return true;
     if (action === 'edit_own_job') return canAccessJob(user, job) && ['draft', 'needs_changes', 'rejected', 'approved'].includes(job.status);
-    if (action === 'publish_approved_job') return job.recruiterId === user.userId && job.status === 'approved';
+    if (['publish_verified_job', 'publish_approved_job'].includes(action)) {
+      if (job.recruiterId !== user.userId) return false;
+      if (job.status === 'approved') return Boolean(job.approval?.decision === 'approved' && job.approval.approverId !== job.recruiterId);
+      if (!['draft', 'needs_changes'].includes(job.status)) return false;
+      if (job.validation?.riskLevel) return job.validation.riskLevel === 'green' && (!root.VerifyEngine || root.VerifyEngine.canPublish(job));
+      return Boolean(root.VerifyEngine?.canPublish(job));
+    }
     if (['approve_assigned_job', 'request_changes', 'reject_assigned_job'].includes(action)) {
       return job.hiringManagerId === user.userId && job.status === 'pending_approval' && job.recruiterId !== user.userId;
     }

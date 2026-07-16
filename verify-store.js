@@ -4,7 +4,7 @@
 // Keys: spv.jobs, spv.audit, spv.role, spv.seedVersion.
 
 (function (root) {
-  const SEED_VERSION = 'v2'; // bump to force reseed on next load
+  const SEED_VERSION = 'v3-risk-paths'; // bump to force reseed on next load
   const JOBS_KEY = 'spv.jobs';
   const AUDIT_KEY = 'spv.audit';
   const ROLE_KEY = 'spv.role';
@@ -48,10 +48,11 @@
     const events = [];
 
     events.push(makeAuditEvent(job.id, recruiter, 'create', null, 'draft', job.createdAt));
-    events.push(makeAuditEvent(job.id, recruiter, 'validate', 'draft',
-      job.status === 'needs_changes' ? 'needs_changes' : 'draft', job.updatedAt));
+    events.push(makeAuditEvent(job.id, { name: 'CareerOS Integrity Engine', role: 'system' }, 'integrity_recalculated', 'draft',
+      job.status === 'needs_changes' ? 'needs_changes' : 'draft', job.updatedAt, `Automatic check: ${job.validation?.riskLevel || 'unknown'} · ${job.validation?.score || 0}/100.`));
 
-    if (['pending_approval', 'approved', 'published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status)) {
+    const usedManagerPath = job.status === 'pending_approval' || Boolean(job.approval);
+    if (usedManagerPath && ['pending_approval', 'approved', 'published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status)) {
       events.push(makeAuditEvent(job.id, recruiter, 'submit', 'draft', 'pending_approval', job.updatedAt));
     }
     if (['approved', 'published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status) && job.approval) {
@@ -59,10 +60,11 @@
         job.approval.ts, job.approval.comments));
     }
     if (['published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status)) {
-      events.push(makeAuditEvent(job.id, manager, 'publish', 'approved', 'published', job.updatedAt));
+      if (!usedManagerPath) events.push(makeAuditEvent(job.id, { name: 'CareerOS Integrity Engine', role: 'system' }, 'automatic_fast_path', 'draft', 'draft', job.updatedAt, 'Green integrity result made this vacancy eligible for direct publication.'));
+      events.push(makeAuditEvent(job.id, recruiter, 'publish', usedManagerPath ? 'approved' : 'draft', 'published', job.updatedAt, usedManagerPath ? 'Manager-confirmed vacancy published.' : 'Green vacancy published through the automatic fast path.'));
     }
     if (job.status === 'confirmation_due') events.push(makeAuditEvent(job.id, { name: 'CareerOS Policy Engine', role: 'system' }, 'mark_confirmation_due', 'published', 'confirmation_due', job.confirmationDueAt));
-    if (job.status === 'paused_stale') events.push(makeAuditEvent(job.id, { name: 'CareerOS Policy Engine', role: 'system' }, 'pause_stale', 'confirmation_due', 'paused_stale', job.pausedAt));
+    if (job.status === 'paused_stale') events.push(makeAuditEvent(job.id, { name: 'CareerOS Policy Engine', role: 'system' }, job.pausedAutomatically ? 'auto_pause_stale' : 'pause_stale', 'confirmation_due', 'paused_stale', job.pausedAt));
     if (job.status === 'filled') events.push(makeAuditEvent(job.id, manager, 'mark_filled', 'published', 'filled', job.filledAt));
     if (job.status === 'closed') events.push(makeAuditEvent(job.id, manager, 'close', 'published', 'closed', job.closedAt));
     return events;
@@ -71,6 +73,8 @@
   function seed() {
     const jobs = Seeds.JOBS.map(seedJob => {
       const job = JSON.parse(JSON.stringify(seedJob));
+      if (job.requisitionId && !job.approvalEvidenceSource) job.approvalEvidenceSource = 'Seeded ATS requisition record';
+      if (job.requisitionId && !job.approvalEvidenceDate) job.approvalEvidenceDate = String(job.updatedAt || job.createdAt || new Date().toISOString()).slice(0, 10);
       job.validation = Engine.validateJob(job); // scores/badges render immediately
       return job;
     });
@@ -126,6 +130,7 @@
         }
       }
       if (needsSeed) seed();
+      this.runFreshnessPolicy();
     },
 
     listJobs() {
@@ -137,6 +142,8 @@
     },
 
     createJob(fields) {
+      // Production boundary: ATS/requisition evidence would be hydrated and
+      // role authorisation enforced by the backend before this mutation.
       const jobs = loadJobs();
       const now = new Date().toISOString();
       const job = Object.assign({
@@ -147,9 +154,12 @@
         validation: null,
         approval: null
       }, fields);
+      job.validation = Engine.calculatePostingIntegrity(job, { minimumScore: this.loadPolicy().minimumValidationScore });
+      job.status = job.validation.riskLevel === 'green' ? 'draft' : 'needs_changes';
       jobs.push(job);
       saveJobs(jobs);
       addAudit(job.id, 'create', null, 'draft', null, this.currentUser());
+      addAudit(job.id, 'integrity_recalculated', 'draft', job.status, `Automatic check: ${job.validation.riskLevel} · ${job.validation.score}/100.`, { id: 'system-integrity', name: 'CareerOS Integrity Engine', role: 'system' });
       return job;
     },
 
@@ -158,12 +168,24 @@
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1) return null;
       const before = jobs[idx];
-      const result = Engine.applyTransition(before, 'edit', this.currentUser(), { comment: 'Material fields updated.' });
+      const previousIssueIds = new Set([...(before.validation?.hardBlockers || []), ...(before.validation?.warnings || [])].map(item => item.id));
+      const result = Engine.applyTransition(before, 'edit', this.currentUser(), { comment: 'Posting fields updated.' });
       const updated = Object.assign({}, result.job, fields, { updatedAt: new Date().toISOString() });
+      updated.validation = Engine.calculatePostingIntegrity(updated, { minimumScore: this.loadPolicy().minimumValidationScore });
+      updated.status = updated.validation.riskLevel === 'green' ? 'draft' : 'needs_changes';
       jobs[idx] = updated;
       saveJobs(jobs);
       const audit = loadAudit();
       audit.push(result.auditEvent);
+      const beforeIssues = new Set([...(before.validation?.hardBlockers || before.validation?.blockers || []), ...(before.validation?.warnings || [])].map(item => item.id));
+      const afterIssues = new Set([...(updated.validation.hardBlockers || []), ...updated.validation.warnings].map(item => item.id));
+      const resolved = [...beforeIssues].filter(id => !afterIssues.has(id));
+      if (resolved.length) audit.push(makeAuditEvent(id, this.currentUser(), 'warning_resolved', before.status, updated.status, null, `Resolved: ${resolved.join(', ')}.`));
+      audit.push(makeAuditEvent(id, { name: 'CareerOS Integrity Engine', role: 'system' }, 'integrity_recalculated', result.job.status, updated.status, null, `Automatic check: ${updated.validation.riskLevel} · ${updated.validation.score}/100.`));
+      const currentIssueIds = new Set([...updated.validation.hardBlockers, ...updated.validation.warnings].map(item => item.id));
+      [...previousIssueIds].filter(issueId => !currentIssueIds.has(issueId)).forEach(issueId => {
+        audit.push(makeAuditEvent(id, this.currentUser(), 'warning_resolved', updated.status, updated.status, null, `Resolved posting-integrity issue: ${issueId}.`));
+      });
       saveAudit(audit);
       return updated;
     },
@@ -180,7 +202,7 @@
       const jobs = loadJobs();
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1) return null;
-      const result = Engine.applyTransition(jobs[idx], 'validate', this.currentUser(), {});
+      const result = Engine.applyTransition(jobs[idx], 'recalculate', { id: 'system-integrity', name: 'CareerOS Integrity Engine', role: 'system' }, { comment: 'Demo integrity check refreshed.', minimumScore: this.loadPolicy().minimumValidationScore });
       result.job.updatedAt = new Date().toISOString();
       jobs[idx] = result.job;
       saveJobs(jobs);
@@ -188,31 +210,23 @@
       audit.push(result.auditEvent);
       saveAudit(audit);
       return result.job;
+    },
+
+    refreshIntegrity(id) {
+      return this.validate(id);
     },
 
     transition(id, action, opts) {
       const jobs = loadJobs();
       const idx = jobs.findIndex(j => j.id === id);
       if (idx === -1) throw new Error(`Job not found: ${id}`);
-      const result = Engine.applyTransition(jobs[idx], action, this.currentUser(), opts || {});
+      const before = jobs[idx];
+      const result = Engine.applyTransition(before, action, this.currentUser(), opts || {});
       result.job.updatedAt = new Date().toISOString();
       jobs[idx] = result.job;
       saveJobs(jobs);
       const audit = loadAudit();
-      audit.push(result.auditEvent);
-      saveAudit(audit);
-      return result.job;
-    },
-
-    acknowledgeWarning(id, warningId) {
-      const jobs = loadJobs();
-      const idx = jobs.findIndex(j => j.id === id);
-      if (idx === -1 || !jobs[idx].validation) return null;
-      const result = Engine.applyTransition(jobs[idx], 'acknowledge_warning', this.currentUser(), { warningId, comment: `Warning acknowledged: ${warningId}` });
-      result.job.updatedAt = new Date().toISOString();
-      jobs[idx] = result.job;
-      saveJobs(jobs);
-      const audit = loadAudit();
+      if (action === 'publish' && before.status !== 'approved') audit.push(makeAuditEvent(id, { name: 'CareerOS Integrity Engine', role: 'system' }, 'automatic_fast_path', before.status, before.status, null, `Green result ${before.validation?.score || Engine.calculatePostingIntegrity(before).score}/100: sufficient approval evidence and no material issues.`));
       audit.push(result.auditEvent);
       saveAudit(audit);
       return result.job;
@@ -262,6 +276,15 @@
     },
 
     addAudit,
+
+    runFreshnessPolicy(nowValue) {
+      const jobs = loadJobs();
+      const result = Engine.applyFreshnessPolicy(jobs, this.loadPolicy(), nowValue);
+      if (!result.auditEvents.length) return result;
+      saveJobs(result.jobs);
+      saveAudit([...loadAudit(), ...result.auditEvents]);
+      return result;
+    },
 
     reset() {
       Object.keys(localStorage)

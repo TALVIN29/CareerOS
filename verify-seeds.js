@@ -411,7 +411,92 @@
     ] }
   ];
 
-  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT, DEMO_DRAFTS, PEER_ORGS };
+  // --- Historical outcome corpus ---------------------------------------------
+  // GENERATED DEMONSTRATION DATA. These are not real requisitions and none of
+  // these hires happened. The deliverable is the method and the pipeline; this
+  // corpus exists only so the survival curves have enough rows to separate.
+  // Replace wholesale with real requisitions once postings flow through the rail.
+  //
+  // Generative rule, stated so the shape of the result is never mistaken for a
+  // finding:
+  //   1. Time-to-fill rises with the number of required skills and with years
+  //      of experience demanded.
+  //   2. Abandonment risk rises with the same two factors and only bites after
+  //      roughly 45 days on the board.
+  //   3. A third of requisitions have one to three "hype" skills bolted on
+  //      regardless of the role. Each one over-specifies the requisition, so it
+  //      pushes the same two hazards up. This is what makes a skill advertised
+  //      often and hired rarely - phantom demand is a by-product of the rule,
+  //      not a number typed in by hand.
+  const HISTORY_SEED = 20260719;
+  const HISTORY_WINDOW_DAYS = 540;
+  const HISTORY_END = new Date('2026-07-19T00:00:00.000Z').getTime();
+  const UNIVERSITIES = ['Universiti Malaya', 'Universiti Teknologi Malaysia', 'Universiti Kebangsaan Malaysia', 'Taylor’s University', 'Sunway University', 'Universiti Sains Malaysia', 'APU', 'Multimedia University'];
+  const HISTORY_ROLES = [
+    { title: 'Backend Engineer', seniority: 'mid', skills: ['Node.js', 'SQL', 'REST APIs', 'Git', 'Docker', 'AWS', 'System Design', 'Kubernetes', 'GraphQL', 'Terraform'] },
+    { title: 'Data Analyst', seniority: 'entry', skills: ['SQL', 'Excel', 'Python', 'Data Visualization', 'Statistics', 'Power BI', 'dbt', 'Machine Learning'] },
+    { title: 'Product Designer', seniority: 'mid', skills: ['Figma', 'User Research', 'Prototyping', 'Design Systems', 'Accessibility', 'Motion Design', 'Design Ops', 'Front-end Basics', 'Service Design'] },
+    { title: 'Cybersecurity Specialist', seniority: 'senior', skills: ['SIEM', 'Network Security', 'ISO 27001', 'Incident Response', 'Cloud Security', 'AI Governance', 'Threat Modelling', 'Zero Trust', 'Kubernetes'] },
+    { title: 'Software Engineer', seniority: 'mid', skills: ['Git', 'SQL', 'System Design', 'Testing', 'React', 'TypeScript', 'Kubernetes', 'AI Governance', 'GraphQL', 'Terraform'] },
+    { title: 'Sales Executive', seniority: 'entry', skills: ['CRM', 'Negotiation', 'Lead Generation', 'Communication', 'Account Planning', 'Forecasting', 'Salesforce', 'Bid Writing'] }
+  ];
+  const HISTORY_LOCATIONS = ['Kuala Lumpur', 'Penang', 'Johor Bahru'];
+  // Fashionable requirements that get attached to requisitions of any shape.
+  const HYPE_SKILLS = ['AI Governance', 'Machine Learning', 'MLOps', 'Prompt Engineering', 'Blockchain', 'Generative AI'];
+
+  function generateHistory(orgId, count, bias, seed) {
+    // Deterministic LCG so every run, browser and test produces the same corpus.
+    let state = seed >>> 0;
+    const rand = () => { state = (state * 1664525 + 1013904223) >>> 0; return state / 4294967296; };
+    const pick = list => list[Math.floor(rand() * list.length)];
+    const iso = ms => new Date(ms).toISOString();
+    const jobs = [];
+    for (let index = 0; index < count; index += 1) {
+      const role = pick(HISTORY_ROLES);
+      const skillCount = 4 + Math.floor(rand() * (role.skills.length - 3));
+      const years = Math.floor(rand() * 10);
+      const publishedAt = HISTORY_END - Math.floor(rand() * HISTORY_WINDOW_DAYS) * 86400000;
+      const ageDays = Math.round((HISTORY_END - publishedAt) / 86400000);
+      const hypeCount = rand() < 0.35 ? 1 + Math.floor(rand() * 3) : 0;
+      const hypeOffset = Math.floor(rand() * HYPE_SKILLS.length);
+      const hype = Array.from({ length: hypeCount }, (unused, slot) => HYPE_SKILLS[(hypeOffset + slot) % HYPE_SKILLS.length]);
+      const strain = Math.max(0, skillCount - 4) + Math.max(0, years - 3) + hype.length * 1.6;
+      const fillDays = Math.round((16 + strain * 5) * (0.6 + rand() * 0.9));
+      const abandonRisk = Math.min(0.78, 0.08 + strain * 0.055 + bias);
+      const requirements = [...role.skills.slice(0, skillCount), ...hype].map(name => ({ name, type: 'skill', required: true }));
+      if (years > 0) requirements.push({ type: 'experience', required: true, yearsExperience: years, justification: 'Seeded historical requisition' });
+      const job = {
+        id: `${orgId}-h${index}`, employerVerified: true, title: role.title, seniority: role.seniority,
+        location: pick(HISTORY_LOCATIONS), requirements, publishedAt: iso(publishedAt),
+        submittedAt: iso(publishedAt - 4 * 86400000), approval: { ts: iso(publishedAt - 2 * 86400000) }, generated: true
+      };
+      const abandonDay = 45 + Math.floor(rand() * 40);
+      if (rand() < abandonRisk && ageDays > abandonDay) {
+        jobs.push({ ...job, status: 'paused_stale', pausedAt: iso(publishedAt + abandonDay * 86400000) });
+      } else if (fillDays <= ageDays) {
+        jobs.push({ ...job, status: 'filled', filledAt: iso(publishedAt + fillDays * 86400000), hireUniversity: pick(UNIVERSITIES) });
+      } else {
+        jobs.push({ ...job, status: 'published', confirmationDueAt: iso(HISTORY_END + 20 * 86400000), lastConfirmedAt: iso(HISTORY_END - 5 * 86400000) });
+      }
+    }
+    return jobs;
+  }
+
+  // Vertex carries the largest history because the recruiter's autopsy reads
+  // from it; peers carry enough to make the rating leaderboard non-degenerate.
+  const HISTORY = {
+    'vertex-digital': generateHistory('vertex-digital', 260, 0.00, HISTORY_SEED),
+    'meridian-labs': generateHistory('meridian-labs', 70, 0.04, HISTORY_SEED + 7),
+    'northstar-tech': generateHistory('northstar-tech', 64, 0.12, HISTORY_SEED + 13),
+    'apex-commerce': generateHistory('apex-commerce', 58, 0.02, HISTORY_SEED + 29),
+    'cobalt-systems': generateHistory('cobalt-systems', 54, 0.18, HISTORY_SEED + 41),
+    'harbour-analytics': generateHistory('harbour-analytics', 60, 0.01, HISTORY_SEED + 53)
+  };
+  PEER_ORGS.forEach(org => { org.history = HISTORY[org.id] || []; });
+  // The national corpus the Realised Demand Index reads from.
+  const DEMAND_CORPUS = PEER_ORGS.flatMap(org => org.history);
+
+  const VerifySeeds = { PERSONAS, JOBS, DEMO_DRAFT, DEMO_DRAFTS, PEER_ORGS, HISTORY, DEMAND_CORPUS, UNIVERSITIES };
 
   if (typeof window !== 'undefined') window.VerifySeeds = VerifySeeds;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifySeeds;

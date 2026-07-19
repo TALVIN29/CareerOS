@@ -37,6 +37,8 @@ function app() {
     activeJobId: null,
     candidatePreviewJobId: null,
     freshnessJobId: null,
+    fillUniversity: '',
+    universities: Seeds.UNIVERSITIES || [],
     managerAttests: false,
     decisionModal: null,
     toast: '',
@@ -190,11 +192,19 @@ function app() {
 
     employerRating() { return Engine.computeEmployerRating(this.jobs, new Date()); },
     peerRatings() {
-      return Seeds.PEER_ORGS.map(org => ({ id: org.id, name: org.name, ...Engine.computeEmployerRating(org.id === 'vertex-digital' ? this.jobs : org.jobs, new Date()) }))
+      // Ratings read the closed-out history as well as the live board, so the
+      // sample size behind each band is a real one.
+      return Seeds.PEER_ORGS.map(org => ({ id: org.id, name: org.name, ...Engine.computeEmployerRating([...(org.history || []), ...(org.id === 'vertex-digital' ? this.jobs : org.jobs)], new Date()) }))
         .sort((a, b) => (b.rating ?? -1) - (a.rating ?? -1));
     },
-    demandCorpus() { return Seeds.PEER_ORGS.flatMap(org => org.id === 'vertex-digital' ? this.jobs : org.jobs); },
-    divergence() { return Engine.computeDemandDivergence(this.demandCorpus(), new Date()); },
+
+    // The national outcome corpus: every peer organisation's closed-out
+    // requisition history, plus this organisation's live board.
+    outcomeCorpus() { return [...Seeds.DEMAND_CORPUS, ...this.jobs]; },
+    realisedDemand() { return Engine.realisedDemand(this.outcomeCorpus()); },
+    // Requirement Autopsy for the requisition currently being drafted.
+    autopsy() { return Engine.requirementAutopsy(this.liveDraft(), this.outcomeCorpus(), new Date()); },
+    describeDays(value) { return value == null ? 'not reached' : `${value} days`; },
 
     overviewCards() {
       const counts = this.counts();
@@ -413,14 +423,16 @@ function app() {
       const permission = action === 'mark_filled' || action === 'pause_stale' ? 'mark_team_job_filled' : '';
       if (!this.can(permission, job)) return this.notify('You do not have permission for this lifecycle action.');
       try {
-        Store.transition(job.id, action, { comment: action === 'mark_filled' ? 'Hiring process completed.' : 'Vacancy paused by assigned manager.' });
+        Store.transition(job.id, action, {
+          comment: action === 'mark_filled' ? `Hiring process completed${this.fillUniversity ? ` · hire from ${this.fillUniversity}` : ''}.` : 'Vacancy paused by assigned manager.',
+          hireUniversity: action === 'mark_filled' ? this.fillUniversity : ''
+        });
+        this.fillUniversity = '';
         this.freshnessJobId = null;
         this.refresh();
       } catch (error) { this.notify(error.message); }
     },
 
-    trustedJobs() { return this.jobs.filter(job => job.status === 'published' && job.employerVerified && (!job.confirmationDueAt || new Date(job.confirmationDueAt) >= new Date())); },
-    demandSkills() { return Object.entries(Engine.computeDemandDivergence(this.jobs, new Date()).verified).sort((a, b) => b[1] - a[1]); },
 
     renderValidationCharts(prefix, job) {
       if (!job?.validation) return;
@@ -430,8 +442,12 @@ function app() {
 
     renderGovernance() {
       if (this.currentUser?.role !== 'hr_admin') return;
-      const divergence = this.divergence();
-      Viz.renderDemandDivergence?.('demand-divergence-chart', divergence);
+      Viz.renderRealisedDemand?.('realised-demand-chart', this.realisedDemand());
+    },
+
+    renderAutopsy() {
+      if (this.currentUser?.role !== 'recruiter') return;
+      Viz.renderSurvival?.('autopsy-survival-chart', this.autopsy().base);
     },
 
     savePolicy() {

@@ -94,23 +94,58 @@
       .text(k => `${((components[k] || 0) * WEIGHTS[k] / 100).toFixed(1)}pt`);
   }
 
-  function renderDemandDivergence(elId, divergence) {
+
+  // Advertised vs hired, per skill. Same bar structure as the divergence
+  // chart, but the second bar is an external outcome rather than our own
+  // verification coverage.
+  function renderRealisedDemand(elId, demand) {
     const el = document.getElementById(elId);
-    if (!el || typeof d3 === 'undefined' || !divergence) return;
+    if (!el || typeof d3 === 'undefined' || !demand) return;
     el.innerHTML = '';
-    const rows = divergence.rows.slice(0, 8);
-    const max = d3.max(rows, row => row.all) || 1;
+    const rows = demand.rows.slice(0, 8);
+    const max = d3.max(rows, row => row.advertised) || 1;
     const root = d3.select(el);
     const legend = root.append('div').attr('class', 'divergence-legend');
-    legend.append('span').attr('class', 'legend-all').text('All advertised demand');
-    legend.append('span').attr('class', 'legend-verified').text('Verified active demand');
+    legend.append('span').attr('class', 'legend-all').text('Advertised in postings');
+    legend.append('span').attr('class', 'legend-verified').text('Present in postings that hired');
 
     const row = root.selectAll('.divergence-row').data(rows).enter().append('div').attr('class', 'divergence-row');
-    row.append('div').attr('class', 'divergence-skill').html(item => `<strong>${item.skill}</strong><small>${item.unverifiedShare}% unsupported signal</small>`);
+    row.append('div').attr('class', 'divergence-skill').html(item => `<strong>${item.skill}</strong><small>${item.conversion}% of postings led to a hire</small>`);
     const bars = row.append('div').attr('class', 'divergence-bars');
-    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-all').style('width', '0%').transition().duration(700).style('width', item => `${item.all / max * 100}%`);
-    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-verified').style('width', '0%').transition().duration(700).style('width', item => `${item.verified / max * 100}%`);
-    row.append('div').attr('class', 'divergence-count').html(item => `<strong>${item.all}</strong><small>${item.verified} verified</small>`);
+    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-all').style('width', '0%').transition().duration(700).style('width', item => `${item.advertised / max * 100}%`);
+    bars.append('div').attr('class', 'divergence-track').append('div').attr('class', 'divergence-fill divergence-verified').style('width', '0%').transition().duration(700).style('width', item => `${item.hired / max * 100}%`);
+    row.append('div').attr('class', 'divergence-count').html(item => `<strong>${item.advertised}</strong><small>${item.hired} hired</small>`);
+  }
+
+  // Kaplan-Meier step function. Flat until an event, then a vertical drop.
+  // The 50% line is drawn so "median not reached" is visible rather than stated.
+  function renderSurvival(elId, curve) {
+    const el = document.getElementById(elId);
+    if (!el || typeof d3 === 'undefined' || !curve) return;
+    el.innerHTML = '';
+    if (!curve.sufficient || curve.points.length < 2) {
+      d3.select(el).append('p').attr('class', 'muted-copy').text(`Insufficient evidence — ${curve.sampleSize} comparable requisitions.`);
+      return;
+    }
+    const width = Math.max(el.clientWidth || 460, 320);
+    const height = 200;
+    const margin = { top: 12, right: 14, bottom: 28, left: 40 };
+    const maxDay = curve.points[curve.points.length - 1].day || 1;
+    const x = d3.scaleLinear().domain([0, maxDay]).range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain([0, 1]).range([height - margin.bottom, margin.top]);
+    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`).attr('width', '100%');
+
+    svg.append('line').attr('x1', margin.left).attr('x2', width - margin.right).attr('y1', y(0.5)).attr('y2', y(0.5))
+      .attr('stroke', 'rgba(148,163,184,.45)').attr('stroke-dasharray', '4 4');
+    svg.append('path').datum(curve.points)
+      .attr('fill', 'none').attr('stroke', '#ef4444').attr('stroke-width', 2)
+      .attr('d', d3.line().curve(d3.curveStepAfter).x(point => x(point.day)).y(point => y(point.survival)));
+    svg.append('g').attr('transform', `translate(0,${height - margin.bottom})`).call(d3.axisBottom(x).ticks(6).tickFormat(day => `${day}d`));
+    svg.append('g').attr('transform', `translate(${margin.left},0)`).call(d3.axisLeft(y).ticks(3).tickFormat(d3.format('.0%')));
+    if (curve.medianDays != null) {
+      svg.append('line').attr('x1', x(curve.medianDays)).attr('x2', x(curve.medianDays)).attr('y1', y(0.5)).attr('y2', height - margin.bottom)
+        .attr('stroke', '#ef4444').attr('stroke-dasharray', '3 3');
+    }
   }
 
   // ── Hero signal field (three.js) ──────────────────────────────────────
@@ -261,7 +296,7 @@
     _signalField = null;
   }
 
-  const VerifyViz = { renderGauge, renderComponentBars, renderDemandDivergence, destroy, initSignalField, destroySignalField };
+  const VerifyViz = { renderGauge, renderComponentBars, renderRealisedDemand, renderSurvival, destroy, initSignalField, destroySignalField };
 
   if (typeof window !== 'undefined') window.VerifyViz = VerifyViz;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifyViz;

@@ -153,18 +153,6 @@ test('freshness policy marks due jobs and automatically pauses after grace', () 
   assert.equal(stale.auditEvents[0].action, 'auto_pause_stale');
 });
 
-test('paused, filled and unverified jobs are excluded from verified demand', () => {
-  const skill = [{ name: 'SQL', type: 'skill', required: true }];
-  const jobs = [
-    { status: 'published', employerVerified: true, lastConfirmedAt: '2026-07-01', confirmationDueAt: '2026-08-01', requirements: skill },
-    { status: 'paused_stale', employerVerified: true, requirements: skill },
-    { status: 'filled', employerVerified: true, requirements: skill }
-  ];
-  const result = Engine.computeDemandDivergence(jobs, '2026-07-17');
-  assert.equal(result.verifiedJobs, 1);
-  assert.equal(result.verified.SQL, 1);
-});
-
 test('Employer Integrity Rating retains a sample-size guard', () => {
   const result = Engine.computeEmployerRating([{ status: 'published', publishedAt: '2026-01-01' }], '2026-07-17');
   assert.equal(result.rating, null);
@@ -179,6 +167,121 @@ test('seed data coherently demonstrates Green, Amber, Red, approved, due and sta
   assert.equal(byId('job_product_designer').status, 'approved');
   assert.equal(byId('job_operations_confirmation').status, 'confirmation_due');
   assert.equal(byId('job_ai_product_stale').status, 'paused_stale');
+});
+
+// --- Vacancy outcome analysis ------------------------------------------------
+// Hand-computed Kaplan-Meier fixture. 10 published requisitions:
+//   filled  at 10, 10, 20, 30, 60 days
+//   open    at 15, 25, 40 days (right-censored)
+//   abandoned at 35, 50 days (censored for the fill curve, counted separately)
+//
+//   t=10  at risk 10, events 2  S = 1 - 2/10          = 0.8
+//   t=20  at risk  7, events 1  S = 0.8 * 6/7         = 0.6857142857...
+//   t=30  at risk  5, events 1  S = 0.6857... * 4/5   = 0.5485714285...
+//   t=60  at risk  1, events 1  S = 0.5485... * 0     = 0
+// Median = first t where S <= 0.5, which is 60.
+// Deleting the censored rows would give median(10,10,20,30,60) = 20.
+const OUTCOME_START = '2026-01-01T00:00:00.000Z';
+const addDays = days => new Date(new Date(OUTCOME_START).getTime() + days * 86400000).toISOString();
+const OUTCOME_WINDOW = 90;
+const outcomeJob = (id, days, kind) => {
+  const job = { id, publishedAt: OUTCOME_START, seniority: 'mid', location: 'Kuala Lumpur', requirements: [{ name: 'SQL', type: 'skill', required: true }] };
+  if (kind === 'filled') return { ...job, status: 'filled', filledAt: addDays(days) };
+  if (kind === 'abandoned') return { ...job, status: 'paused_stale', pausedAt: addDays(days) };
+  // A still-open vacancy is censored at "now", so its observed duration is set
+  // by pushing publishedAt forward rather than by any field on the job.
+  return { ...job, status: 'published', publishedAt: addDays(OUTCOME_WINDOW - days) };
+};
+const OUTCOME_CORPUS = [
+  outcomeJob('f1', 10, 'filled'), outcomeJob('f2', 10, 'filled'), outcomeJob('f3', 20, 'filled'),
+  outcomeJob('f4', 30, 'filled'), outcomeJob('f5', 60, 'filled'),
+  outcomeJob('c1', 15, 'open'), outcomeJob('c2', 25, 'open'), outcomeJob('c3', 40, 'open'),
+  outcomeJob('a1', 35, 'abandoned'), outcomeJob('a2', 50, 'abandoned')
+];
+const OUTCOME_NOW = addDays(OUTCOME_WINDOW);
+
+test('Kaplan-Meier matches the hand-computed curve including censored rows', () => {
+  const curve = Engine.survivalCurve(OUTCOME_CORPUS, OUTCOME_NOW);
+  assert.equal(curve.sufficient, true);
+  assert.equal(curve.sampleSize, 10);
+  assert.deepEqual(clone(curve.points.map(point => point.day)), [0, 10, 20, 30, 60]);
+  assert.deepEqual(clone(curve.points.map(point => point.atRisk)), [10, 10, 7, 5, 1]);
+  const survival = clone(curve.points.map(point => Number(point.survival.toFixed(6))));
+  assert.deepEqual(survival, [1, 0.8, 0.685714, 0.548571, 0]);
+  assert.equal(curve.medianDays, 60);
+});
+
+test('censored rows raise the median rather than being silently deleted', () => {
+  const naive = OUTCOME_CORPUS.filter(job => job.status === 'filled')
+    .map(job => (new Date(job.filledAt) - new Date(job.publishedAt)) / 86400000).sort((a, b) => a - b);
+  assert.equal(naive[Math.floor(naive.length / 2)], 20);
+  assert.ok(Engine.survivalCurve(OUTCOME_CORPUS, OUTCOME_NOW).medianDays > 20);
+});
+
+test('a curve that never reaches 0.5 reports null instead of extrapolating', () => {
+  const mostlyOpen = OUTCOME_CORPUS.map((job, index) => index === 0 ? job : outcomeJob(`o${index}`, 20 + index, 'open'));
+  const curve = Engine.survivalCurve(mostlyOpen, OUTCOME_NOW);
+  assert.ok(curve.points.every(point => point.survival > 0.5));
+  assert.equal(curve.medianDays, null);
+});
+
+test('cohorts below the sample floor refuse to report a number', () => {
+  const curve = Engine.survivalCurve(OUTCOME_CORPUS.slice(0, Engine.MIN_COHORT - 1), OUTCOME_NOW);
+  assert.equal(curve.sufficient, false);
+  assert.equal(curve.medianDays, null);
+  assert.deepEqual(clone(curve.points), []);
+});
+
+test('abandonment is reported as a rate over settled vacancies only', () => {
+  // 5 filled + 2 abandoned settled; the 3 still-open rows are excluded.
+  assert.equal(Engine.abandonmentRate(OUTCOME_CORPUS, OUTCOME_NOW), 29);
+  assert.equal(Engine.abandonmentRate([], OUTCOME_NOW), null);
+});
+
+test('cohort filtering is deterministic and order-independent', () => {
+  const spec = Engine.cohortSpec(OUTCOME_CORPUS[0]);
+  const forward = clone(Engine.cohort(OUTCOME_CORPUS, spec).map(job => job.id).sort());
+  const reversed = clone(Engine.cohort(OUTCOME_CORPUS.slice().reverse(), spec).map(job => job.id).sort());
+  assert.deepEqual(forward, reversed);
+  assert.equal(forward.length, 10);
+  assert.deepEqual(clone(Engine.cohort(OUTCOME_CORPUS, { ...spec, seniority: "senior" })), []);
+});
+
+test('realised demand counts hires, not verification coverage', () => {
+  const demand = Engine.realisedDemand(OUTCOME_CORPUS);
+  const sql = demand.rows.find(row => row.skill === 'SQL');
+  assert.equal(demand.totalPostings, 10);
+  assert.equal(demand.totalHires, 5);
+  assert.equal(sql.advertised, 10);
+  assert.equal(sql.hired, 5);
+  assert.equal(sql.conversion, 50);
+  assert.equal(sql.phantom, 5);
+});
+
+test('requirement autopsy only recommends a change the data supports', () => {
+  const heavy = { seniority: 'mid', location: 'Kuala Lumpur', requirements: [{ type: 'experience', required: true, yearsExperience: 8 }] };
+  const autopsy = Engine.requirementAutopsy(heavy, OUTCOME_CORPUS, OUTCOME_NOW);
+  // The corpus holds no 7+ years cohort, so the base cannot report and no
+  // recommendation may be invented from an empty comparison.
+  assert.equal(autopsy.base.sufficient, false);
+  assert.ok(autopsy.variants.some(variant => variant.field === 'experience'));
+  assert.ok(autopsy.best === null || autopsy.best.sufficient);
+});
+
+test('marking a vacancy filled records the hire university that closes the loop', () => {
+  const published = { ...clone(Seeds.DEMO_DRAFTS.green), status: 'published', publishedAt: OUTCOME_START };
+  const filled = Engine.applyTransition(published, 'mark_filled', manager, { now: addDays(30), hireUniversity: 'Universiti Malaya' }).job;
+  assert.equal(filled.status, 'filled');
+  assert.equal(filled.hireUniversity, 'Universiti Malaya');
+  // Recording it is optional; omitting it must not invent a university.
+  assert.equal(Engine.applyTransition(published, 'mark_filled', manager, { now: addDays(30) }).job.hireUniversity, undefined);
+});
+
+test('the generated history corpus is deterministic and labelled as generated', () => {
+  assert.ok(Seeds.DEMAND_CORPUS.length > 400);
+  assert.ok(Seeds.DEMAND_CORPUS.every(job => job.generated === true));
+  assert.equal(Seeds.DEMAND_CORPUS[0].id, loadUmd('verify-seeds.js').DEMAND_CORPUS[0].id);
+  assert.equal(Seeds.DEMAND_CORPUS[100].filledAt, loadUmd('verify-seeds.js').DEMAND_CORPUS[100].filledAt);
 });
 
 console.log(`\n${passed} PASS`);

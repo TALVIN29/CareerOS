@@ -196,6 +196,157 @@
     const ordered = values.slice().sort((a, b) => a - b); const middle = Math.floor(ordered.length / 2);
     return ordered.length % 2 ? ordered[middle] : (ordered[middle - 1] + ordered[middle]) / 2;
   }
+  // --- Vacancy outcome analysis ---------------------------------------------
+  // A published requisition ends filled (the event), abandoned (paused stale or
+  // closed with no hire), or is still open. Still-open rows are RIGHT-CENSORED:
+  // they have survived at least this long and nothing more is known. Deleting
+  // them biases every median downward, because the long-running open roles are
+  // exactly the ones most likely to become ghosts. So time-to-fill is estimated
+  // with Kaplan-Meier rather than averaged.
+  //
+  // ponytail: abandonment is treated as censoring for the fill curve and
+  // reported separately as a rate. That is informative censoring - roles are
+  // abandoned precisely because they are hard to fill - so the curve reads
+  // slightly optimistic. Read it as "days to fill among roles still being
+  // pursued". A Fine-Gray competing-risks model is the upgrade path if the
+  // abandonment rate ever climbs high enough for the bias to matter.
+  const MIN_COHORT = 8;
+  const bandYears = years => years <= 2 ? '0-2' : years <= 4 ? '3-4' : years <= 6 ? '5-6' : '7+';
+  const bandSkills = count => count <= 4 ? '1-4' : count <= 7 ? '5-7' : '8+';
+  function requiredSkillCount(job) { return (job.requirements || []).filter(req => req.type === 'skill' && req.required).length; }
+
+  function vacancyOutcome(job, nowValue) {
+    const nowMs = new Date(nowValue || Date.now()).getTime();
+    const start = job.publishedAt ? new Date(job.publishedAt).getTime() : NaN;
+    if (!Number.isFinite(start)) return null;
+    const daysFrom = end => Math.max(0, Math.round((new Date(end).getTime() - start) / DAY));
+    if (job.status === 'filled' && job.filledAt) return { days: daysFrom(job.filledAt), outcome: 'filled' };
+    if (job.status === 'paused_stale') return { days: daysFrom(job.pausedAt || job.updatedAt || nowMs), outcome: 'abandoned' };
+    if (job.status === 'closed' && !job.filledAt) return { days: daysFrom(job.closedAt || job.updatedAt || nowMs), outcome: 'abandoned' };
+    if (['published', 'confirmation_due'].includes(job.status)) return { days: daysFrom(nowMs), outcome: 'censored' };
+    return null;
+  }
+
+  function survivalCurve(jobs, nowValue) {
+    const rows = (jobs || []).map(job => vacancyOutcome(job, nowValue)).filter(Boolean);
+    const sampleSize = rows.length;
+    if (sampleSize < MIN_COHORT) return { points: [], medianDays: null, sampleSize, sufficient: false };
+    const eventDays = [...new Set(rows.filter(row => row.outcome === 'filled').map(row => row.days))].sort((a, b) => a - b);
+    const points = [{ day: 0, survival: 1, atRisk: sampleSize, events: 0 }];
+    let survival = 1;
+    eventDays.forEach(day => {
+      const atRisk = rows.filter(row => row.days >= day).length;
+      if (!atRisk) return;
+      const events = rows.filter(row => row.outcome === 'filled' && row.days === day).length;
+      survival *= 1 - events / atRisk;
+      points.push({ day, survival, atRisk, events });
+    });
+    // Median is the first time the curve drops to or below 0.5. If it never
+    // does, the median is NOT REACHED - report null, never extrapolate.
+    const crossing = points.find(point => point.survival <= 0.5);
+    return { points, medianDays: crossing ? crossing.day : null, sampleSize, sufficient: true };
+  }
+
+  function abandonmentRate(jobs, nowValue) {
+    const settled = (jobs || []).map(job => vacancyOutcome(job, nowValue)).filter(row => row && row.outcome !== 'censored');
+    if (!settled.length) return null;
+    return Math.round(100 * settled.filter(row => row.outcome === 'abandoned').length / settled.length);
+  }
+
+  function cohortSpec(job) {
+    return { seniority: job.seniority || null, yearsBand: bandYears(maxExperience(job)), skillBand: bandSkills(requiredSkillCount(job)) };
+  }
+  // ponytail: the cohort key is seniority + years band + required-skill band.
+  // Location and salary are deliberately excluded - each extra dimension
+  // multiplies the number of cells, and at demo volume a five-dimension key
+  // returns "insufficient evidence" almost everywhere. Years and skill count
+  // earn their place because they are the two levers the recruiter can
+  // actually pull. Add location back when volume supports it.
+  function cohort(jobs, spec = {}) {
+    return (jobs || []).filter(job => (!spec.seniority || job.seniority === spec.seniority)
+      && (!spec.yearsBand || bandYears(maxExperience(job)) === spec.yearsBand)
+      && (!spec.skillBand || bandSkills(requiredSkillCount(job)) === spec.skillBand));
+  }
+
+  function cohortStats(jobs, nowValue) {
+    const curve = survivalCurve(jobs, nowValue);
+    return { medianDays: curve.medianDays, sampleSize: curve.sampleSize, sufficient: curve.sufficient, abandonment: abandonmentRate(jobs, nowValue), points: curve.points };
+  }
+
+  // Greedy, one factor at a time: re-run the cohort with a single requirement
+  // relaxed and keep whichever change moves the median most. Not a model.
+  function requirementAutopsy(job, corpus, nowValue) {
+    const spec = cohortSpec(job);
+    const base = cohortStats(cohort(corpus, spec), nowValue);
+    const years = maxExperience(job);
+    const skills = requiredSkillCount(job);
+    const variants = [];
+    if (years > 2) {
+      const relaxed = Math.max(0, years - 3);
+      variants.push({ field: 'experience', change: `Ask ${relaxed} years of experience instead of ${years}`, ...cohortStats(cohort(corpus, { ...spec, yearsBand: bandYears(relaxed) }), nowValue) });
+    }
+    if (skills > 4) {
+      variants.push({ field: 'requirements', change: `Mark 4 skills as required instead of ${skills}`, ...cohortStats(cohort(corpus, { ...spec, skillBand: bandSkills(4) }), nowValue) });
+    }
+    const improved = variants.filter(variant => variant.sufficient && variant.medianDays != null
+      && (base.medianDays == null || variant.medianDays < base.medianDays));
+    return { base, variants, best: improved.sort((a, b) => a.medianDays - b.medianDays)[0] || null };
+  }
+
+  // The honest denominator: how often a skill appears in postings that actually
+  // produced a hire, against how often it is advertised. A hire is an event
+  // outside this system, so unlike "verified" it cannot measure our own reach.
+  // minAdvertised keeps one-off skills out of the ranking: a skill advertised
+  // twice and hired zero times is 0% conversion and means nothing.
+  function realisedDemand(jobs, minAdvertised = 5) {
+    const countSkills = source => source.reduce((totals, job) => {
+      (job.requirements || []).filter(req => req.type === 'skill' && req.required).forEach(req => { if (req.name) totals[req.name] = (totals[req.name] || 0) + 1; });
+      return totals;
+    }, {});
+    const posted = (jobs || []).filter(job => job.publishedAt);
+    const hired = posted.filter(job => job.status === 'filled' && job.filledAt);
+    const advertised = countSkills(posted);
+    const realised = countSkills(hired);
+    const rows = Object.keys(advertised).filter(skill => advertised[skill] >= minAdvertised).map(skill => {
+      const ads = advertised[skill];
+      const hires = realised[skill] || 0;
+      return { skill, advertised: ads, hired: hires, conversion: Math.round(100 * hires / ads), phantom: ads - hires };
+    }).sort((a, b) => a.conversion - b.conversion || b.advertised - a.advertised);
+    return { rows, totalPostings: posted.length, totalHires: hired.length, sufficient: posted.length >= MIN_COHORT };
+  }
+
+  // Award standing: what a student-voted employer award looks like once part of
+  // it is behavioural rather than purely perceptual.
+  //
+  // Today the award ranks employers on what students believe about them. Adding
+  // the employer's observed vacancy behaviour is what makes honest posting
+  // self-enforcing: employers already compete for the award, so compliance stops
+  // being a cost they resent.
+  //
+  // BEHAVIOUR_WEIGHT is a placeholder. How much behaviour should count is the
+  // award owner's policy decision, not this engine's - the mechanism is the
+  // proposal, the number is not.
+  const BEHAVIOUR_WEIGHT = 0.4;
+  function computeAwardStanding(orgs, behaviourWeight = BEHAVIOUR_WEIGHT) {
+    const scored = (orgs || []).map(org => {
+      const perception = Number(org.perceptionScore) || 0;
+      const behaviour = org.rating == null ? null : Number(org.rating);
+      // An employer with no behavioural sample keeps their perception score
+      // rather than being penalised for absence of evidence.
+      const combined = behaviour == null ? perception : Math.round(perception * (1 - behaviourWeight) + behaviour * behaviourWeight);
+      return { ...org, perception, behaviour, combined };
+    });
+    const rank = (list, key) => list.slice().sort((a, b) => b[key] - a[key]).map((item, index) => [item.id, index + 1]);
+    const perceptionRanks = new Map(rank(scored, 'perception'));
+    const combinedRanks = new Map(rank(scored, 'combined'));
+    return scored.map(org => ({
+      ...org,
+      perceptionRank: perceptionRanks.get(org.id),
+      combinedRank: combinedRanks.get(org.id),
+      movement: perceptionRanks.get(org.id) - combinedRanks.get(org.id)
+    })).sort((a, b) => a.combinedRank - b.combinedRank);
+  }
+
   function computeEmployerRating(jobs, nowValue) {
     const nowMs = new Date(nowValue || Date.now()).getTime();
     const published = (jobs || []).filter(job => job.publishedAt || ['published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status));
@@ -216,17 +367,6 @@
     const components = { reconfirmOnTime, ghostAvoidance, decisionSpeed, staleAvoidance, medianDecisionDays };
     const rating = Math.round(.35 * reconfirmOnTime + .30 * ghostAvoidance + .20 * decisionSpeed + .15 * staleAvoidance);
     return { rating, band: rating >= 85 ? 'Leading' : rating >= 70 ? 'Trusted' : rating >= 55 ? 'Developing' : 'At risk', sampleSize, components };
-  }
-  function computeDemandDivergence(jobs, nowValue) {
-    const nowMs = new Date(nowValue || Date.now()).getTime();
-    const countSkills = source => source.reduce((totals, job) => {
-      (job.requirements || []).filter(req => req.type === 'skill' && req.required).forEach(req => { if (req.name) totals[req.name] = (totals[req.name] || 0) + 1; }); return totals;
-    }, {});
-    const source = jobs || [];
-    const trusted = source.filter(job => job.status === 'published' && job.employerVerified === true && job.lastConfirmedAt && (!job.confirmationDueAt || new Date(job.confirmationDueAt).getTime() >= nowMs));
-    const all = countSkills(source); const verified = countSkills(trusted);
-    const rows = Object.keys(all).map(skill => ({ skill, all: all[skill], verified: verified[skill] || 0, unverifiedCount: all[skill] - (verified[skill] || 0), unverifiedShare: Math.round(100 * (all[skill] - (verified[skill] || 0)) / all[skill]) })).sort((a, b) => b.unverifiedCount - a.unverifiedCount || b.all - a.all);
-    return { all, verified, rows, totalJobs: source.length, verifiedJobs: trusted.length };
   }
 
   let auditSeq = 0;
@@ -261,7 +401,9 @@
       extra = { lastConfirmedAt: timestamp, confirmationDueAt: new Date(new Date(timestamp).getTime() + confirmationDays * DAY).toISOString(), pausedAt: null, confirmations: [...(job.confirmations || []), { confirmedAt: timestamp, dueAt: job.confirmationDueAt || null, actorId: actor?.id || actor?.userId, action: 'reconfirmed' }] };
     } else if (action === 'mark_confirmation_due') toStatus = 'confirmation_due';
     else if (['pause_stale', 'auto_pause_stale'].includes(action)) { toStatus = 'paused_stale'; extra.pausedAt = timestamp; if (action === 'auto_pause_stale') extra.pausedAutomatically = true; }
-    else if (action === 'mark_filled') { toStatus = 'filled'; extra.filledAt = timestamp; }
+    // The hire's university closes the loop: it is what turns an advertised
+    // skill into a realised one, and it is already collected annually today.
+    else if (action === 'mark_filled') { toStatus = 'filled'; extra.filledAt = timestamp; if (opts.hireUniversity) extra.hireUniversity = opts.hireUniversity; }
     else if (action === 'close') { toStatus = 'closed'; extra.closedAt = timestamp; }
     else if (action === 'edit') { toStatus = ['approved', 'rejected'].includes(fromStatus) ? 'draft' : fromStatus; extra.approval = fromStatus === 'approved' ? null : job.approval; }
     const newJob = { ...job, ...extra, status: toStatus };
@@ -283,7 +425,8 @@
     return { jobs: updatedJobs, auditEvents: events };
   }
 
-  const VerifyEngine = { RULES_VERSION, STATUSES, TRANSITIONS, BENCHMARKS, findBenchmark, calculatePostingIntegrity, validateJob, findBlockers, findWarnings, scoreComponents, computeScore, canRequestConfirmation, canSubmit, canApprove, canPublish, computeEmployerRating, computeDemandDivergence, applyTransition, applyFreshnessPolicy };
+  const VerifyEngine = { RULES_VERSION, STATUSES, TRANSITIONS, BENCHMARKS, findBenchmark, calculatePostingIntegrity, validateJob, findBlockers, findWarnings, scoreComponents, computeScore, canRequestConfirmation, canSubmit, canApprove, canPublish, computeEmployerRating, computeAwardStanding, BEHAVIOUR_WEIGHT, applyTransition, applyFreshnessPolicy,
+    MIN_COHORT, vacancyOutcome, survivalCurve, abandonmentRate, cohort, cohortSpec, cohortStats, requirementAutopsy, realisedDemand };
   if (typeof window !== 'undefined') window.VerifyEngine = VerifyEngine;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifyEngine;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

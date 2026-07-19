@@ -24,4 +24,13 @@ assert.match(app, /Publish Verified Job/, 'the Green fast-path CTA must be prese
 assert.match(app, /Send for Manager Confirmation/, 'the Red accountability CTA must be present');
 assert.doesNotMatch(html, /Run Automated Validation/, 'manual validation must not remain a required posting step');
 
+// The outcome loop: advertised-vs-hired must not regress to advertised-vs-verified,
+// which measured our own coverage rather than anything about the posting.
+assert.match(app, /realisedDemand/, 'app.js must expose the Realised Demand Index');
+assert.match(app, /requirementAutopsy/, 'app.js must expose the Requirement Autopsy');
+assert.match(html, /realised-demand-chart/, 'the network view must render advertised vs hired');
+assert.match(html, /autopsy-survival-chart/, 'the posting form must render the survival curve');
+assert.doesNotMatch(html, /demand-divergence-chart/, 'the circular advertised-vs-verified proof must not return');
+assert.match(html, /x-model="fillUniversity"/, 'marking a vacancy filled must capture the hire university');
+
 console.log('wiring.test.js: all assertions passed');

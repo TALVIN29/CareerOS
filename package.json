@@ -2,22 +2,11 @@
   "name": "signal-path-verify",
   "version": "1.0.0",
   "description": "Static CareerOS employer prototype for verified labour-demand infrastructure.",
-  "main": "server/index.js",
   "type": "module",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
+    "start": "npx serve . -l 5189",
     "test": "node tests/verify-engine.test.js && node tests/permissions.test.js && node tests/wiring.test.js",
-    "build": "node --check verify-engine.js && node --check verify-seeds.js && node --check verify-store.js && node --check permissions.js && node --check viz.js && node --check app.js && node --check server/index.js"
-  },
-  "dependencies": {
-    "better-sqlite3": "^12.11.1",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "mammoth": "^1.12.0",
-    "multer": "^2.2.0",
-    "pdf-parse": "^2.4.5"
+    "build": "node --check verify-engine.js && node --check verify-seeds.js && node --check verify-store.js && node --check permissions.js && node --check viz.js && node --check app.js"
   },
   "engines": {
     "node": ">=18"

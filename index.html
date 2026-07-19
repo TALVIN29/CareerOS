@@ -53,9 +53,9 @@
               </div>
             </div>
             <div class="hero-panel">
-              <div class="passport-head"><div><strong>Demand Signal Integrity</strong><div class="muted-line">All postings vs verified active roles</div></div><i class="fa-solid fa-chart-column verify-icon"></i></div>
-              <div class="signal-comparison"><div><span>Advertised SQL demand</span><strong>12</strong><div class="signal-bar"><i style="width:100%"></i></div></div><div><span>Verified active demand</span><strong>5</strong><div class="signal-bar verified"><i style="width:42%"></i></div></div></div>
-              <div class="signal-delta"><strong>58% unsupported signal</strong><span>The delta changes which skills appear valuable.</span></div>
+              <div class="passport-head"><div><strong>Realised Demand Index</strong><div class="muted-line">Skill in all postings vs postings that hired</div></div><i class="fa-solid fa-chart-column verify-icon"></i></div>
+              <div class="signal-comparison"><div><span>Machine Learning · advertised</span><strong>99</strong><div class="signal-bar"><i style="width:100%"></i></div></div><div><span>Present in postings that hired</span><strong>41</strong><div class="signal-bar verified"><i style="width:41%"></i></div></div></div>
+              <div class="signal-delta"><strong>41% of those postings led to a hire</strong><span>Students choose skills from the first number, because it is the only one anyone publishes.</span></div>
             </div>
           </div>
         </section>
@@ -195,6 +195,29 @@
                 <button type="button" class="btn btn-secondary full-button" @click="validate(draft)"><i class="fa-solid fa-rotate"></i> Refresh check <small>Demo only</small></button>
                 <p class="integration-note"><i class="fa-solid fa-plug"></i> Production: ATS evidence and checks update automatically.</p>
               </aside>
+              <aside class="panel autopsy-panel" x-effect="draft.requirements.length; draft.seniority; renderAutopsy()">
+                <div class="integrity-panel-head"><div><span class="responsibility-label">Will this vacancy fill?</span><h2>Requirement Autopsy</h2></div></div>
+                <template x-if="autopsy().base.sufficient">
+                  <div>
+                    <p class="muted-copy"><strong x-text="autopsy().base.sampleSize"></strong> comparable requisitions — same seniority, same experience band, same number of required skills.</p>
+                    <div class="autopsy-headline">
+                      <div><span>Median time to fill</span><strong x-text="describeDays(autopsy().base.medianDays)"></strong></div>
+                      <div><span>Abandoned before filling</span><strong x-text="`${autopsy().base.abandonment}%`"></strong></div>
+                    </div>
+                    <div id="autopsy-survival-chart" class="autopsy-chart"></div>
+                    <template x-if="autopsy().best">
+                      <div class="autopsy-advice">
+                        <strong x-text="autopsy().best.change"></strong>
+                        <span x-text="`Comparable requisitions fill in ${describeDays(autopsy().best.medianDays)} with ${autopsy().best.abandonment}% abandoned (n=${autopsy().best.sampleSize}).`"></span>
+                      </div>
+                    </template>
+                    <p class="integration-note"><i class="fa-solid fa-circle-info"></i> Survival estimate over historical requisitions. Still-open roles are censored, not dropped. Demonstration data.</p>
+                  </div>
+                </template>
+                <template x-if="!autopsy().base.sufficient">
+                  <p class="muted-copy">Insufficient evidence — only <span x-text="autopsy().base.sampleSize"></span> comparable requisitions. CareerOS reports nothing rather than guessing.</p>
+                </template>
+              </aside>
             </div>
           </section>
 
@@ -238,11 +261,30 @@
           </section>
 
           <section x-show="workspacePage === 'impact'">
-            <div class="page-heading"><div><span class="responsibility-label">Verified Labour-Demand Infrastructure</span><h1>The delta is the lie.</h1><p>Compare what the market appears to demand with the jobs that were authorised, approved, and recently reconfirmed.</p></div><span class="status status-green">HR Administrator · Read Only</span></div>
+            <div class="page-heading"><div><span class="responsibility-label">Realised Demand Index</span><h1>Advertised is not hired.</h1><p>The world plans careers from how often a skill appears in job advertisements. This compares that against how often it appears in postings that actually produced a hire.</p></div><span class="status status-green">HR Administrator · Read Only</span></div>
             <div class="integrity-rating-band"><div class="integrity-score"><span>Vertex Digital Employer Integrity Rating</span><strong x-text="employerRating().rating ?? 'N/A'"></strong><small x-text="`${employerRating().band} · ${employerRating().sampleSize} historical jobs`"></small></div><div class="rating-components" x-show="employerRating().components"><div><span>On-time reconfirmation</span><strong x-text="`${employerRating().components?.reconfirmOnTime || 0}%`"></strong></div><div><span>Ghost-job avoidance</span><strong x-text="`${employerRating().components?.ghostAvoidance || 0}%`"></strong></div><div><span>Decision speed</span><strong x-text="`${employerRating().components?.decisionSpeed || 0}%`"></strong></div><div><span>Stale-job avoidance</span><strong x-text="`${employerRating().components?.staleAvoidance || 0}%`"></strong></div></div></div>
             <p class="evidence-caveat">Prototype weights are uncalibrated. The rating measures observed vacancy-management behaviour, not employer quality, and is shown with its sample size.</p>
             <div class="network-grid">
-              <article class="panel divergence-panel"><div class="panel-heading"><div><h2>Advertised demand vs verified demand</h2><p class="muted-copy" x-text="`${divergence().totalJobs} postings observed · ${divergence().verifiedJobs} currently verified and active`"></p></div></div><div id="demand-divergence-chart"></div><div class="delta-callout" x-show="divergence().rows.length"><strong x-text="`${divergence().rows[0]?.unverifiedShare}% of the apparent demand for ${divergence().rows[0]?.skill}`"></strong><span>came from roles that were not currently authorised, verified, and active.</span></div></article>
+              <article class="panel divergence-panel"><div class="panel-heading"><div><h2>Advertised demand vs realised demand</h2><p class="muted-copy" x-text="`${realisedDemand().totalPostings} published requisitions followed to an outcome · ${realisedDemand().totalHires} produced a hire`"></p></div></div><div id="realised-demand-chart"></div><div class="delta-callout" x-show="realisedDemand().rows.length"><strong x-text="`${realisedDemand().rows[0]?.skill} appears in ${realisedDemand().rows[0]?.advertised} postings and ${realisedDemand().rows[0]?.hired} hires`"></strong><span>A hire is an outcome outside CareerOS, so this gap measures the advertisement — not our own coverage.</span></div><p class="evidence-caveat">Historical requisitions are generated demonstration data. The method and the pipeline are the deliverable; the numbers are not findings about the Malaysian market.</p></article>
+              <article class="panel award-panel">
+                <div class="panel-heading"><div><h2>If the employer award counted behaviour</h2><p class="muted-copy" x-text="`Student perception as it stands today, against the same award with ${awardBehaviourWeight()}% weight on observed vacancy behaviour.`"></p></div></div>
+                <div class="award-list">
+                  <template x-for="org in awardStanding()" :key="org.id">
+                    <div class="award-row" :class="org.id==='vertex-digital'?'current-org':''">
+                      <span class="rank" x-text="org.combinedRank"></span>
+                      <span class="award-name"><strong x-text="org.name"></strong><small x-text="`perception ${org.perception} · behaviour ${org.behaviour ?? 'n/a'}`"></small></span>
+                      <span class="award-move" :class="org.movement > 0 ? 'move-up' : org.movement < 0 ? 'move-down' : 'move-flat'"
+                            x-text="org.movement === 0 ? `no change (was ${org.perceptionRank})` : org.movement > 0 ? `up ${org.movement} from ${org.perceptionRank}` : `down ${-org.movement} from ${org.perceptionRank}`"></span>
+                      <strong class="peer-score" x-text="org.combined"></strong>
+                    </div>
+                  </template>
+                </div>
+                <div class="delta-callout" x-show="awardStanding().some(org => org.movement < 0)">
+                  <strong x-text="(() => { const drop = awardStanding().slice().sort((a,b) => a.movement - b.movement)[0]; return `${drop.name} ranks ${drop.perceptionRank} on student perception and ${drop.combinedRank} once vacancy behaviour counts.`; })()"></strong>
+                  <span>Employers already compete for this award. Counting what they do with their vacancies is what makes honest posting worth their while — no enforcement required.</span>
+                </div>
+                <p class="evidence-caveat">Perception scores are seeded stand-ins for student votes. How much behaviour should count is the award owner's policy decision, not this engine's — the mechanism is the proposal, the weight is not.</p>
+              </article>
               <aside class="panel leaderboard"><h2>Peer integrity benchmark</h2><p class="muted-copy">Seeded demonstration histories. Rankings become credible only as behavioural samples grow.</p><div class="leaderboard-list"><template x-for="(peer,index) in peerRatings()" :key="peer.id"><div class="leaderboard-row" :class="peer.id==='vertex-digital'?'current-org':''"><span class="rank" x-text="index+1"></span><span><strong x-text="peer.name"></strong><small x-text="`${peer.band} · n=${peer.sampleSize}`"></small></span><strong class="peer-score" x-text="peer.rating ?? 'N/A'"></strong></div></template></div></aside>
             </div>
           </section>
@@ -266,7 +308,7 @@
   </template>
 
   <template x-if="freshnessJobId && job(freshnessJobId)">
-    <div class="modal-bg"><article class="modal"><div class="modal-header"><div><span class="responsibility-label">Active-Hiring Confirmation</span><h2 x-text="job(freshnessJobId).title"></h2><p class="muted-line">Is this vacancy still actively being filled?</p></div><button class="text-button" aria-label="Close active-hiring confirmation" @click="freshnessJobId=null"><i class="fa-solid fa-xmark"></i></button></div><div class="passport-grid"><div class="passport-item"><span>Current status</span><strong x-text="statusLabel(job(freshnessJobId).status)"></strong></div><div class="passport-item"><span>Last confirmed active</span><strong x-text="`${daysAgo(job(freshnessJobId).lastConfirmedAt)} days ago`"></strong></div><div class="passport-item"><span>Confirmation deadline</span><strong x-text="formatDate(job(freshnessJobId).confirmationDueAt)"></strong></div><div class="passport-item"><span>Assigned decision owner</span><strong x-text="personName(job(freshnessJobId).hiringManagerId)"></strong></div></div><div class="listing-actions modal-actions"><button class="btn btn-primary" @click="confirmHiring(job(freshnessJobId))">Yes, Still Hiring</button><button class="btn btn-secondary" @click="setLifecycle(job(freshnessJobId),'mark_filled')">Position Filled</button><button class="btn btn-danger" @click="setLifecycle(job(freshnessJobId),'pause_stale')">Pause Vacancy</button></div></article></div>
+    <div class="modal-bg"><article class="modal"><div class="modal-header"><div><span class="responsibility-label">Active-Hiring Confirmation</span><h2 x-text="job(freshnessJobId).title"></h2><p class="muted-line">Is this vacancy still actively being filled?</p></div><button class="text-button" aria-label="Close active-hiring confirmation" @click="freshnessJobId=null"><i class="fa-solid fa-xmark"></i></button></div><div class="passport-grid"><div class="passport-item"><span>Current status</span><strong x-text="statusLabel(job(freshnessJobId).status)"></strong></div><div class="passport-item"><span>Last confirmed active</span><strong x-text="`${daysAgo(job(freshnessJobId).lastConfirmedAt)} days ago`"></strong></div><div class="passport-item"><span>Confirmation deadline</span><strong x-text="formatDate(job(freshnessJobId).confirmationDueAt)"></strong></div><div class="passport-item"><span>Assigned decision owner</span><strong x-text="personName(job(freshnessJobId).hiringManagerId)"></strong></div></div><div class="field"><label>If filled, which university did the hire come from?</label><select class="input" x-model="fillUniversity"><option value="">Not recorded</option><template x-for="name in universities" :key="name"><option :value="name" x-text="name"></option></template></select><small class="muted-line">Already collected annually for Employers' Choice. Recording it per requisition is what turns an advertised skill into a realised one.</small></div><div class="listing-actions modal-actions"><button class="btn btn-primary" @click="confirmHiring(job(freshnessJobId))">Yes, Still Hiring</button><button class="btn btn-secondary" @click="setLifecycle(job(freshnessJobId),'mark_filled')">Position Filled</button><button class="btn btn-danger" @click="setLifecycle(job(freshnessJobId),'pause_stale')">Pause Vacancy</button></div></article></div>
   </template>
 
   <template x-if="candidatePreviewJobId && job(candidatePreviewJobId)">

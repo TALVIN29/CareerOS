@@ -1,8 +1,35 @@
 [build]
   publish = "."
 
+# The site publishes the repository root, so anything not explicitly blocked
+# below is fetchable by URL. Keep this list in step with what lands in the repo.
+[[redirects]]
+  from = "/docs/*"
+  to = "/index.html"
+  status = 404
+
+[[redirects]]
+  from = "/tests/*"
+  to = "/index.html"
+  status = 404
+
+[[redirects]]
+  from = "/package.json"
+  to = "/index.html"
+  status = 404
+
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/index.html"
+  status = 404
+
 [[headers]]
   for = "/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # 'unsafe-eval' is REQUIRED: Alpine.js evaluates x- attribute expressions at
+    # runtime. Removing it silently breaks the entire workspace UI. The CDN
+    # hosts below are the only external origins the page uses.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'"

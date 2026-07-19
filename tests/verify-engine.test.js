@@ -284,4 +284,26 @@ test('the generated history corpus is deterministic and labelled as generated', 
   assert.equal(Seeds.DEMAND_CORPUS[100].filledAt, loadUmd('verify-seeds.js').DEMAND_CORPUS[100].filledAt);
 });
 
+test('a behavioural award component reorders employers who win on perception alone', () => {
+  const orgs = [
+    { id: 'brand-strong', perceptionScore: 94, rating: 52 },
+    { id: 'behaviour-strong', perceptionScore: 72, rating: 92 }
+  ];
+  const standing = Engine.computeAwardStanding(orgs, 0.4);
+  const brand = standing.find(org => org.id === 'brand-strong');
+  const behaviour = standing.find(org => org.id === 'behaviour-strong');
+  assert.equal(brand.perceptionRank, 1);
+  assert.equal(brand.combined, Math.round(94 * 0.6 + 52 * 0.4));
+  assert.equal(behaviour.combined, Math.round(72 * 0.6 + 92 * 0.4));
+  assert.equal(behaviour.combinedRank, 1);
+  assert.equal(brand.combinedRank, 2);
+  assert.equal(brand.movement, -1);
+});
+
+test('an employer with no behavioural sample is not penalised for missing evidence', () => {
+  const standing = Engine.computeAwardStanding([{ id: 'new-employer', perceptionScore: 80, rating: null }], 0.4);
+  assert.equal(standing[0].behaviour, null);
+  assert.equal(standing[0].combined, 80);
+});
+
 console.log(`\n${passed} PASS`);

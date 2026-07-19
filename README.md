@@ -76,7 +76,7 @@ The browser runtime loads modules in this order:
 5. `viz.js` — explainable factor and demand-divergence visualisations
 6. `app.js` — Alpine.js presentation and interaction state
 
-The repository retains the earlier Express server, API routes, SQLite code, and backend dependencies for possible future enhancements. They are dormant and are not involved in the CareerOS Verify prototype runtime.
+The prototype ships as static files and uses **zero npm packages at runtime** — Alpine, D3 and Font Awesome load from a CDN, and `npm install` installs nothing. The earlier Express server, its API routes, its SQLite code and its seven backend dependencies were deleted once it was clear none of them were reachable from the deployed site; they remain in git history if the production path is ever revived.
 
 Production integration comments identify where ATS/requisition data, backend authorisation, notification delivery, and real market or AI services would connect. The interface does not claim those integrations are live.
 

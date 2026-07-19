@@ -382,29 +382,29 @@
   };
 
   const PEER_ORGS = [
-    { id: 'vertex-digital', name: 'Vertex Digital', jobs: JOBS },
-    { id: 'meridian-labs', name: 'Meridian Labs', jobs: [
+    { id: 'vertex-digital', perceptionScore: 78, name: 'Vertex Digital', jobs: JOBS },
+    { id: 'meridian-labs', perceptionScore: 80, name: 'Meridian Labs', jobs: [
       { id: 'ml-1', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-27', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-28' }, requirements: [{ name: 'SQL', type: 'skill', required: true }, { name: 'Python', type: 'skill', required: true }] },
       { id: 'ml-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-25', filledAt: '2026-06-01', approval: { ts: '2026-02-27' }, requirements: [{ name: 'Data Visualization', type: 'skill', required: true }] },
       { id: 'ml-3', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-28', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-29' }, requirements: [{ name: 'AI Governance', type: 'skill', required: true }] },
       { id: 'ml-4', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-27', closedAt: '2026-05-01', approval: { ts: '2026-01-30' }, requirements: [{ name: 'Python', type: 'skill', required: true }] }
     ] },
-    { id: 'northstar-tech', name: 'Northstar Tech', jobs: [
+    { id: 'northstar-tech', perceptionScore: 94, name: 'Northstar Tech', jobs: [
       { id: 'nt-1', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-20', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-26' }, requirements: [{ name: 'Node.js', type: 'skill', required: true }, { name: 'SQL', type: 'skill', required: true }] },
       { id: 'nt-2', status: 'paused_stale', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-20', confirmationDueAt: '2026-05-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'React', type: 'skill', required: true }] },
       { id: 'nt-3', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-20', closedAt: '2026-04-01', approval: { ts: '2026-01-30' }, requirements: [{ name: 'Cloud Security', type: 'skill', required: true }] }
     ] },
-    { id: 'apex-commerce', name: 'Apex Commerce', jobs: [
+    { id: 'apex-commerce', perceptionScore: 72, name: 'Apex Commerce', jobs: [
       { id: 'ac-1', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-30', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-31' }, requirements: [{ name: 'Product Strategy', type: 'skill', required: true }] },
       { id: 'ac-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-26', filledAt: '2026-06-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Figma', type: 'skill', required: true }] },
       { id: 'ac-3', status: 'published', employerVerified: true, publishedAt: '2026-05-15', submittedAt: '2026-05-10', confirmationDueAt: '2026-08-15', lastConfirmedAt: '2026-07-15', approval: { ts: '2026-05-12' }, requirements: [{ name: 'SQL', type: 'skill', required: true }] }
     ] },
-    { id: 'cobalt-systems', name: 'Cobalt Systems', jobs: [
+    { id: 'cobalt-systems', perceptionScore: 88, name: 'Cobalt Systems', jobs: [
       { id: 'cs-1', status: 'paused_stale', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-20', confirmationDueAt: '2026-04-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Node.js', type: 'skill', required: true }] },
       { id: 'cs-2', status: 'closed', employerVerified: true, publishedAt: '2026-02-01', submittedAt: '2026-01-20', closedAt: '2026-04-01', approval: { ts: '2026-01-31' }, requirements: [{ name: 'Python', type: 'skill', required: true }] },
       { id: 'cs-3', status: 'published', employerVerified: false, publishedAt: '2026-06-01', submittedAt: '2026-05-20', confirmationDueAt: '2026-07-01', approval: { ts: '2026-05-30' }, requirements: [{ name: 'AI Governance', type: 'skill', required: true }] }
     ] },
-    { id: 'harbour-analytics', name: 'Harbour Analytics', jobs: [
+    { id: 'harbour-analytics', perceptionScore: 68, name: 'Harbour Analytics', jobs: [
       { id: 'ha-1', status: 'published', employerVerified: true, publishedAt: '2026-06-01', submittedAt: '2026-05-29', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-05-30' }, requirements: [{ name: 'SQL', type: 'skill', required: true }, { name: 'Statistics', type: 'skill', required: true }] },
       { id: 'ha-2', status: 'filled', employerVerified: true, publishedAt: '2026-03-01', submittedAt: '2026-02-27', filledAt: '2026-06-01', approval: { ts: '2026-02-28' }, requirements: [{ name: 'Data Visualization', type: 'skill', required: true }] },
       { id: 'ha-3', status: 'published', employerVerified: true, publishedAt: '2026-05-01', submittedAt: '2026-04-28', confirmationDueAt: '2026-08-01', lastConfirmedAt: '2026-07-01', approval: { ts: '2026-04-29' }, requirements: [{ name: 'Python', type: 'skill', required: true }] }

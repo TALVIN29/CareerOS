@@ -202,6 +202,12 @@ function app() {
     // requisition history, plus this organisation's live board.
     outcomeCorpus() { return [...Seeds.DEMAND_CORPUS, ...this.jobs]; },
     realisedDemand() { return Engine.realisedDemand(this.outcomeCorpus()); },
+    // What a student-voted employer award looks like once part of it counts
+    // observed vacancy behaviour rather than perception alone.
+    awardStanding() {
+      return Engine.computeAwardStanding(this.peerRatings().map(peer => ({ ...peer, perceptionScore: Seeds.PEER_ORGS.find(org => org.id === peer.id)?.perceptionScore })));
+    },
+    awardBehaviourWeight() { return Math.round(Engine.BEHAVIOUR_WEIGHT * 100); },
     // Requirement Autopsy for the requisition currently being drafted.
     autopsy() { return Engine.requirementAutopsy(this.liveDraft(), this.outcomeCorpus(), new Date()); },
     describeDays(value) { return value == null ? 'not reached' : `${value} days`; },

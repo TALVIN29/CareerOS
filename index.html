@@ -266,6 +266,25 @@
             <p class="evidence-caveat">Prototype weights are uncalibrated. The rating measures observed vacancy-management behaviour, not employer quality, and is shown with its sample size.</p>
             <div class="network-grid">
               <article class="panel divergence-panel"><div class="panel-heading"><div><h2>Advertised demand vs realised demand</h2><p class="muted-copy" x-text="`${realisedDemand().totalPostings} published requisitions followed to an outcome · ${realisedDemand().totalHires} produced a hire`"></p></div></div><div id="realised-demand-chart"></div><div class="delta-callout" x-show="realisedDemand().rows.length"><strong x-text="`${realisedDemand().rows[0]?.skill} appears in ${realisedDemand().rows[0]?.advertised} postings and ${realisedDemand().rows[0]?.hired} hires`"></strong><span>A hire is an outcome outside CareerOS, so this gap measures the advertisement — not our own coverage.</span></div><p class="evidence-caveat">Historical requisitions are generated demonstration data. The method and the pipeline are the deliverable; the numbers are not findings about the Malaysian market.</p></article>
+              <article class="panel award-panel">
+                <div class="panel-heading"><div><h2>If the employer award counted behaviour</h2><p class="muted-copy" x-text="`Student perception as it stands today, against the same award with ${awardBehaviourWeight()}% weight on observed vacancy behaviour.`"></p></div></div>
+                <div class="award-list">
+                  <template x-for="org in awardStanding()" :key="org.id">
+                    <div class="award-row" :class="org.id==='vertex-digital'?'current-org':''">
+                      <span class="rank" x-text="org.combinedRank"></span>
+                      <span class="award-name"><strong x-text="org.name"></strong><small x-text="`perception ${org.perception} · behaviour ${org.behaviour ?? 'n/a'}`"></small></span>
+                      <span class="award-move" :class="org.movement > 0 ? 'move-up' : org.movement < 0 ? 'move-down' : 'move-flat'"
+                            x-text="org.movement === 0 ? `no change (was ${org.perceptionRank})` : org.movement > 0 ? `up ${org.movement} from ${org.perceptionRank}` : `down ${-org.movement} from ${org.perceptionRank}`"></span>
+                      <strong class="peer-score" x-text="org.combined"></strong>
+                    </div>
+                  </template>
+                </div>
+                <div class="delta-callout" x-show="awardStanding().some(org => org.movement < 0)">
+                  <strong x-text="(() => { const drop = awardStanding().slice().sort((a,b) => a.movement - b.movement)[0]; return `${drop.name} ranks ${drop.perceptionRank} on student perception and ${drop.combinedRank} once vacancy behaviour counts.`; })()"></strong>
+                  <span>Employers already compete for this award. Counting what they do with their vacancies is what makes honest posting worth their while — no enforcement required.</span>
+                </div>
+                <p class="evidence-caveat">Perception scores are seeded stand-ins for student votes. How much behaviour should count is the award owner's policy decision, not this engine's — the mechanism is the proposal, the weight is not.</p>
+              </article>
               <aside class="panel leaderboard"><h2>Peer integrity benchmark</h2><p class="muted-copy">Seeded demonstration histories. Rankings become credible only as behavioural samples grow.</p><div class="leaderboard-list"><template x-for="(peer,index) in peerRatings()" :key="peer.id"><div class="leaderboard-row" :class="peer.id==='vertex-digital'?'current-org':''"><span class="rank" x-text="index+1"></span><span><strong x-text="peer.name"></strong><small x-text="`${peer.band} · n=${peer.sampleSize}`"></small></span><strong class="peer-score" x-text="peer.rating ?? 'N/A'"></strong></div></template></div></aside>
             </div>
           </section>

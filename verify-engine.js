@@ -315,6 +315,38 @@
     return { rows, totalPostings: posted.length, totalHires: hired.length, sufficient: posted.length >= MIN_COHORT };
   }
 
+  // Award standing: what a student-voted employer award looks like once part of
+  // it is behavioural rather than purely perceptual.
+  //
+  // Today the award ranks employers on what students believe about them. Adding
+  // the employer's observed vacancy behaviour is what makes honest posting
+  // self-enforcing: employers already compete for the award, so compliance stops
+  // being a cost they resent.
+  //
+  // BEHAVIOUR_WEIGHT is a placeholder. How much behaviour should count is the
+  // award owner's policy decision, not this engine's - the mechanism is the
+  // proposal, the number is not.
+  const BEHAVIOUR_WEIGHT = 0.4;
+  function computeAwardStanding(orgs, behaviourWeight = BEHAVIOUR_WEIGHT) {
+    const scored = (orgs || []).map(org => {
+      const perception = Number(org.perceptionScore) || 0;
+      const behaviour = org.rating == null ? null : Number(org.rating);
+      // An employer with no behavioural sample keeps their perception score
+      // rather than being penalised for absence of evidence.
+      const combined = behaviour == null ? perception : Math.round(perception * (1 - behaviourWeight) + behaviour * behaviourWeight);
+      return { ...org, perception, behaviour, combined };
+    });
+    const rank = (list, key) => list.slice().sort((a, b) => b[key] - a[key]).map((item, index) => [item.id, index + 1]);
+    const perceptionRanks = new Map(rank(scored, 'perception'));
+    const combinedRanks = new Map(rank(scored, 'combined'));
+    return scored.map(org => ({
+      ...org,
+      perceptionRank: perceptionRanks.get(org.id),
+      combinedRank: combinedRanks.get(org.id),
+      movement: perceptionRanks.get(org.id) - combinedRanks.get(org.id)
+    })).sort((a, b) => a.combinedRank - b.combinedRank);
+  }
+
   function computeEmployerRating(jobs, nowValue) {
     const nowMs = new Date(nowValue || Date.now()).getTime();
     const published = (jobs || []).filter(job => job.publishedAt || ['published', 'confirmation_due', 'paused_stale', 'filled', 'closed'].includes(job.status));
@@ -393,7 +425,7 @@
     return { jobs: updatedJobs, auditEvents: events };
   }
 
-  const VerifyEngine = { RULES_VERSION, STATUSES, TRANSITIONS, BENCHMARKS, findBenchmark, calculatePostingIntegrity, validateJob, findBlockers, findWarnings, scoreComponents, computeScore, canRequestConfirmation, canSubmit, canApprove, canPublish, computeEmployerRating, applyTransition, applyFreshnessPolicy,
+  const VerifyEngine = { RULES_VERSION, STATUSES, TRANSITIONS, BENCHMARKS, findBenchmark, calculatePostingIntegrity, validateJob, findBlockers, findWarnings, scoreComponents, computeScore, canRequestConfirmation, canSubmit, canApprove, canPublish, computeEmployerRating, computeAwardStanding, BEHAVIOUR_WEIGHT, applyTransition, applyFreshnessPolicy,
     MIN_COHORT, vacancyOutcome, survivalCurve, abandonmentRate, cohort, cohortSpec, cohortStats, requirementAutopsy, realisedDemand };
   if (typeof window !== 'undefined') window.VerifyEngine = VerifyEngine;
   if (typeof module !== 'undefined' && module.exports) module.exports = VerifyEngine;
